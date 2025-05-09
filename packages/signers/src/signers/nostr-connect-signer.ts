@@ -85,7 +85,7 @@ export type NostrConnectSignerOptions = {
   publishMethod?: NostrPublishMethod;
 };
 
-// simple types copied from rxjs
+// Simple types copied from rxjs
 interface Unsubscribable {
   unsubscribe(): void;
 }
@@ -99,7 +99,7 @@ type Subscribable<T extends unknown> = {
 };
 
 export type NostrSubscriptionMethod = (relays: string[], filters: Filter[]) => Subscribable<NostrEvent>;
-export type NostrPublishMethod = (relays: string[], event: NostrEvent) => void | Promise<void>;
+export type NostrPublishMethod = (relays: string[], event: NostrEvent) => any | Promise<any>;
 
 export type NostrConnectAppMetadata = {
   name?: string;
