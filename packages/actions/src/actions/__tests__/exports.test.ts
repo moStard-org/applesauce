@@ -1,0 +1,63 @@
+import { describe, expect, it } from "vitest";
+import * as exports from "../index.js";
+
+describe("exports", () => {
+  it("should export the expected functions", () => {
+    expect(Object.keys(exports).sort()).toMatchInlineSnapshot(`
+      [
+        "AddBlockedRelay",
+        "AddBlossomServer",
+        "AddDMRelay",
+        "AddFavoriteRelay",
+        "AddFavoriteRelaySet",
+        "AddInboxRelay",
+        "AddOutboxRelay",
+        "AddRelayToRelaySet",
+        "AddSearchRelay",
+        "AddUserToFollowSet",
+        "BookmarkEvent",
+        "CreateBookmarkList",
+        "CreateBookmarkSet",
+        "CreateFollowSet",
+        "CreateMailboxes",
+        "CreatePinList",
+        "CreateProfile",
+        "CreateRelaySet",
+        "FollowUser",
+        "MuteHashtag",
+        "MuteThread",
+        "MuteUser",
+        "MuteWord",
+        "NewBlockedRelays",
+        "NewBlossomServers",
+        "NewContacts",
+        "NewDMRelays",
+        "NewFavoriteRelays",
+        "NewSearchRelays",
+        "PinNote",
+        "RemoveBlockedRelay",
+        "RemoveBlossomServer",
+        "RemoveDMRelay",
+        "RemoveFavoriteRelay",
+        "RemoveFavoriteRelaySet",
+        "RemoveInboxRelay",
+        "RemoveOutboxRelay",
+        "RemoveRelayFromRelaySet",
+        "RemoveSearchRelay",
+        "RemoveUserFromFollowSet",
+        "SetDefaultBlossomServer",
+        "SetListMetadata",
+        "UnbookmarkEvent",
+        "UnfollowUser",
+        "UnmuteHashtag",
+        "UnmuteThread",
+        "UnmuteUser",
+        "UnmuteWord",
+        "UnpinNote",
+        "UpdateFollowSetInformation",
+        "UpdateProfile",
+        "UpdateRelaySetInformation",
+      ]
+    `);
+  });
+});

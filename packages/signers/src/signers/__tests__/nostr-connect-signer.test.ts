@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { NostrConnectSigner } from "./nostr-connect-signer.js";
-import { SimpleSigner } from "./simple-signer.js";
+import { NostrConnectSigner } from "../nostr-connect-signer.js";
+import { SimpleSigner } from "../simple-signer.js";
 
 describe("NostrConnectSigner", () => {
   describe("connection", () => {

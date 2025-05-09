@@ -1,11 +1,11 @@
 /// <reference types="@types/dom-serial" />
-import { EventTemplate, getEventHash, NostrEvent, verifyEvent } from "nostr-tools";
-import { base64 } from "@scure/base";
-import { randomBytes, hexToBytes, bytesToHex } from "@noble/hashes/utils";
+import { bytesToHex, hexToBytes, randomBytes } from "@noble/hashes/utils";
 import { Point } from "@noble/secp256k1";
+import { base64 } from "@scure/base";
+import { logger } from "applesauce-core";
 import { createDefer, Deferred } from "applesauce-core/promise";
+import { EventTemplate, getEventHash, NostrEvent, verifyEvent } from "nostr-tools";
 
-import { logger } from "../logger.js";
 import { Nip07Interface } from "../nip-07.js";
 
 type Callback = () => void;
