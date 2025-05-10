@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { subscribeSpyTo } from "@hirez_io/observer-spy";
 import { getSeenRelays } from "applesauce-core/helpers";
-import { NostrEvent } from "nostr-tools";
+import { Filter, NostrEvent } from "nostr-tools";
 import { WS } from "vitest-websocket-mock";
 
 import { Relay } from "../relay.js";
 import { filter } from "rxjs/operators";
-import { firstValueFrom, of, throwError, timer } from "rxjs";
+import { firstValueFrom, of, Subject, throwError, timer } from "rxjs";
 import { RelayInformation } from "nostr-tools/nip11";
 
 const defaultMockInfo: RelayInformation = {
@@ -283,6 +283,55 @@ describe("req", () => {
     relay.ready$.next(true);
 
     await expect(server).toReceiveMessage(["REQ", "sub1", { kinds: [1] }]);
+  });
+
+  it("should wait for filters if filters are provided as an observable", async () => {
+    const filters = new Subject<Filter | Filter[]>();
+    subscribeSpyTo(relay.req(filters, "sub1"));
+
+    // Wait 10sm and ensure no messages were sent yet
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(server.messagesToConsume.pendingItems.length).toBe(0);
+
+    // Send REQ message with filters
+    filters.next([{ kinds: [1] }]);
+
+    // Wait for the REQ message to be sent
+    await expect(server).toReceiveMessage(["REQ", "sub1", { kinds: [1] }]);
+  });
+
+  it("should update filters if filters are provided as an observable", async () => {
+    const filters = new Subject<Filter | Filter[]>();
+    subscribeSpyTo(relay.req(filters, "sub1"));
+
+    // Send REQ message with filters
+    filters.next([{ kinds: [1] }]);
+
+    // Should send REQ message with new filters
+    await expect(server).toReceiveMessage(["REQ", "sub1", { kinds: [1] }]);
+
+    // Send REQ message with filters
+    filters.next([{ kinds: [2] }]);
+
+    // Should send new REQ message with new filters
+    await expect(server).toReceiveMessage(["REQ", "sub1", { kinds: [2] }]);
+    // It should not send CLOSE message
+    await expect(server.messages).not.toContain(["CLOSE", "sub1"]);
+  });
+
+  it("should complete if filters are provided as an observable that completes", async () => {
+    const filters = new Subject<Filter | Filter[]>();
+    const sub = subscribeSpyTo(relay.req(filters, "sub1"));
+
+    // Send REQ message with filters
+    filters.next([{ kinds: [1] }]);
+
+    // Complete the observable
+    filters.complete();
+
+    await sub.onComplete();
+
+    expect(sub.receivedComplete()).toBe(true);
   });
 });
 

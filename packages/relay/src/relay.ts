@@ -7,9 +7,12 @@ import {
   catchError,
   combineLatest,
   defer,
+  endWith,
   filter,
+  finalize,
   from,
   ignoreElements,
+  isObservable,
   map,
   merge,
   mergeMap,
@@ -23,6 +26,7 @@ import {
   Subject,
   switchMap,
   take,
+  takeUntil,
   tap,
   throwError,
   timeout,
@@ -35,6 +39,7 @@ import { completeOnEose } from "./operators/complete-on-eose.js";
 import { markFromRelay } from "./operators/mark-from-relay.js";
 import {
   AuthSigner,
+  FilterInput,
   IRelay,
   PublishOptions,
   PublishResponse,
@@ -309,17 +314,32 @@ export class Relay implements IRelay {
   }
 
   /** Create a REQ observable that emits events or "EOSE" or errors */
-  req(filters: Filter | Filter[], id = nanoid()): Observable<SubscriptionResponse> {
-    const request = this.socket.multiplex(
-      () => (Array.isArray(filters) ? ["REQ", id, ...filters] : ["REQ", id, filters]),
-      () => ["CLOSE", id],
-      (message) => (message[0] === "EVENT" || message[0] === "CLOSED" || message[0] === "EOSE") && message[1] === id,
+  req(filters: FilterInput, id = nanoid()): Observable<SubscriptionResponse> {
+    // Convert filters input into an observable, if its a normal value merge it with NEVER so it never completes
+    const input = isObservable(filters) ? filters : merge(of(filters), NEVER);
+
+    // Create an observable that completes when the upstream observable completes
+    const complete = input.pipe(ignoreElements(), endWith(null));
+
+    // Create an observable that filters responses from the relay to just the ones for this REQ
+    const messages: Observable<any[]> = this.socket.pipe(
+      filter((m) => Array.isArray(m) && (m[0] === "EVENT" || m[0] === "CLOSED" || m[0] === "EOSE") && m[1] === id),
     );
 
-    // Start the watch tower with the observable
-    const withWatchTower = merge(this.watchTower, request);
+    // Create an observable that controls sending the filters and closing the REQ
+    const control = input.pipe(
+      // Send the filters when they change
+      tap((filters) => this.socket.next(Array.isArray(filters) ? ["REQ", id, ...filters] : ["REQ", id, filters])),
+      // Close the req when unsubscribed
+      finalize(() => this.socket.next(["CLOSE", id])),
+      // Once filters have been sent, switch to listening for messages
+      switchMap(() => messages),
+    );
 
-    const observable = withWatchTower.pipe(
+    // Start the watch tower with the observables
+    const observable = merge(this.watchTower, control).pipe(
+      // Complete the subscription when the input is completed
+      takeUntil(complete),
       // Map the messages to events, EOSE, or throw an error
       map<any[], SubscriptionResponse>((message) => {
         if (message[0] === "EOSE") return "EOSE";

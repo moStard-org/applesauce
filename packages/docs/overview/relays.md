@@ -305,6 +305,55 @@ Relay.createReconnectTimer = (relay: string) => {
 };
 ```
 
+## Updating filters
+
+The `.req`, `.request` and `.subscription` methods accept `filters` as an observable. This allows you to pass a `BehaviorSubject` or `ReplaySubject` to update the subscription filters without needing to create a new subscription.
+
+```ts
+import { ReplaySubject } from "rxjs";
+import { Relay, onlyEvents } from "applesauce-relay";
+
+const relay = new Relay("wss://relay.example.com");
+
+// Create a new subject for the filters
+// use a ReplaySubject so that the last filters are kept in case on reconnection
+const filters = new ReplaySubject<Filter | Filter[]>(1);
+
+// Subscribe to the relay
+relay
+  .req(filters)
+  .pipe(onlyEvents())
+  .subscribe((event) => console.log(event.id));
+
+// The subscription wont start until some filters are set
+filters.next({ kinds: [1] });
+
+setTimeout(() => {
+  // Update the filters after a few seconds
+  filters.next({ kinds: [1], "#t": ["nostr"] });
+}, 5000);
+```
+
+Make sure to use a `ReplaySubject` or a `BehaviorSubject` to keep the last filters in case the relay disconnects and needs to resubscribe or if the subscrition is subscribed to after the filters are set.
+
+```ts
+import { BehaviorSubject } from "rxjs";
+import { Relay, onlyEvents } from "applesauce-relay";
+
+// Create a BehaviorSubject with initial filters
+const filters = new BehaviorSubject<Filter | Filter[]>([{ kinds: [1] }]);
+
+// Update the filters
+filters.next({ kinds: [1], "#t": ["nostr"] });
+
+// Start the subscription
+// this will use the last filters set and start the subscription immediately
+relay
+  .req(filters)
+  .pipe(onlyEvents())
+  .subscribe((event) => console.log(event.id));
+```
+
 ## Operators
 
 The `applesauce-relay` package includes a set of rxjs operators for modifying the stream of events from subscriptions.
