@@ -1,5 +1,17 @@
 # applesauce-relay
 
+## 1.2.0
+
+### Minor Changes
+
+- 466cd6e: Allow `.req`, `.request`, and `.subscription` to take `filters` as an observable so they can be updated
+
+### Patch Changes
+
+- 63ed560: Normalize relay url to prevent duplicates
+- Updated dependencies
+  - applesauce-core@1.2.0
+
 ## 1.1.0
 
 ### Minor Changes

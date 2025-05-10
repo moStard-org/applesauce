@@ -1,5 +1,13 @@
 # applesauce-signer
 
+## 1.2.0
+
+### Patch Changes
+
+- ed6ad27: Fix nostr-connect signer `publishMethod` expecting `Promise<void>` instead of `Promise<any>`
+- Updated dependencies
+  - applesauce-core@1.2.0
+
 ## 1.0.0
 
 ### Major Changes

@@ -1,5 +1,15 @@
 # applesauce-core
 
+## 1.2.0
+
+### Minor Changes
+
+- ed6ad27: Add `mergeBlossomServers` method
+
+### Patch Changes
+
+- 7506bf7: Remove leading and trailing whitespace on display names
+
 ## 1.0.0
 
 ### Major Changes
