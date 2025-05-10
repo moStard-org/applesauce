@@ -1,5 +1,16 @@
 # applesauce-content
 
+## 1.2.0
+
+### Minor Changes
+
+- b611352: Add `Token` regular expressions that match things surrounded by whitespace to avoid matching in URLs
+
+### Patch Changes
+
+- Updated dependencies
+  - applesauce-core@1.2.0
+
 ## 1.0.0
 
 ### Patch Changes

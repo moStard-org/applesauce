@@ -1,5 +1,14 @@
 # applesauce-factory
 
+## 1.2.0
+
+### Patch Changes
+
+- b611352: Only match NIP-19 mentions surrounded by whitespace
+- Updated dependencies
+  - applesauce-core@1.2.0
+  - applesauce-content@1.2.0
+
 ## 1.1.0
 
 ### Minor Changes
