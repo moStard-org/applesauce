@@ -119,7 +119,8 @@ export class NostrConnectSigner implements Nip07Interface {
   /** The local client signer */
   public signer: SimpleSigner;
 
-  protected subscriptionOpen = false;
+  /** Whether the signer is listening for events */
+  listening = false;
 
   /** Whether the signer is connected to the remote signer */
   isConnected = false;
@@ -195,9 +196,9 @@ export class NostrConnectSigner implements Nip07Interface {
 
   /** Open the connection */
   async open() {
-    if (this.subscriptionOpen) return;
+    if (this.listening) return;
 
-    this.subscriptionOpen = true;
+    this.listening = true;
     const pubkey = await this.signer.getPublicKey();
 
     // Setup subscription
@@ -215,9 +216,10 @@ export class NostrConnectSigner implements Nip07Interface {
 
   /** Close the connection */
   async close() {
-    this.subscriptionOpen = false;
+    this.listening = false;
     this.isConnected = false;
     this.req?.unsubscribe();
+    this.req = undefined;
     this.log("Closed");
   }
 
@@ -331,11 +333,21 @@ export class NostrConnectSigner implements Nip07Interface {
   private waitingPromise: Deferred<void> | null = null;
 
   /** Wait for a remote signer to connect */
-  waitForSigner(): Promise<void> {
+  waitForSigner(abort?: AbortSignal): Promise<void> {
     if (this.isConnected) return Promise.resolve();
 
     this.open();
     this.waitingPromise = createDefer();
+    abort?.addEventListener(
+      "abort",
+      () => {
+        this.waitingPromise?.reject(new Error("Aborted"));
+        this.waitingPromise = null;
+        this.close();
+      },
+      true,
+    );
+
     return this.waitingPromise;
   }
 
