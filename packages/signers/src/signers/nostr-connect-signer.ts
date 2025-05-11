@@ -218,8 +218,19 @@ export class NostrConnectSigner implements Nip07Interface {
   async close() {
     this.listening = false;
     this.isConnected = false;
-    this.req?.unsubscribe();
-    this.req = undefined;
+
+    // Close the current subscription
+    if (this.req) {
+      this.req.unsubscribe();
+      this.req = undefined;
+    }
+
+    // Cancel waiting promise
+    if (this.waitingPromise) {
+      this.waitingPromise.reject(new Error("Closed"));
+      this.waitingPromise = null;
+    }
+
     this.log("Closed");
   }
 
