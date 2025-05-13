@@ -2,7 +2,7 @@ import { logger } from "applesauce-core";
 import { markFromCache } from "applesauce-core/helpers";
 import { nanoid } from "nanoid";
 import { NostrEvent } from "nostr-tools";
-import { bufferTime, filter, from, map, mergeAll, Observable, tap } from "rxjs";
+import { bufferTime, EMPTY, filter, map, merge, Observable, tap } from "rxjs";
 
 import { consolidateAddressPointers, createFiltersFromAddressPointers } from "../helpers/address-pointer.js";
 import { groupByRelay } from "../helpers/pointer.js";
@@ -35,22 +35,24 @@ function* cacheFirstSequence(
   if (opts?.cacheRequest) {
     log(`Checking cache`);
     const filters = createFiltersFromAddressPointers(pointers);
-    const results = yield opts.cacheRequest(filters).pipe(
-      // mark the event as from the cache
-      tap((event) => markFromCache(event)),
-    );
 
-    if (results.length > 0) {
-      log(`Loaded ${results.length} events from cache`);
+    if (filters.length > 0) {
+      const results = yield opts.cacheRequest(filters).pipe(
+        // mark the event as from the cache
+        tap((event) => markFromCache(event)),
+      );
+
+      if (results.length > 0) log(`Loaded ${results.length} events from cache`);
     }
   }
 
   let byRelay = groupByRelay(pointers, opts?.extraRelays);
 
   // load sets from relays
-  yield from(
-    Array.from(byRelay.entries()).map(([relay, pointers]) => {
+  yield merge<NostrEvent[]>(
+    ...Array.from(byRelay.entries()).map(([relay, pointers]) => {
       let filters = createFiltersFromAddressPointers(pointers);
+      if (filters.length === 0) return EMPTY;
 
       let count = 0;
       log(`Requesting from ${relay}`, pointers);
@@ -63,7 +65,7 @@ function* cacheFirstSequence(
         }),
       );
     }),
-  ).pipe(mergeAll());
+  );
 }
 
 export type UserSetsLoaderOptions = {
