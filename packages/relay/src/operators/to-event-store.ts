@@ -16,11 +16,11 @@ export function toEventStore(eventStore: IEventStore): OperatorFunction<Subscrip
       // Add the events to an array
       scan((events, event) => {
         // Get the current instance of this event
-        let e = eventStore.add(event);
+        let inserted = eventStore.add(event);
 
         // If its not in the timeline, add it
-        if (events.includes(e)) return events;
-        else return insertEventIntoDescendingList(events, e);
+        if (!inserted || events.includes(inserted)) return events;
+        else return insertEventIntoDescendingList(events, inserted);
       }, [] as NostrEvent[]),
     );
 }

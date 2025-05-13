@@ -33,7 +33,7 @@ export interface IStreamEventStore {
 }
 
 export interface IEventStore extends ISyncEventStore, IStreamEventStore {
-  add(event: NostrEvent, fromRelay?: string): NostrEvent;
+  add(event: NostrEvent, fromRelay?: string): NostrEvent | null;
   remove(event: string | NostrEvent): boolean;
-  update(event: NostrEvent): NostrEvent;
+  update(event: NostrEvent): void;
 }

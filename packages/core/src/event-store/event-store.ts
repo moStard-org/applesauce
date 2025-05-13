@@ -51,7 +51,10 @@ export class EventStore implements IEventStore {
   /** Enable this to keep old versions of replaceable events */
   keepOldVersions = false;
 
-  /** A method used to verify new events before added them */
+  /**
+   * A method used to verify new events before added them
+   * @returns true if the event is valid, false if it should be ignored
+   */
   verifyEvent?: (event: NostrEvent) => boolean;
 
   /** A stream of new events added to the store */
@@ -66,9 +69,11 @@ export class EventStore implements IEventStore {
   constructor() {
     this.database = new Database();
 
+    // verify events before they are added to the database
     this.database.onBeforeInsert = (event) => {
-      // reject events that are invalid
-      if (this.verifyEvent && this.verifyEvent(event) === false) throw new Error("Invalid event");
+      // Ignore events that are invalid
+      if (this.verifyEvent && this.verifyEvent(event) === false) return false;
+      else return true;
     };
 
     // when events are added to the database, add the symbol
@@ -143,10 +148,10 @@ export class EventStore implements IEventStore {
   }
 
   /**
-   * Adds an event to the database and update subscriptions
-   * @throws
+   * Adds an event to the store and update subscriptions
+   * @returns The existing event or the event that was added, if it was ignored returns null
    */
-  add(event: NostrEvent, fromRelay?: string): NostrEvent {
+  add(event: NostrEvent, fromRelay?: string): NostrEvent | null {
     if (event.kind === kinds.EventDeletion) this.handleDeleteEvent(event);
 
     // Ignore if the event was deleted
@@ -175,6 +180,9 @@ export class EventStore implements IEventStore {
 
     // Insert event into database
     const inserted = this.database.addEvent(event);
+
+    // If the event was ignored, return null
+    if (inserted === null) return null;
 
     // Copy cached data if its a duplicate event
     if (event !== inserted) EventStore.mergeDuplicateEvent(event, inserted);
@@ -210,7 +218,7 @@ export class EventStore implements IEventStore {
   }
 
   /** Add an event to the store and notifies all subscribes it has updated */
-  update(event: NostrEvent): NostrEvent {
+  update(event: NostrEvent): boolean {
     return this.database.updateEvent(event);
   }
 
@@ -219,10 +227,12 @@ export class EventStore implements IEventStore {
     return this.database.getEventsForFilters(Array.isArray(filters) ? filters : [filters]);
   }
 
-  /** Check if the store has an event */
+  /** Check if the store has an event by id */
   hasEvent(id: string): boolean {
     return this.database.hasEvent(id);
   }
+
+  /** Get an event by id from the store */
   getEvent(id: string): NostrEvent | undefined {
     return this.database.getEvent(id);
   }

@@ -123,6 +123,14 @@ describe("add", () => {
     expect(eventStore.getEvent(newEvent.id)).toBeDefined();
     expect(eventStore.getReplaceable(event.kind, event.pubkey, "test")).toBe(newEvent);
   });
+
+  it("should return null when event is invalid and there isn't an existing event", () => {
+    const verifyEvent = vi.fn().mockReturnValue(false);
+    eventStore.verifyEvent = verifyEvent;
+
+    expect(eventStore.add(profile)).toBeNull();
+    expect(verifyEvent).toHaveBeenCalledWith(profile);
+  });
 });
 
 describe("inserts", () => {

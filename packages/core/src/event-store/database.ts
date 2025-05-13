@@ -36,7 +36,7 @@ export class Database {
   removed = new Subject<NostrEvent>();
 
   /** A method thats called before a new event is inserted */
-  onBeforeInsert?: (event: NostrEvent) => void;
+  onBeforeInsert?: (event: NostrEvent) => boolean;
 
   get size() {
     return this.events.size;
@@ -97,13 +97,14 @@ export class Database {
   }
 
   /** Inserts an event into the database and notifies all subscriptions */
-  addEvent(event: NostrEvent): NostrEvent {
+  addEvent(event: NostrEvent): NostrEvent | null {
     const id = event.id;
 
     const current = this.events.get(id);
     if (current) return current;
 
-    this.onBeforeInsert?.(event);
+    // Ignore events if before insert returns false
+    if (this.onBeforeInsert?.(event) === false) return null;
 
     this.events.set(id, event);
     this.getKindIndex(event.kind).add(event);
@@ -139,10 +140,10 @@ export class Database {
   }
 
   /** Inserts and event into the database and notifies all subscriptions that the event has updated */
-  updateEvent(event: NostrEvent): NostrEvent {
+  updateEvent(event: NostrEvent): boolean {
     const inserted = this.addEvent(event);
-    this.updated.next(inserted);
-    return inserted;
+    if (inserted) this.updated.next(inserted);
+    return inserted !== null;
   }
 
   /** Removes an event from the database and notifies all subscriptions */
