@@ -8,7 +8,7 @@ import { consolidateAddressPointers, createFiltersFromAddressPointers } from "..
 import { groupByRelay } from "../helpers/pointer.js";
 import { completeOnEOSE } from "../operators/complete-on-eose.js";
 import { distinctRelaysBatch } from "../operators/distinct-relays.js";
-import { generatorSequence } from "../operators/generator-sequence.js";
+import { generator } from "../operators/generator.js";
 import { CacheRequest, Loader, NostrRequest } from "./loader.js";
 
 export type LoadableSetPointer = {
@@ -104,7 +104,7 @@ export class UserSetsLoader extends Loader<LoadableSetPointer, NostrEvent> {
         // deduplicate address pointers
         map(consolidateAddressPointers),
         // check cache, relays, lookup relays in that order
-        generatorSequence<LoadableSetPointer[], NostrEvent>(
+        generator<LoadableSetPointer[], NostrEvent>(
           (pointers) => cacheFirstSequence(request, pointers, this.log, options),
           // there will always be more events, never complete
           false,

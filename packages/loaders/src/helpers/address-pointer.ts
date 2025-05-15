@@ -1,9 +1,9 @@
-import { AddressPointerWithoutD, getReplaceableUID, mergeRelaySets } from "applesauce-core/helpers";
+import { AddressPointerWithoutD, createReplaceableAddress, mergeRelaySets } from "applesauce-core/helpers";
 import { Filter } from "nostr-tools";
 import { isAddressableKind, isReplaceableKind } from "nostr-tools/kinds";
 
-import { unique } from "./array.js";
 import { AddressPointer } from "nostr-tools/nip19";
+import { unique } from "./array.js";
 
 export type LoadableAddressPointer = {
   kind: number;
@@ -12,7 +12,7 @@ export type LoadableAddressPointer = {
   identifier?: string;
   /** Relays to load from */
   relays?: string[];
-  /** Load this address pointer even if it has already been loaded */
+  /** Ignore all forms of caching */
   force?: boolean;
 };
 
@@ -102,8 +102,9 @@ export function getRelaysFromPointers(pointers: AddressPointerWithoutD[]) {
   return relays;
 }
 
+/** @deprecated use getReplaceableAddress instead */
 export function getAddressPointerId<T extends AddressPointerWithoutD>(pointer: T): string {
-  return getReplaceableUID(pointer.kind, pointer.pubkey, pointer.identifier);
+  return createReplaceableAddress(pointer.kind, pointer.pubkey, pointer.identifier);
 }
 
 /** deep clone a loadable pointer to ensure its safe to modify */

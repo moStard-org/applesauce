@@ -5,7 +5,7 @@ import { Filter, NostrEvent } from "nostr-tools";
 import { nanoid } from "nanoid";
 
 import { CacheRequest, Loader, NostrRequest } from "./loader.js";
-import { generatorSequence } from "../operators/generator-sequence.js";
+import { generator } from "../operators/generator.js";
 import { distinctRelaysBatch } from "../operators/distinct-relays.js";
 import { groupByRelay } from "../helpers/pointer.js";
 import { consolidateEventPointers } from "../helpers/event-pointer.js";
@@ -119,7 +119,7 @@ export class SingleEventLoader extends Loader<LoadableEventPointer, NostrEvent> 
         // ensure there is only one of each event pointer
         map(consolidateEventPointers),
         // run the loader sequence
-        generatorSequence<LoadableEventPointer[], NostrEvent>(
+        generator<LoadableEventPointer[], NostrEvent>(
           (pointers) =>
             cacheFirstSequence(
               request,

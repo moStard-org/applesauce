@@ -60,7 +60,7 @@ export class TimelineLoader extends Loader<number | undefined, NostrEvent> {
       );
 
       // observable that merges all the outputs of the loaders
-      const events$ = merge<NostrEvent[]>(...allLoaders.map((l) => l.observable));
+      const events$ = merge<NostrEvent[]>(...allLoaders.map((l) => l.output));
 
       // subscribe to all observables but only return the results of events$
       return merge(trigger$, loading$, events$).pipe(connect((_shared$) => events$));

@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { lastValueFrom, of, toArray } from "rxjs";
 import { TestScheduler } from "rxjs/testing";
-import { generatorSequence } from "../generator-sequence.js";
+import { generator } from "../generator.js";
 
 let testScheduler = new TestScheduler((actual, expected) => {
   expect(actual).toEqual(expected);
@@ -16,7 +16,7 @@ it("should work with normal generator functions", () => {
       yield value + 4;
     }
 
-    const source$ = of(1).pipe(generatorSequence(normalGenerator));
+    const source$ = of(1).pipe(generator(normalGenerator));
 
     // Define expected marble diagram
     const expectedMarble = "(abcd|)";
@@ -39,7 +39,7 @@ it("should work with async generator functions", async () => {
     yield `${value}-4`;
   }
 
-  const source$ = of("test").pipe(generatorSequence(asyncGenerator));
+  const source$ = of("test").pipe(generator(asyncGenerator));
 
   const expectedValues = ["test-1", "test-2", "test-3", "test-4"];
 
