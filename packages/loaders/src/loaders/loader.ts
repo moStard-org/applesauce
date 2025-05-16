@@ -37,7 +37,7 @@ export function createPipeline<Input extends unknown = unknown, Output extends u
   operator: OperatorFunction<Input, Output>,
 ): Pipeline<Input, Output> {
   const input = new Subject<Input>();
-  const output = input.pipe(operator, share());
+  const output = input.pipe(operator);
 
   return { input, output };
 }

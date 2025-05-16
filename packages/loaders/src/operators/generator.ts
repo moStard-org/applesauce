@@ -7,6 +7,8 @@ import {
   NEVER,
   Observable,
   OperatorFunction,
+  share,
+  Subscription,
   switchMap,
 } from "rxjs";
 
@@ -17,16 +19,21 @@ export function fromGenerator<Result>(
     | AsyncGenerator<Observable<Result> | Result, void, Result[]>,
 ): Observable<Result> {
   return new Observable<Result>((observer) => {
+    let sub: Subscription | undefined;
+
     const nextSequence = (prevResults?: Result[]) => {
       const p = prevResults ? generator.next(prevResults) : generator.next();
 
       const handleResult = (result: IteratorResult<Observable<Result> | Result>) => {
         // generator complete, exit
-        if (result.done) return observer.complete();
+        if (result.done) {
+          // Ignore result.value here because its the return value and we only want the yield values
+          return observer.complete();
+        }
 
         const results: Result[] = [];
         if (isObservable(result.value)) {
-          result.value.subscribe({
+          sub = result.value.subscribe({
             next: (v) => {
               // track results and pass along values
               results.push(v);
@@ -54,7 +61,13 @@ export function fromGenerator<Result>(
 
     // start running steps
     nextSequence();
-  });
+
+    // Attempt to cleanup
+    return () => sub?.unsubscribe();
+  }).pipe(
+    // Only create a single instance of the observalbe to avoice race conditions
+    share(),
+  );
 }
 
 /** Wraps a generator function to return an observable */

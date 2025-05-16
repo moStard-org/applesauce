@@ -1,14 +1,6 @@
-import { EventStore, logger } from "applesauce-core";
+import { logger } from "applesauce-core";
 import { getProfilePointersFromList, mergeRelaySets } from "applesauce-core/helpers";
-import {
-  createAddressPointerLoadingSequence,
-  loadAddressPointersFromCache,
-  loadAddressPointersFromRelayHints,
-  loadAddressPointersFromRelays,
-  loadAddressPointersFromStore,
-  NostrRequest,
-  triggerPipeline,
-} from "applesauce-loaders";
+import { NostrRequest, triggerPipeline } from "applesauce-loaders";
 import { useObservable } from "applesauce-react/hooks";
 import { completeOnEose, RelayPool } from "applesauce-relay";
 import { ExtensionSigner } from "applesauce-signers";
@@ -16,7 +8,6 @@ import { Filter, kinds, NostrEvent } from "nostr-tools";
 import { ProfilePointer } from "nostr-tools/nip19";
 import { useMemo, useState } from "react";
 import {
-  BehaviorSubject,
   bufferTime,
   combineLatest,
   distinct,
@@ -24,7 +15,6 @@ import {
   filter,
   mergeMap,
   Observable,
-  of,
   ReplaySubject,
   scan,
   Subject,
@@ -34,22 +24,7 @@ import {
 
 const log = logger.extend("SocialGraph");
 
-const store = new EventStore();
 const pool = new RelayPool();
-
-const lookupRelays = new BehaviorSubject<string[]>(["wss://purplepag.es"]);
-
-/** Create a simple method that takes an array of address pointers and returns an observable of events */
-const addressLoader = createAddressPointerLoadingSequence(
-  // First return any address pointers that are already in the store
-  loadAddressPointersFromStore(store),
-  // Then try to load from the cache
-  loadAddressPointersFromCache((filters) => of()),
-  // Then try to load from the hints
-  loadAddressPointersFromRelayHints(pool.request.bind(pool)),
-  // Then attempt to load from the lookup relays
-  loadAddressPointersFromRelays(pool.request.bind(pool), lookupRelays),
-);
 
 export function createBatchUserLoader(
   request: NostrRequest,
