@@ -4,7 +4,7 @@ import { of } from "rxjs";
 import { NostrEvent } from "nostr-tools";
 
 import { EventStore } from "../../event-store/event-store.js";
-import { listenLatestUpdates } from "../listen-latest-updates.js";
+import { watchEventUpdates } from "../watch-event-updates.js";
 import { FakeUser } from "../../__tests__/fixtures.js";
 
 let eventStore: EventStore;
@@ -17,10 +17,10 @@ beforeEach(() => {
   event = user.note("original content");
 });
 
-describe("listenLatestUpdates", () => {
+describe("watchEventUpdates", () => {
   it("should emit the initial event", () => {
     const source = of(event);
-    const spy = subscribeSpyTo(source.pipe(listenLatestUpdates(eventStore)));
+    const spy = subscribeSpyTo(source.pipe(watchEventUpdates(eventStore)));
 
     expect(spy.getValues()).toEqual([event]);
   });
@@ -31,7 +31,7 @@ describe("listenLatestUpdates", () => {
 
     // Create a source that emits the event
     const source = of(event);
-    const spy = subscribeSpyTo(source.pipe(listenLatestUpdates(eventStore)));
+    const spy = subscribeSpyTo(source.pipe(watchEventUpdates(eventStore)));
 
     // Create an updated version of the event
     Reflect.set(event, Symbol.for("new-prop"), "testing");
@@ -49,7 +49,7 @@ describe("listenLatestUpdates", () => {
 
     // Create a source that emits the event
     const source = of(event);
-    const spy = subscribeSpyTo(source.pipe(listenLatestUpdates(eventStore)));
+    const spy = subscribeSpyTo(source.pipe(watchEventUpdates(eventStore)));
 
     // Create a different event
     const otherEvent = user.note("other content");
@@ -63,7 +63,7 @@ describe("listenLatestUpdates", () => {
 
   it("should handle undefined initial event", () => {
     const source = of(undefined);
-    const spy = subscribeSpyTo(source.pipe(listenLatestUpdates(eventStore)));
+    const spy = subscribeSpyTo(source.pipe(watchEventUpdates(eventStore)));
 
     expect(spy.getValues()).toEqual([undefined]);
 

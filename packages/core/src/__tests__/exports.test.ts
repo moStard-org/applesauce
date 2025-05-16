@@ -11,7 +11,17 @@ describe("exports", () => {
         "Helpers",
         "Queries",
         "QueryStore",
+        "TimeoutError",
+        "defined",
+        "firstValueFrom",
+        "getObservableValue",
+        "lastValueFrom",
+        "listenLatestUpdates",
         "logger",
+        "mapEventsToStore",
+        "simpleTimeout",
+        "watchEventUpdates",
+        "withImmediateValueOrDefault",
       ]
     `);
   });

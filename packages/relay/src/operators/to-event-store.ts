@@ -2,6 +2,7 @@ import { OperatorFunction, scan } from "rxjs";
 import { IEventStore } from "applesauce-core";
 import { NostrEvent } from "nostr-tools";
 import { insertEventIntoDescendingList } from "nostr-tools/utils";
+import { mapEventsToStore } from "applesauce-core/observable";
 
 import { SubscriptionResponse } from "../types.js";
 
@@ -13,14 +14,9 @@ export function toEventStore(eventStore: IEventStore): OperatorFunction<Subscrip
     source.pipe(
       // Complete when there are not events
       completeOnEose(),
+      // Save events to store and remove duplicates
+      mapEventsToStore(eventStore, true),
       // Add the events to an array
-      scan((events, event) => {
-        // Get the current instance of this event
-        let e = eventStore.add(event);
-
-        // If its not in the timeline, add it
-        if (events.includes(e)) return events;
-        else return insertEventIntoDescendingList(events, e);
-      }, [] as NostrEvent[]),
+      scan((events, event) => insertEventIntoDescendingList(events, event), [] as NostrEvent[]),
     );
 }

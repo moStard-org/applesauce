@@ -2,8 +2,8 @@ import { NostrEvent } from "nostr-tools";
 import { filter, merge, MonoTypeOperatorFunction, tap } from "rxjs";
 import { IStreamEventStore } from "../event-store/interface.js";
 
-/** Lists for any updates to the latest event and remits it */
-export function listenLatestUpdates(eventStore: IStreamEventStore): MonoTypeOperatorFunction<NostrEvent | undefined> {
+/** watches for any updates to the latest event and remits the event when updated */
+export function watchEventUpdates(eventStore: IStreamEventStore): MonoTypeOperatorFunction<NostrEvent | undefined> {
   return (source) => {
     let latest: NostrEvent | undefined;
 
@@ -15,3 +15,6 @@ export function listenLatestUpdates(eventStore: IStreamEventStore): MonoTypeOper
     );
   };
 }
+
+/** @deprecated use `watchEventUpdates` instead */
+export const listenLatestUpdates = watchEventUpdates;
