@@ -14,6 +14,14 @@ describe("exports", () => {
         "TagValueLoader",
         "TimelineLoader",
         "UserSetsLoader",
+        "createAddressLoader",
+        "createAddressPointerLoadingSequence",
+        "createPipeline",
+        "loadAddressPointersFromCache",
+        "loadAddressPointersFromRelayHints",
+        "loadAddressPointersFromRelays",
+        "loadAddressPointersFromStore",
+        "triggerPipeline",
       ]
     `);
   });

@@ -263,6 +263,15 @@ importers:
       applesauce-react:
         specifier: ^1.0.0
         version: link:../react
+      applesauce-relay:
+        specifier: ^1
+        version: link:../relay
+      applesauce-signers:
+        specifier: ^1.0.0
+        version: link:../signers
+      nanoid:
+        specifier: ^5.1.5
+        version: 5.1.5
       nostr-tools:
         specifier: ^2.10.4
         version: 2.12.0(typescript@5.6.3)
@@ -350,6 +359,12 @@ importers:
         specifier: ^7.8.1
         version: 7.8.2
     devDependencies:
+      '@hirez_io/observer-spy':
+        specifier: ^2.2.0
+        version: 2.2.0(rxjs@7.8.2)(typescript@5.8.3)
+      applesauce-signers:
+        specifier: ^1.0.0
+        version: link:../signers
       typescript:
         specifier: ^5.8.3
         version: 5.8.3

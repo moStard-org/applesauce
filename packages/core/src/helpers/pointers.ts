@@ -15,6 +15,7 @@ import { getPublicKey, kinds, NostrEvent } from "nostr-tools";
 import { getReplaceableIdentifier } from "./event.js";
 import { isAddressableKind } from "nostr-tools/kinds";
 import { isSafeRelayURL } from "./relays.js";
+import { isHexKey } from "./string.js";
 
 export type AddressPointerWithoutD = Omit<AddressPointer, "identifier"> & {
   identifier?: string;
@@ -131,6 +132,7 @@ export function getAddressPointerFromATag(tag: string[]): AddressPointer {
  */
 export function getProfilePointerFromPTag(tag: string[]): ProfilePointer {
   if (!tag[1]) throw new Error("Missing pubkey in tag");
+  if (!isHexKey(tag[1])) throw new Error("Invalid pubkey");
   const pointer: ProfilePointer = { pubkey: tag[1] };
   if (tag[2] && isSafeRelayURL(tag[2])) pointer.relays = [tag[2]];
   return pointer;

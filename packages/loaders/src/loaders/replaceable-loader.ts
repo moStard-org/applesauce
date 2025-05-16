@@ -1,7 +1,8 @@
 import { logger } from "applesauce-core";
-import { getEventUID, markFromCache, mergeRelaySets } from "applesauce-core/helpers";
+import { getEventUID, getReplaceableIdentifier, markFromCache, mergeRelaySets } from "applesauce-core/helpers";
 import { nanoid } from "nanoid";
 import { NostrEvent } from "nostr-tools";
+import { isAddressableKind } from "nostr-tools/kinds";
 import { bufferTime, filter, map, Observable, tap } from "rxjs";
 
 import {
@@ -14,7 +15,7 @@ import {
 } from "../helpers/address-pointer.js";
 import { completeOnEOSE } from "../operators/complete-on-eose.js";
 import { distinctRelaysBatch } from "../operators/distinct-relays.js";
-import { generatorSequence } from "../operators/generator-sequence.js";
+import { generator } from "../operators/generator.js";
 import { CacheRequest, Loader, NostrRequest } from "./loader.js";
 
 /** A generator that tries to load the address pointers from the cache first, then tries the relays */
@@ -79,14 +80,14 @@ function* cacheFirstSequence(
   if (opts?.lookupRelays) {
     // make sure we aren't asking a relay twice
     const relays = opts.lookupRelays.filter((r) => !pointerRelays.includes(r));
-    if (relays.length > 0) {
-      log(`[${id}] Request from lookup`, relays, remaining);
+    if (relays.length === 0) return;
 
-      const filters = createFiltersFromAddressPointers(remaining);
-      const results = yield request(relays, filters).pipe(completeOnEOSE());
+    log(`[${id}] Request from lookup`, relays, remaining);
 
-      if (handleResults(results)) return;
-    }
+    const filters = createFiltersFromAddressPointers(remaining);
+    const results = yield request(relays, filters).pipe(completeOnEOSE());
+
+    if (handleResults(results)) return;
   }
 }
 
@@ -116,33 +117,41 @@ export class ReplaceableLoader extends Loader<LoadableAddressPointer, NostrEvent
   extraRelays?: string[];
 
   constructor(request: NostrRequest, opts?: ReplaceableLoaderOptions) {
-    super((source) => {
-      return source.pipe(
-        // filter out invalid pointers
-        filter(isLoadableAddressPointer),
-        // buffer on time
-        bufferTime(opts?.bufferTime ?? 1000),
-        // ignore empty buffers
-        filter((buffer) => buffer.length > 0),
-        // only fetch from each relay once
-        distinctRelaysBatch(getAddressPointerId),
-        // consolidate buffered pointers
-        map(consolidateAddressPointers),
-        // ignore empty buffer
-        filter((buffer) => buffer.length > 0),
-        // check cache, relays, lookup relays in that order
-        generatorSequence<LoadableAddressPointer[], NostrEvent>(
-          (pointers) =>
-            cacheFirstSequence(request, pointers, this.log, {
-              cacheRequest: this.cacheRequest,
-              lookupRelays: this.lookupRelays,
-              extraRelays: this.extraRelays,
-            }),
-          // there will always be more events, never complete
-          false,
-        ),
-      );
-    });
+    super(
+      (source) => {
+        return source.pipe(
+          // filter out invalid pointers
+          filter(isLoadableAddressPointer),
+          // buffer on time
+          bufferTime(opts?.bufferTime ?? 1000),
+          // ignore empty buffers
+          filter((buffer) => buffer.length > 0),
+          // only fetch from each relay once
+          distinctRelaysBatch(getAddressPointerId),
+          // consolidate buffered pointers
+          map(consolidateAddressPointers),
+          // ignore empty buffer
+          filter((buffer) => buffer.length > 0),
+          // check cache, relays, lookup relays in that order
+          generator<LoadableAddressPointer[], NostrEvent>(
+            (pointers) =>
+              cacheFirstSequence(request, pointers, this.log, {
+                cacheRequest: this.cacheRequest,
+                lookupRelays: this.lookupRelays,
+                extraRelays: this.extraRelays,
+              }),
+            // there will always be more events, never complete
+            false,
+          ),
+        );
+      },
+      (pointer, event) =>
+        event.pubkey === pointer.pubkey &&
+        event.kind === pointer.kind &&
+        (pointer.identifier && isAddressableKind(event.kind)
+          ? getReplaceableIdentifier(event) === pointer.identifier
+          : true),
+    );
 
     // set options
     this.cacheRequest = opts?.cacheRequest;
