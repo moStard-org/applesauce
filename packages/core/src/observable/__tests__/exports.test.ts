@@ -12,6 +12,7 @@ describe("exports", () => {
         "lastValueFrom",
         "listenLatestUpdates",
         "mapEventsToStore",
+        "mapEventsToTimeline",
         "simpleTimeout",
         "watchEventUpdates",
         "withImmediateValueOrDefault",
