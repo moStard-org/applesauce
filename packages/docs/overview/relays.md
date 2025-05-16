@@ -109,7 +109,7 @@ The `RelayPool` class allows you to connect and subscribe to multiple relays sim
 
 :::warning
 
-The relay pool does not deduplicate events from multiple relays. if you need deduplication use the [distinct](https://rxjs.dev/api/index/function/distinct) rxjs operator or an [EventStore](./events.md)
+The relay pool does not deduplicate events from multiple relays. if you need deduplication use the [`distinct(e => e.id)`](https://rxjs.dev/api/index/function/distinct) operator or, [`mapEventsToStore`](https://hzrd149.github.io/applesauce/typedoc/functions/map-events-to-store.html) with an [EventStore](./events.md)
 
 :::
 

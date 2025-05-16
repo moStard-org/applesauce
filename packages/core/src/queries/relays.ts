@@ -3,7 +3,7 @@ import { AddressPointer } from "nostr-tools/nip19";
 import { identity, map } from "rxjs";
 
 import { FAVORITE_RELAYS_KIND, getAddressPointersFromList, getRelaysFromList, ReadListTags } from "../helpers/lists.js";
-import { listenLatestUpdates } from "../observable/listen-latest-updates.js";
+import { watchEventUpdates } from "../observable/watch-event-updates.js";
 import { Query } from "../query-store/query-store.js";
 
 /**
@@ -14,7 +14,7 @@ import { Query } from "../query-store/query-store.js";
 export function FavoriteRelays(pubkey: string, type?: ReadListTags): Query<string[] | undefined> {
   return (events) => {
     return events.replaceable(FAVORITE_RELAYS_KIND, pubkey).pipe(
-      type !== "public" ? listenLatestUpdates(events) : map(identity),
+      type !== "public" ? watchEventUpdates(events) : map(identity),
       map((e) => e && getRelaysFromList(e, type)),
     );
   };
@@ -28,7 +28,7 @@ export function FavoriteRelays(pubkey: string, type?: ReadListTags): Query<strin
 export function FavoriteRelaySets(pubkey: string, type?: ReadListTags): Query<AddressPointer[] | undefined> {
   return (events) => {
     return events.replaceable(FAVORITE_RELAYS_KIND, pubkey).pipe(
-      type !== "public" ? listenLatestUpdates(events) : map(identity),
+      type !== "public" ? watchEventUpdates(events) : map(identity),
       map((e) => e && getAddressPointersFromList(e, type)),
     );
   };
@@ -42,7 +42,7 @@ export function FavoriteRelaySets(pubkey: string, type?: ReadListTags): Query<Ad
 export function SearchRelays(pubkey: string, type?: ReadListTags): Query<string[] | undefined> {
   return (events) => {
     return events.replaceable(kinds.SearchRelaysList, pubkey).pipe(
-      type !== "public" ? listenLatestUpdates(events) : map(identity),
+      type !== "public" ? watchEventUpdates(events) : map(identity),
       map((e) => e && getRelaysFromList(e, type)),
     );
   };
@@ -56,7 +56,7 @@ export function SearchRelays(pubkey: string, type?: ReadListTags): Query<string[
 export function BlockedRelays(pubkey: string, type?: ReadListTags): Query<string[] | undefined> {
   return (events) => {
     return events.replaceable(kinds.BlockedRelaysList, pubkey).pipe(
-      type !== "public" ? listenLatestUpdates(events) : map(identity),
+      type !== "public" ? watchEventUpdates(events) : map(identity),
       map((e) => e && getRelaysFromList(e, type)),
     );
   };
