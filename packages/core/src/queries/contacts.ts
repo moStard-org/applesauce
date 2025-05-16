@@ -3,7 +3,7 @@ import { ProfilePointer } from "nostr-tools/nip19";
 import { map } from "rxjs/operators";
 
 import { getContacts, getHiddenContacts, getPublicContacts } from "../helpers/contacts.js";
-import { listenLatestUpdates } from "../observable/index.js";
+import { watchEventUpdates } from "../observable/index.js";
 import { Query } from "../query-store/index.js";
 
 /** A query that returns all contacts for a user */
@@ -11,7 +11,7 @@ export function ContactsQuery(pubkey: string): Query<ProfilePointer[] | undefine
   return (events) =>
     events.replaceable(kinds.Contacts, pubkey).pipe(
       // listen for event updates (hidden tags unlocked)
-      listenLatestUpdates(events),
+      watchEventUpdates(events),
       // Get all contacts
       map((e) => e && getContacts(e)),
     );
@@ -27,7 +27,7 @@ export function HiddenContactsQuery(pubkey: string): Query<ProfilePointer[] | nu
   return (events) =>
     events.replaceable(kinds.Contacts, pubkey).pipe(
       // listen for event updates (hidden tags unlocked)
-      listenLatestUpdates(events),
+      watchEventUpdates(events),
       // Get hidden contacts
       map((e) => e && (getHiddenContacts(e) ?? null)),
     );

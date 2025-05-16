@@ -11,7 +11,9 @@ describe("exports", () => {
         "getObservableValue",
         "lastValueFrom",
         "listenLatestUpdates",
+        "mapEventsToStore",
         "simpleTimeout",
+        "watchEventUpdates",
         "withImmediateValueOrDefault",
       ]
     `);
