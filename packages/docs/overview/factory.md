@@ -1,6 +1,6 @@
 # Event Factory
 
-The `EventFactory` is a class is used to provide a [Signer](../signers/signers.md) and relay hints to the blueprints
+The `EventFactory` is a class that can be used to create new events based on blueprints and a [Signer](../signers/signers.md).
 
 ## Creating a factory
 
