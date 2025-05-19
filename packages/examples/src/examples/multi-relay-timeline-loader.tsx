@@ -1,28 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { map } from "rxjs/operators";
-import { Button, ButtonGroup, Stack } from "@mui/material";
-import { NostrRequest, TimelineLoader } from "applesauce-loaders";
-import { createRxNostr, createRxOneshotReq } from "rx-nostr";
 import { EventStore } from "applesauce-core";
 import { getSeenRelays, unixNow } from "applesauce-core/helpers";
-import { verifyEvent } from "nostr-tools";
+import { TimelineLoader } from "applesauce-loaders";
+import { RelayPool } from "applesauce-relay";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-const rxNostr = createRxNostr({
-  disconnectTimeout: 120 * 1000,
-  verifier: async (event) => {
-    try {
-      return verifyEvent(event);
-    } catch (error) {
-      return false;
-    }
-  },
-});
-
-const loaderRequest: NostrRequest = (relays, filters, id) => {
-  return rxNostr
-    .use(createRxOneshotReq({ filters, rxReqId: id }), { on: { relays } })
-    .pipe(map((packet) => packet.event));
-};
+const pool = new RelayPool();
 
 const COLORS = ["red", "green", "blue", "orange", "purple", "darkcyan"];
 
@@ -47,7 +29,11 @@ export default function TimelineExample() {
   const loader = useMemo(() => {
     console.log(`Creating filter with`, relays, limit);
 
-    return new TimelineLoader(loaderRequest, TimelineLoader.simpleFilterMap(relays, [{ kinds: [1] }]), { limit });
+    return new TimelineLoader(
+      (relays, filters) => pool.request(relays, filters),
+      TimelineLoader.simpleFilterMap(relays, [{ kinds: [1] }]),
+      { limit },
+    );
   }, [relays, limit]);
 
   // clear the canvas when loader
@@ -87,35 +73,54 @@ export default function TimelineExample() {
   }, [loader, now, relays]);
 
   return (
-    <>
-      <ButtonGroup>
-        <Button onClick={() => setFrame(60 * 60)}>1 Hour</Button>
-        <Button onClick={() => setFrame(2 * 60 * 60)}>2 Hour</Button>
-      </ButtonGroup>
-      <ButtonGroup>
-        <Button onClick={() => setLimit(50)}>50</Button>
-        <Button onClick={() => setLimit(100)}>100</Button>
-        <Button onClick={() => setLimit(200)}>200</Button>
-      </ButtonGroup>
-      <Stack direction="row" sx={{ fontSize: 12, padding: 1 }} spacing={1}>
+    <div className="flex flex-col gap-4 p-4">
+      <div className="join">
+        <button className="btn join-item" onClick={() => setFrame(60 * 60)}>
+          1 Hour
+        </button>
+        <button className="btn join-item" onClick={() => setFrame(2 * 60 * 60)}>
+          2 Hours
+        </button>
+        <button className="btn join-item" onClick={() => setLimit(50)}>
+          50
+        </button>
+        <button className="btn join-item" onClick={() => setLimit(100)}>
+          100
+        </button>
+        <button className="btn join-item" onClick={() => setLimit(200)}>
+          200
+        </button>
+      </div>
+
+      <div className="flex flex-row gap-2 text-sm p-1">
         {relays.map((relay, i) => (
-          <code style={{ color: COLORS[i] }}>{relay}</code>
+          <code key={relay} style={{ color: COLORS[i] }}>
+            {relay}
+          </code>
         ))}
-      </Stack>
-      <canvas width={frame} height={relays.length * 32} style={{ width: "100%" }} ref={canvas} />
+      </div>
+
+      <canvas
+        width={frame}
+        height={relays.length * 32}
+        style={{ width: "100%" }}
+        ref={canvas}
+        className="border border-base-300"
+      />
+
       <input
         type="range"
-        style={{ width: "100%" }}
+        className="range w-full"
         min={0}
         max={frame}
         value={seconds}
         onInput={(e) => {
           const v = parseInt(e.currentTarget.value);
-
           if (Number.isFinite(v)) setSeconds(v);
         }}
       />
-      <p>scroll: {seconds}s</p>
-    </>
+
+      <p className="text-sm">scroll: {seconds}s</p>
+    </div>
   );
 }

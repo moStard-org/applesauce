@@ -1,6 +1,5 @@
-import { Avatar, Card, CardContent, CardHeader, Container, Stack, Tab, Tabs } from "@mui/material";
 import { EventStore, mapEventsToStore, mapEventsToTimeline } from "applesauce-core";
-import { getDisplayName, getProfileContent, getSeenRelays } from "applesauce-core/helpers";
+import { getDisplayName, getProfilePicture, getSeenRelays } from "applesauce-core/helpers";
 import { createAddressLoader } from "applesauce-loaders";
 import { useObservable } from "applesauce-react/hooks";
 import { onlyEvents, RelayPool } from "applesauce-relay";
@@ -33,16 +32,20 @@ function Note({ note }: { note: NostrEvent }) {
   // Subscribe to the request and wait for the profile event
   const profile = useObservable(profile$);
 
-  // Parse the profile event into the metadata
-  const metadata = useMemo(() => profile && getProfileContent(profile), [profile]);
-
   return (
-    <Card>
-      <CardHeader avatar={<Avatar src={metadata?.picture} />} title={getDisplayName(profile)} />
-      <CardContent>
-        <div>{note.content}</div>
-      </CardContent>
-    </Card>
+    <div className="card bg-base-100 shadow-xl">
+      <div className="card-body">
+        <div className="flex items-center gap-4">
+          <div className="avatar">
+            <div className="w-12 rounded-full">
+              <img src={getProfilePicture(profile, `https://robohash.org/${note.pubkey}.png`)} alt="Profile" />
+            </div>
+          </div>
+          <h2 className="card-title">{getDisplayName(profile)}</h2>
+        </div>
+        <p>{note.content}</p>
+      </div>
+    </div>
   );
 }
 
@@ -72,22 +75,26 @@ export default function RelayTimeline() {
   const events = useObservable(timeline$);
 
   return (
-    <Container>
-      <Tabs
-        value={relay}
-        onChange={(_, newValue) => setRelay(newValue)}
-        variant="scrollable"
-        scrollButtons="auto"
-        aria-label="relay selection tabs"
-      >
-        <Tab label="relay.devvul.com" value="wss://relay.devvul.com" />
-        <Tab label="relay.damus.io" value="wss://relay.damus.io" />
-        <Tab label="nos.lol" value="wss://nos.lol" />
-      </Tabs>
+    <div className="container mx-auto px-4">
+      <div className="tabs tabs-lift">
+        <a
+          className={`tab ${relay === "wss://relay.devvul.com" ? "tab-active" : ""}`}
+          onClick={() => setRelay("wss://relay.devvul.com")}
+        >
+          relay.devvul.com
+        </a>
+        <a
+          className={`tab ${relay === "wss://relay.damus.io" ? "tab-active" : ""}`}
+          onClick={() => setRelay("wss://relay.damus.io")}
+        >
+          relay.damus.io
+        </a>
+        <a className={`tab ${relay === "wss://nos.lol" ? "tab-active" : ""}`} onClick={() => setRelay("wss://nos.lol")}>
+          nos.lol
+        </a>
+      </div>
 
-      <Stack spacing={2} direction="column" paddingY={2}>
-        {events?.map((event) => <Note key={event.id} note={event} />)}
-      </Stack>
-    </Container>
+      <div className="flex flex-col gap-4 py-4">{events?.map((event) => <Note key={event.id} note={event} />)}</div>
+    </div>
   );
 }

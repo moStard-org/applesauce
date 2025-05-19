@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useAsync } from "react-use";
-import { Container, Typography } from "@mui/material";
 import { EventFactory } from "applesauce-factory";
 import JsonBlock from "../components/json-block";
 
@@ -16,33 +15,27 @@ const parent = {
   tags: [],
 };
 
+// TODO: convert this to a simple thread renderer
 export default function NoteReplyBlueprintExample() {
   const [input, setInput] = useState<string>("");
   const { value: output } = useAsync(() => factory.noteReply(parent, input), [input]);
 
   return (
-    <Container>
-      <Typography variant="h5" gutterBottom>
-        Note Reply blueprint
-      </Typography>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Note Reply blueprint</h1>
 
       <textarea
-        rows={6}
-        cols={120}
+        className="textarea textarea-bordered w-full h-36"
         placeholder="Enter text here..."
         value={input}
         onChange={(e) => setInput(e.target.value)}
       />
 
-      <Typography variant="h6" gutterBottom>
-        Event template
-      </Typography>
+      <h2 className="text-xl font-semibold mt-6 mb-3">Event template</h2>
       {output && <JsonBlock value={output} />}
 
-      <Typography variant="h6" gutterBottom>
-        Parent event
-      </Typography>
+      <h2 className="text-xl font-semibold mt-6 mb-3">Parent event</h2>
       <JsonBlock value={parent} />
-    </Container>
+    </div>
   );
 }

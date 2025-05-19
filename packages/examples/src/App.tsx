@@ -1,6 +1,4 @@
 import { useEffect, useState } from "react";
-import { AppBar, Box, Button, CssBaseline, Link, Stack, Toolbar, Typography } from "@mui/material";
-
 import SideNav from "./Nav";
 import examples from "./examples";
 
@@ -28,48 +26,51 @@ function App() {
   }, []);
 
   return (
-    <Box sx={{ display: "flex" }}>
-      <CssBaseline />
-      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-        <Toolbar>
-          <Typography variant="h6" noWrap component="div">
-            Examples
-          </Typography>
+    <div className="drawer lg:drawer-open">
+      <input id="drawer" type="checkbox" className="drawer-toggle" />
 
-          <Box sx={{ display: { xs: "none", sm: "block" } }}>
-            <Button sx={{ color: "#fff" }} href="https://hzrd149.github.io/applesauce">
+      {/* Navbar */}
+      <div className="drawer-content flex flex-col">
+        <div className="navbar bg-base-300 fixed top-0 z-50">
+          <div className="flex-1">
+            <span className="text-xl font-bold">Examples</span>
+          </div>
+          <div className="flex-none hidden sm:block">
+            <a href="https://hzrd149.github.io/applesauce" className="btn btn-ghost text-white">
               Documentation
-            </Button>
-            <Button sx={{ color: "#fff" }} href="https://hzrd149.github.io/applesauce/typedoc/">
+            </a>
+            <a href="https://hzrd149.github.io/applesauce/typedoc/" className="btn btn-ghost text-white">
               Reference
-            </Button>
-          </Box>
-        </Toolbar>
-      </AppBar>
+            </a>
+          </div>
+        </div>
 
+        {/* Main content */}
+        <div className="flex-1 pt-16">
+          {Example ? (
+            <div className="flex flex-col">
+              <div className="p-4">
+                <a
+                  target="_blank"
+                  href={`https://github.com/hzrd149/applesauce/tree/master/packages/examples/src/${source}`}
+                  className="link link-primary"
+                >
+                  source code
+                </a>
+              </div>
+              <div className="flex-1">
+                <Example />
+              </div>
+            </div>
+          ) : (
+            <div className="p-4">Select example</div>
+          )}
+        </div>
+      </div>
+
+      {/* Sidebar */}
       <SideNav />
-
-      <Box component="main" sx={{ flexGrow: 1, bgcolor: "background.default" }}>
-        <Toolbar />
-        {Example ? (
-          <Stack direction="column">
-            <Stack sx={{ p: 1 }}>
-              <Link
-                target="_blank"
-                href={`https://github.com/hzrd149/applesauce/tree/master/packages/examples/src/${source}`}
-              >
-                source code
-              </Link>
-            </Stack>
-            <Box sx={{ flex: 1 }}>
-              <Example />
-            </Box>
-          </Stack>
-        ) : (
-          "Select example"
-        )}
-      </Box>
-    </Box>
+    </div>
   );
 }
 

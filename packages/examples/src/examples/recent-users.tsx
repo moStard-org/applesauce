@@ -1,21 +1,16 @@
-import { useEffect } from "react";
-import { Avatar, Container, Stack, Typography } from "@mui/material";
+import { Container, Stack, Typography } from "@mui/material";
 import { EventStore, QueryStore } from "applesauce-core";
+import { getProfilePicture } from "applesauce-core/helpers";
+import { TimelineQuery } from "applesauce-core/queries";
 import { QueryStoreProvider } from "applesauce-react";
-import { SimplePool } from "nostr-tools";
 import { useStoreQuery } from "applesauce-react/hooks";
-import { ProfileQuery, TimelineQuery } from "applesauce-core/queries";
+import { SimplePool } from "nostr-tools";
+import { useEffect } from "react";
 
 const eventStore = new EventStore();
 const queryStore = new QueryStore(eventStore);
 
 const pool = new SimplePool();
-
-function User({ pubkey }: { pubkey: string }) {
-  const profile = useStoreQuery(ProfileQuery, [pubkey]);
-
-  return <Avatar src={profile?.picture} alt={profile?.display_name || profile?.name} />;
-}
 
 function RecentUsers() {
   useEffect(() => {
@@ -35,7 +30,13 @@ function RecentUsers() {
       </Typography>
 
       <Stack direction="row" flexWrap="wrap">
-        {events?.map((event) => <User key={event.id} pubkey={event.pubkey} />)}
+        {events?.map((event) => (
+          <div key={event.pubkey} className="avatar">
+            <div className="w-16 rounded-full">
+              <img src={getProfilePicture(event, `https://robohash.org/${event.pubkey}.png`)} />
+            </div>
+          </div>
+        ))}
       </Stack>
     </Container>
   );

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Drawer, List, ListItem, ListItemText, TextField, Box, ListItemButton, Toolbar } from "@mui/material";
 import examples from "./examples";
 
 export default function SideNav() {
@@ -8,40 +7,24 @@ export default function SideNav() {
   const filtered = examples.filter((item) => item.id.toLowerCase().includes(searchTerm.toLowerCase()));
 
   return (
-    <Drawer
-      sx={{
-        width: 300,
-        flexShrink: 0,
-        "& .MuiDrawer-paper": {
-          width: 300,
-          boxSizing: "border-box",
-        },
-      }}
-      variant="permanent"
-      anchor="left"
-    >
-      <Toolbar />
-      <Box sx={{ p: 2 }}>
-        <TextField
-          fullWidth
-          size="small"
+    <div className="drawer-side">
+      <label htmlFor="drawer" className="drawer-overlay"></label>
+      <div className="menu bg-base-200 text-base-content min-h-full">
+        <input
+          type="text"
           placeholder="Search..."
+          className="input input-bordered w-full"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          variant="outlined"
         />
-      </Box>
-      <Box sx={{ overflow: "auto" }}>
-        <List>
+        <ul className="menu menu-lg">
           {filtered.map((item) => (
-            <ListItem key={item.id} disablePadding>
-              <ListItemButton href={"#" + item.id}>
-                <ListItemText primary={item.id} />
-              </ListItemButton>
-            </ListItem>
+            <li key={item.id}>
+              <a href={"#" + item.id}>{item.id}</a>
+            </li>
           ))}
-        </List>
-      </Box>
-    </Drawer>
+        </ul>
+      </div>
+    </div>
   );
 }
