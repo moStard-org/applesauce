@@ -7,6 +7,8 @@ import { NostrEvent } from "nostr-tools";
 import { useMemo, useState } from "react";
 import { map } from "rxjs";
 
+import { RelayPicker } from "../components/relay-picker";
+
 // Create an event store for all events
 const eventStore = new EventStore();
 
@@ -76,23 +78,7 @@ export default function RelayTimeline() {
 
   return (
     <div className="container mx-auto px-4">
-      <div className="tabs tabs-lift">
-        <a
-          className={`tab ${relay === "wss://relay.devvul.com" ? "tab-active" : ""}`}
-          onClick={() => setRelay("wss://relay.devvul.com")}
-        >
-          relay.devvul.com
-        </a>
-        <a
-          className={`tab ${relay === "wss://relay.damus.io" ? "tab-active" : ""}`}
-          onClick={() => setRelay("wss://relay.damus.io")}
-        >
-          relay.damus.io
-        </a>
-        <a className={`tab ${relay === "wss://nos.lol" ? "tab-active" : ""}`} onClick={() => setRelay("wss://nos.lol")}>
-          nos.lol
-        </a>
-      </div>
+      <RelayPicker value={relay} onChange={setRelay} />
 
       <div className="flex flex-col gap-4 py-4">{events?.map((event) => <Note key={event.id} note={event} />)}</div>
     </div>
