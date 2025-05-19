@@ -1,10 +1,22 @@
-import { filter, map, mergeAll, Observable, OperatorFunction, share, Subject, take } from "rxjs";
+import {
+  filter,
+  identity,
+  map,
+  mergeAll,
+  MonoTypeOperatorFunction,
+  Observable,
+  OperatorFunction,
+  share,
+  Subject,
+  take,
+} from "rxjs";
 
 /** Creates a loader that takes a single value and batches the requests to an upstream loader */
-export function createBatchLoader<Input extends unknown = unknown, Output extends unknown = unknown>(
+export function batchLoader<Input extends unknown = unknown, Output extends unknown = unknown>(
   buffer: OperatorFunction<Input, Input[]>,
   upstream: (input: Input[]) => Observable<Output>,
   matcher: (input: Input, output: Output) => boolean,
+  output?: MonoTypeOperatorFunction<Output>,
 ): (value: Input) => Observable<Output> {
   const queue = new Subject<Input>();
 
@@ -31,6 +43,8 @@ export function createBatchLoader<Input extends unknown = unknown, Output extend
           mergeAll(),
           // filter the results for the requested input
           filter((output) => matcher(input, output)),
+          // Extra output operations
+          output ?? identity,
         )
         .subscribe(observer);
     });

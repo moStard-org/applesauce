@@ -3,17 +3,17 @@ import { NostrEvent } from "nostr-tools";
 import { bufferTime, EMPTY, Subject } from "rxjs";
 import { describe, expect, it, Mock, vi } from "vitest";
 
-import { createBatchLoader } from "../common-loaders.js";
+import { batchLoader } from "../common-loaders.js";
 import { AddressPointersLoader } from "../address-loader.js";
 import { FakeUser } from "../../__tests__/fake-user.js";
 
 const user = new FakeUser();
 
-describe("createBatchLoader", () => {
+describe("batchLoader", () => {
   it("should batch requests", async () => {
     vi.useFakeTimers();
     const upstream: Mock<AddressPointersLoader> = vi.fn().mockReturnValue(EMPTY);
-    const loader = createBatchLoader(bufferTime(100), upstream, () => true);
+    const loader = batchLoader(bufferTime(100), upstream, () => true);
 
     const request1 = subscribeSpyTo(loader({ kind: 0, pubkey: user.pubkey }));
     const request2 = subscribeSpyTo(loader({ kind: 3, pubkey: user.pubkey }));
@@ -33,7 +33,7 @@ describe("createBatchLoader", () => {
   it("should complete batches when upstream completes", () => {
     vi.useFakeTimers();
     const upstream = vi.fn();
-    const loader = createBatchLoader(bufferTime(100), upstream, () => true);
+    const loader = batchLoader(bufferTime(100), upstream, () => true);
 
     const first = new Subject<NostrEvent>();
     upstream.mockReturnValueOnce(first);

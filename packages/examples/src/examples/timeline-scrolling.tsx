@@ -1,8 +1,9 @@
 import { EventStore } from "applesauce-core";
-import { getSeenRelays, unixNow } from "applesauce-core/helpers";
-import { TimelineLoader } from "applesauce-loaders";
+import { getSeenRelays, mergeRelaySets, unixNow } from "applesauce-core/helpers";
+import { timelineLoader } from "applesauce-loaders";
 import { RelayPool } from "applesauce-relay";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useThrottle } from "react-use";
 
 const pool = new RelayPool();
 
@@ -11,32 +12,29 @@ const COLORS = ["red", "green", "blue", "orange", "purple", "darkcyan"];
 export default function TimelineExample() {
   const now = useMemo(() => unixNow(), []);
   const [limit, setLimit] = useState(50);
-  const [frame, setFrame] = useState(60 * 60);
-  const [relays, _setRelays] = useState([
-    "wss://nostrue.com/",
-    "wss://nos.lol/",
-    "wss://nostr.bitcoiner.social/",
-    "wss://relay.damus.io/",
-    "wss://nostrelites.org/",
-    "wss://nostr.wine/",
-  ]);
+  const [frame, _setFrame] = useState(60 * 60);
+  const [relays, _setRelays] = useState(
+    mergeRelaySets([
+      "wss://nostrue.com/",
+      "wss://nos.lol/",
+      "wss://nostr.bitcoiner.social/",
+      "wss://relay.damus.io/",
+      "wss://nostrelites.org/",
+      "wss://nostr.wine/",
+    ]),
+  );
   useEffect(() => {
     if (ctx.current) ctx.current.canvas.height = relays.length * 32;
   }, [relays]);
 
   const [seconds, setSeconds] = useState(0);
 
+  // Create a new timeline loader when the relays change
   const loader = useMemo(() => {
-    console.log(`Creating filter with`, relays, limit);
-
-    return new TimelineLoader(
-      (relays, filters) => pool.request(relays, filters),
-      TimelineLoader.simpleFilterMap(relays, [{ kinds: [1] }]),
-      { limit },
-    );
+    return timelineLoader(pool.request.bind(pool), relays, [{ kinds: [1] }], { limit });
   }, [relays, limit]);
 
-  // clear the canvas when loader
+  // clear the canvas when loader changes
   useEffect(() => {
     if (ctx.current) {
       ctx.current.clearRect(0, 0, ctx.current.canvas.width, ctx.current.canvas.height);
@@ -44,21 +42,12 @@ export default function TimelineExample() {
     }
   }, [loader, frame]);
 
-  useEffect(() => {
-    loader.next(now - seconds);
-  }, [seconds, loader, now]);
+  // throttle how fast the seconds change
+  const secondsThrottled = useThrottle(seconds, 1000);
 
-  const canvas = useRef<HTMLCanvasElement | null>(null);
-  const ctx = useRef<CanvasRenderingContext2D | null>(null);
+  // Request a new block of events from the loader when the seconds change
   useEffect(() => {
-    if (canvas.current) ctx.current = canvas.current.getContext("2d");
-  }, []);
-
-  const store = useMemo(() => new EventStore(), []);
-
-  useEffect(() => {
-    console.log("Subscribing to loader");
-    const sub = loader.subscribe((event) => {
+    loader(now - secondsThrottled).subscribe((event) => {
       const from = Array.from(getSeenRelays(event) || [])[0];
       if (!from) return;
       store.add(event);
@@ -68,19 +57,19 @@ export default function TimelineExample() {
         ctx.current.fillRect(now - event.created_at, relays.indexOf(from) * 32, 1, 32);
       }
     });
+  }, [secondsThrottled, loader, now]);
 
-    return () => sub.unsubscribe();
-  }, [loader, now, relays]);
+  const canvas = useRef<HTMLCanvasElement | null>(null);
+  const ctx = useRef<CanvasRenderingContext2D | null>(null);
+  useEffect(() => {
+    if (canvas.current) ctx.current = canvas.current.getContext("2d");
+  }, []);
+
+  const store = useMemo(() => new EventStore(), []);
 
   return (
     <div className="flex flex-col gap-4 p-4">
       <div className="join">
-        <button className="btn join-item" onClick={() => setFrame(60 * 60)}>
-          1 Hour
-        </button>
-        <button className="btn join-item" onClick={() => setFrame(2 * 60 * 60)}>
-          2 Hours
-        </button>
         <button className="btn join-item" onClick={() => setLimit(50)}>
           50
         </button>

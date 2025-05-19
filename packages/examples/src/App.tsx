@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import SideNav from "./Nav";
+import SideNav from "./components/Nav";
 import examples from "./examples";
 
 function App() {

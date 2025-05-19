@@ -5,24 +5,21 @@ describe("exports", () => {
   it("should export the expected functions", () => {
     expect(Object.keys(exports).sort()).toMatchInlineSnapshot(`
       [
-        "CacheTimelineLoader",
         "DnsIdentityLoader",
-        "Loader",
         "Operators",
-        "RelayTimelineLoader",
-        "ReplaceableLoader",
         "SingleEventLoader",
         "TagValueLoader",
-        "TimelineLoader",
         "UserSetsLoader",
-        "createAddressLoader",
-        "createAddressPointerLoadingSequence",
-        "createPipeline",
-        "loadAddressPointersFromCache",
-        "loadAddressPointersFromRelayHints",
-        "loadAddressPointersFromRelays",
-        "loadAddressPointersFromStore",
-        "triggerPipeline",
+        "addressLoader",
+        "addressPointerLoadingSequence",
+        "cacheAddressPointersLoader",
+        "cacheTimelineLoader",
+        "eventStoreTimelineLoader",
+        "filterBlockLoader",
+        "relayHintsAddressPointersLoader",
+        "relaysAddressPointersLoader",
+        "relaysTimelineLoader",
+        "timelineLoader",
       ]
     `);
   });

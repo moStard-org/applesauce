@@ -121,6 +121,7 @@ describe("exports", () => {
         "getPointerForEvent",
         "getPointerFromTag",
         "getProfileContent",
+        "getProfilePicture",
         "getProfilePointerFromPTag",
         "getProfilePointersFromList",
         "getPubkeyFromDecodeResult",

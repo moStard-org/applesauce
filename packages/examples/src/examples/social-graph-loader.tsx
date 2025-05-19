@@ -1,14 +1,13 @@
 import { logger } from "applesauce-core";
-import { getProfilePointersFromList, mergeRelaySets } from "applesauce-core/helpers";
-import { NostrRequest, triggerPipeline } from "applesauce-loaders";
+import { getProfilePointersFromList } from "applesauce-core/helpers";
+import { AddressPointerLoader, addressLoader, NostrRequest } from "applesauce-loaders";
 import { useObservable } from "applesauce-react/hooks";
-import { completeOnEose, RelayPool } from "applesauce-relay";
+import { RelayPool } from "applesauce-relay";
 import { ExtensionSigner } from "applesauce-signers";
-import { Filter, kinds, NostrEvent } from "nostr-tools";
+import { kinds, NostrEvent } from "nostr-tools";
 import { ProfilePointer } from "nostr-tools/nip19";
 import { useMemo, useState } from "react";
 import {
-  bufferTime,
   combineLatest,
   distinct,
   EMPTY,
@@ -26,45 +25,13 @@ const log = logger.extend("SocialGraph");
 
 const pool = new RelayPool();
 
-export function createBatchUserLoader(
-  request: NostrRequest,
-  opts?: { relays?: string[]; kinds?: number[]; hints?: boolean },
-): (user: ProfilePointer) => Observable<NostrEvent> {
-  // Use a replay subject to queue all inputs until loader is started
-  const input = new ReplaySubject<ProfilePointer>(Infinity);
-
-  const output = input.pipe(
-    // skip duplicates
-    distinct((user) => user.pubkey),
-    // buffer for 1 second
-    bufferTime(1_000, undefined, 300),
-    // Ignore empty buffers
-    filter((buffer) => buffer.length > 0),
-    // merge users into a single request
-    mergeMap((users) => {
-      const filter: Filter = {
-        kinds: opts?.kinds || [kinds.Contacts, kinds.Metadata, kinds.Mutelist],
-        authors: users.map((u) => u.pubkey),
-      };
-      const relays = (opts?.hints ?? true) ? mergeRelaySets(opts?.relays, ...users.map((u) => u.relays)) : opts?.relays;
-
-      // If there are no relays, skip
-      if (!relays) return EMPTY;
-
-      return request(relays, [filter]).pipe(completeOnEose());
-    }, 1),
-  );
-
-  return (user: ProfilePointer) => triggerPipeline({ input, output }, user, (event) => event.pubkey === user.pubkey);
-}
-
 function createGraphLoader(
   request: NostrRequest,
-  opts?: { relays?: string[]; hints?: boolean; kinds?: number[] },
+  opts?: { relays?: string[]; hints?: boolean; kinds?: number[]; addressLoader?: AddressPointerLoader },
 ): (
   pointer: ProfilePointer & { distance: number },
 ) => Observable<{ total: number; loaded: number; event: NostrEvent }> {
-  const upstream = createBatchUserLoader(request, opts);
+  const loadAddress = opts?.addressLoader || addressLoader(request);
 
   const input = new ReplaySubject<ProfilePointer & { distance: number }>(Infinity);
 
@@ -82,7 +49,7 @@ function createGraphLoader(
     mergeMap((pointer) => {
       log(`Loading ${pointer.pubkey} at distance ${pointer.distance}`);
 
-      return upstream(pointer).pipe(
+      return loadAddress({ kind: 3, pubkey: pointer.pubkey, relays: pointer.relays }).pipe(
         tap(() => loaded.next(pointer.pubkey)),
         filter((e) => e.kind === kinds.Contacts),
         take(1),

@@ -1,4 +1,4 @@
-import { IEventStore } from "applesauce-core";
+import { IEventStore, mapEventsToStore } from "applesauce-core";
 import {
   createReplaceableAddress,
   getReplaceableAddress,
@@ -7,20 +7,7 @@ import {
   mergeRelaySets,
 } from "applesauce-core/helpers";
 import { NostrEvent } from "nostr-tools";
-import {
-  bufferTime,
-  catchError,
-  EMPTY,
-  filter,
-  from,
-  isObservable,
-  map,
-  Observable,
-  of,
-  pipe,
-  switchMap,
-  take,
-} from "rxjs";
+import { bufferTime, catchError, EMPTY, filter, isObservable, map, Observable, of, pipe, switchMap, take } from "rxjs";
 
 import {
   consolidateAddressPointers,
@@ -30,18 +17,17 @@ import {
 } from "../helpers/address-pointer.js";
 import { wrapGeneratorFunction } from "../operators/generator.js";
 import { FilterRequest, NostrRequest } from "../types.js";
-import { createBatchLoader } from "./common-loaders.js";
+import { batchLoader } from "./common-loaders.js";
 
 /** A method that takes address pointers and returns an observable of events */
 export type AddressPointersLoader = (pointers: LoadableAddressPointer[]) => Observable<NostrEvent>;
-
 export type AddressPointerLoader = (pointer: LoadableAddressPointer) => Observable<NostrEvent>;
 
 /**
  * Loads address pointers from an async cache
  * @note ignores pointers with force=true
  */
-export function loadAddressPointersFromCache(request: FilterRequest): AddressPointersLoader {
+export function cacheAddressPointersLoader(request: FilterRequest): AddressPointersLoader {
   return (pointers) =>
     request(
       createFiltersFromAddressPointers(
@@ -52,25 +38,8 @@ export function loadAddressPointersFromCache(request: FilterRequest): AddressPoi
     );
 }
 
-/**
- * Loads address pointers from an event store
- * @note ignores pointers with force=true
- */
-export function loadAddressPointersFromStore(store: IEventStore): AddressPointersLoader {
-  return (pointers) =>
-    from(
-      pointers
-        // Ignore pointers that want to skip cache
-        .filter((p) => p.force !== true)
-        // Get events from store
-        .map((p) => store.getReplaceable(p.kind, p.pubkey, p.identifier))
-        // Filter out null results
-        .filter((p) => !!p),
-    );
-}
-
 /** Loads address pointers from the relay hints */
-export function loadAddressPointersFromRelayHints(request: NostrRequest): AddressPointersLoader {
+export function relayHintsAddressPointersLoader(request: NostrRequest): AddressPointersLoader {
   return (pointers) => {
     const relays = mergeRelaySets(...pointers.map((p) => p.relays));
     if (relays.length === 0) return EMPTY;
@@ -81,7 +50,7 @@ export function loadAddressPointersFromRelayHints(request: NostrRequest): Addres
 }
 
 /** Loads address pointers from an array of relays */
-export function loadAddressPointersFromRelays(
+export function relaysAddressPointersLoader(
   request: NostrRequest,
   relays: Observable<string[]> | string[],
 ): AddressPointersLoader {
@@ -101,7 +70,7 @@ export function loadAddressPointersFromRelays(
 }
 
 /** Creates a loader that loads all event pointers based on their relays */
-export function createAddressPointerLoadingSequence(
+export function addressPointerLoadingSequence(
   ...loaders: (AddressPointersLoader | undefined)[]
 ): AddressPointersLoader {
   return wrapGeneratorFunction<[LoadableAddressPointer[]], NostrEvent>(function* (pointers) {
@@ -136,7 +105,7 @@ export type AddressLoaderOptions = Partial<{
   bufferTime: number;
   /** Max buffer size ( default 200 ) */
   bufferSize: number;
-  /** An event store to get events from and store events in */
+  /** An event store to send all the events to */
   eventStore: IEventStore;
   /** A method used to load events from a local cache */
   cacheRequest: FilterRequest;
@@ -147,8 +116,8 @@ export type AddressLoaderOptions = Partial<{
 }>;
 
 /** Create a pre-built address pointer loader that supports batching, caching, and lookup relays */
-export function createAddressLoader(request: NostrRequest, opts?: AddressLoaderOptions): AddressPointerLoader {
-  return createBatchLoader(
+export function addressLoader(request: NostrRequest, opts?: AddressLoaderOptions): AddressPointerLoader {
+  return batchLoader(
     // Create batching sequence
     pipe(
       // filter out invalid pointers
@@ -159,22 +128,22 @@ export function createAddressLoader(request: NostrRequest, opts?: AddressLoaderO
       map(consolidateAddressPointers),
     ),
     // Create a loader for batching
-    createAddressPointerLoadingSequence(
-      // Step 0. load pointers from event store if available
-      opts?.eventStore ? loadAddressPointersFromStore(opts.eventStore) : undefined,
+    addressPointerLoadingSequence(
       // Step 1. load from cache if available
-      opts?.cacheRequest ? loadAddressPointersFromCache(opts.cacheRequest) : undefined,
+      opts?.cacheRequest ? cacheAddressPointersLoader(opts.cacheRequest) : undefined,
       // Step 2. load from relay hints on pointers
-      loadAddressPointersFromRelayHints(request),
+      relayHintsAddressPointersLoader(request),
       // Step 3. load from extra relays
-      opts?.extraRelays ? loadAddressPointersFromRelays(request, opts.extraRelays) : undefined,
+      opts?.extraRelays ? relaysAddressPointersLoader(request, opts.extraRelays) : undefined,
       // Step 4. load from lookup relays
-      opts?.lookupRelays ? loadAddressPointersFromRelays(request, opts.lookupRelays) : undefined,
+      opts?.lookupRelays ? relaysAddressPointersLoader(request, opts.lookupRelays) : undefined,
     ),
     // Filter resutls based on requests
     (pointer, event) =>
       event.kind === pointer.kind &&
       event.pubkey === pointer.pubkey &&
       (pointer.identifier ? getReplaceableIdentifier(event) === pointer.identifier : true),
+    // Pass all events through the store if defined
+    opts?.eventStore && mapEventsToStore(opts.eventStore),
   );
 }

@@ -3,3 +3,5 @@ import { Observable } from "rxjs";
 
 export type FilterRequest = (filters: Filter[]) => Observable<NostrEvent>;
 export type NostrRequest = (relays: string[], filters: Filter[]) => Observable<NostrEvent>;
+
+export type TimelessFilter = Omit<Filter, "since" | "until">;

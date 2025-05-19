@@ -7,7 +7,7 @@ import {
   GroupPointer,
   mergeRelaySets,
 } from "applesauce-core/helpers";
-import { createAddressLoader } from "applesauce-loaders";
+import * as loaders from "applesauce-loaders";
 import { QueryStoreProvider } from "applesauce-react";
 import { useObservable } from "applesauce-react/hooks";
 import { onlyEvents, RelayPool } from "applesauce-relay";
@@ -20,7 +20,7 @@ const queryStore = new QueryStore(eventStore);
 
 const pool = new RelayPool();
 
-const addressLoader = createAddressLoader(pool.request.bind(pool), {
+const addressLoader = loaders.addressLoader(pool.request.bind(pool), {
   eventStore,
   lookupRelays: ["wss://purplepag.es/"],
 });
@@ -105,7 +105,7 @@ export default function RelayGroupExample() {
               placeholder="Enter group identifier"
             />
             <select className="select join-item w-xs" onChange={(e) => load(e.target.value)} value={identifier}>
-              <option defaultValue="">Select group</option>
+              <option value="">Select group</option>
               <option value="groups.0xchat.com'chachi">chachi</option>
               <option value="groups.hzrd149.com'0a3991">blossom</option>
               <option value="relay.groups.nip29.com'Miz7w4srsmygbqy2">zap.stream</option>

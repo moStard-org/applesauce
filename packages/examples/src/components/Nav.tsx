@@ -1,5 +1,5 @@
 import { useState } from "react";
-import examples from "./examples";
+import examples from "../examples";
 
 export default function SideNav() {
   const [searchTerm, setSearchTerm] = useState<string>("");

@@ -1,22 +1,25 @@
-import { EventStore, mapEventsToStore, mapEventsToTimeline } from "applesauce-core";
+import { EventStore, mapEventsToStore, mapEventsToTimeline, QueryStore } from "applesauce-core";
 import { getDisplayName, getProfilePicture, getSeenRelays } from "applesauce-core/helpers";
-import { createAddressLoader } from "applesauce-loaders";
+import * as loaders from "applesauce-loaders";
 import { useObservable } from "applesauce-react/hooks";
 import { onlyEvents, RelayPool } from "applesauce-relay";
 import { NostrEvent } from "nostr-tools";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { map } from "rxjs";
 
 import { RelayPicker } from "../components/relay-picker";
 
 // Create an event store for all events
 const eventStore = new EventStore();
+const queryStore = new QueryStore(eventStore);
 
 // Create a relay pool to make relay connections
 const pool = new RelayPool();
 
 // Create an address loader to load user profiles
-const addressLoader = createAddressLoader(pool.request.bind(pool), {
+const addressLoader = loaders.addressLoader(pool.request.bind(pool), {
+  // Pass all events to the store
+  eventStore,
   // Make the cache requests attempt to load from a local relay
   cacheRequest: (filters) => pool.relay("ws://localhost:4869").request(filters),
   // Fallback to lookup relays if profiles cant be found
@@ -24,18 +27,18 @@ const addressLoader = createAddressLoader(pool.request.bind(pool), {
 });
 
 function Note({ note }: { note: NostrEvent }) {
-  const profile$ = useMemo(() => {
+  useEffect(() => {
     // Get the relays the event was from
     const relays = getSeenRelays(note);
     // Make a request to the address loader for the users profile
-    return addressLoader({ kind: 0, pubkey: note.pubkey, relays: relays && Array.from(relays) });
+    addressLoader({ kind: 0, pubkey: note.pubkey, relays: relays && Array.from(relays) }).subscribe();
   }, [note.pubkey]);
 
   // Subscribe to the request and wait for the profile event
-  const profile = useObservable(profile$);
+  const profile = useObservable(queryStore.profile(note.pubkey));
 
   return (
-    <div className="card bg-base-100 shadow-xl">
+    <div className="card bg-base-100 shadow-md">
       <div className="card-body">
         <div className="flex items-center gap-4">
           <div className="avatar">
