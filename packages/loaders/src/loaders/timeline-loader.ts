@@ -1,7 +1,7 @@
+import { IEventStore, mapEventsToStore } from "applesauce-core";
 import { NostrEvent } from "nostr-tools";
 import { EMPTY, finalize, identity, merge, Observable, tap } from "rxjs";
 
-import { IEventStore, mapEventsToStore } from "applesauce-core";
 import { FilterRequest, NostrRequest, TimelessFilter } from "../types.js";
 
 /** A loader that optionally takes a timestamp to load till and returns a stream of events */

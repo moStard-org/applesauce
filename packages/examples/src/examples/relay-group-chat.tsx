@@ -7,7 +7,7 @@ import {
   GroupPointer,
   mergeRelaySets,
 } from "applesauce-core/helpers";
-import * as loaders from "applesauce-loaders";
+import { addressPointerLoader } from "applesauce-loaders";
 import { QueryStoreProvider } from "applesauce-react";
 import { useObservable } from "applesauce-react/hooks";
 import { onlyEvents, RelayPool } from "applesauce-relay";
@@ -20,7 +20,7 @@ const queryStore = new QueryStore(eventStore);
 
 const pool = new RelayPool();
 
-const addressLoader = loaders.addressLoader(pool.request.bind(pool), {
+const addressLoader = addressPointerLoader(pool.request.bind(pool), {
   eventStore,
   lookupRelays: ["wss://purplepag.es/"],
 });

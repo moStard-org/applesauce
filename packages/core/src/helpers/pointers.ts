@@ -14,7 +14,7 @@ import { getPublicKey, kinds, NostrEvent } from "nostr-tools";
 
 import { getReplaceableIdentifier } from "./event.js";
 import { isAddressableKind } from "nostr-tools/kinds";
-import { isSafeRelayURL } from "./relays.js";
+import { isSafeRelayURL, mergeRelaySets } from "./relays.js";
 import { isHexKey } from "./string.js";
 
 export type AddressPointerWithoutD = Omit<AddressPointer, "identifier"> & {
@@ -196,10 +196,7 @@ export function getAddressPointerForEvent(event: NostrEvent, relays?: string[]):
   };
 }
 
-/**
- * Returns an EventPointer for an event
- * @throws
- */
+/** Returns an EventPointer for an event */
 export function getEventPointerForEvent(event: NostrEvent, relays?: string[]): EventPointer {
   return {
     id: event.id,
@@ -209,29 +206,26 @@ export function getEventPointerForEvent(event: NostrEvent, relays?: string[]): E
   };
 }
 
-/** Returns a pointer for a given event */
+/**
+ * Returns a pointer for a given event
+ * @throws
+ */
 export function getPointerForEvent(event: NostrEvent, relays?: string[]): DecodeResult {
   if (kinds.isAddressableKind(event.kind)) {
-    const d = getReplaceableIdentifier(event);
-
     return {
       type: "naddr",
-      data: {
-        identifier: d,
-        kind: event.kind,
-        pubkey: event.pubkey,
-        relays,
-      },
+      data: getAddressPointerForEvent(event, relays),
     };
   } else {
     return {
       type: "nevent",
-      data: {
-        id: event.id,
-        kind: event.kind,
-        author: event.pubkey,
-        relays,
-      },
+      data: getEventPointerForEvent(event, relays),
     };
   }
+}
+
+/** Adds relay hints to a pointer object that has a relays array */
+export function addRelayHintsToPointer<T extends { relays?: string[] }>(pointer: T, relays?: Iterable<string>): T {
+  if (!relays) return pointer;
+  else return { ...pointer, relays: mergeRelaySets(relays, pointer.relays) };
 }

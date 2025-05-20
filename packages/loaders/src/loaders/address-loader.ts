@@ -16,8 +16,9 @@ import {
   LoadableAddressPointer,
 } from "../helpers/address-pointer.js";
 import { wrapGeneratorFunction } from "../operators/generator.js";
-import { FilterRequest, NostrRequest } from "../types.js";
-import { batchLoader } from "./common-loaders.js";
+import { CacheRequest, FilterRequest, NostrRequest } from "../types.js";
+import { batchLoader } from "../helpers/loaders.js";
+import { unwrapCacheRequest } from "../helpers/cache.js";
 
 /** A method that takes address pointers and returns an observable of events */
 export type AddressPointersLoader = (pointers: LoadableAddressPointer[]) => Observable<NostrEvent>;
@@ -27,9 +28,10 @@ export type AddressPointerLoader = (pointer: LoadableAddressPointer) => Observab
  * Loads address pointers from an async cache
  * @note ignores pointers with force=true
  */
-export function cacheAddressPointersLoader(request: FilterRequest): AddressPointersLoader {
+export function cacheAddressPointersLoader(request: CacheRequest): AddressPointersLoader {
   return (pointers) =>
-    request(
+    unwrapCacheRequest(
+      request,
       createFiltersFromAddressPointers(
         pointers
           // Ignore pointers that want to skip cache
@@ -105,10 +107,12 @@ export type AddressLoaderOptions = Partial<{
   bufferTime: number;
   /** Max buffer size ( default 200 ) */
   bufferSize: number;
-  /** An event store to send all the events to */
+  /** An event store used to deduplicate events */
   eventStore: IEventStore;
   /** A method used to load events from a local cache */
   cacheRequest: FilterRequest;
+  /** Whether to follow relay hints ( default true ) */
+  followRelayHints: boolean;
   /** Fallback lookup relays to check when event cant be found */
   lookupRelays: string[] | Observable<string[]>;
   /** An array of relays to always fetch from */
@@ -116,7 +120,7 @@ export type AddressLoaderOptions = Partial<{
 }>;
 
 /** Create a pre-built address pointer loader that supports batching, caching, and lookup relays */
-export function addressLoader(request: NostrRequest, opts?: AddressLoaderOptions): AddressPointerLoader {
+export function addressPointerLoader(request: NostrRequest, opts?: AddressLoaderOptions): AddressPointerLoader {
   return batchLoader(
     // Create batching sequence
     pipe(
@@ -124,6 +128,8 @@ export function addressLoader(request: NostrRequest, opts?: AddressLoaderOptions
       filter(isLoadableAddressPointer),
       // buffer requests by time or size
       bufferTime(opts?.bufferTime ?? 1000, undefined, opts?.bufferSize ?? 200),
+      // Ingore empty buffers
+      filter((b) => b.length > 0),
       // consolidate buffered pointers
       map(consolidateAddressPointers),
     ),
@@ -132,7 +138,7 @@ export function addressLoader(request: NostrRequest, opts?: AddressLoaderOptions
       // Step 1. load from cache if available
       opts?.cacheRequest ? cacheAddressPointersLoader(opts.cacheRequest) : undefined,
       // Step 2. load from relay hints on pointers
-      relayHintsAddressPointersLoader(request),
+      opts?.followRelayHints !== false ? relayHintsAddressPointersLoader(request) : undefined,
       // Step 3. load from extra relays
       opts?.extraRelays ? relaysAddressPointersLoader(request, opts.extraRelays) : undefined,
       // Step 4. load from lookup relays

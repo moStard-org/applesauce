@@ -1,14 +1,31 @@
-import { NostrEvent } from "nostr-tools";
-import { safeParse } from "./json.js";
+import { nip18, NostrEvent } from "nostr-tools";
 import { getOrComputeCachedValue } from "./cache.js";
+import { AddressPointer, EventPointer } from "nostr-tools/nip19";
+import { isATag } from "./tags.js";
+import { getAddressPointerFromATag } from "./pointers.js";
 
 export const SharedEventSymbol = Symbol.for("shared-event");
+export const SharedEventPointerSymbol = Symbol.for("shared-event-pointer");
+export const SharedAddressPointerSymbol = Symbol.for("shared-address-pointer");
+/** Returns the event pointer of a kind 6 or 16 share event */
+export function getSharedEventPointer(event: NostrEvent): EventPointer | undefined {
+  return getOrComputeCachedValue(event, SharedEventPointerSymbol, () => nip18.getRepostedEventPointer(event));
+}
 
-/** Returns the stringified event in the content of a kind 6 or 16 share event */
-export function parseSharedEvent(event: NostrEvent): NostrEvent | undefined {
-  return getOrComputeCachedValue(event, SharedEventSymbol, () => {
-    const json = safeParse<NostrEvent>(event.content);
-    if (!json) return;
-    return json;
+/** Returns the address pointer of a kind 6 or 16 share event */
+export function getSharedAddressPointer(event: NostrEvent): AddressPointer | undefined {
+  return getOrComputeCachedValue(event, SharedAddressPointerSymbol, () => {
+    const a = event.tags.find(isATag);
+    if (!a) return undefined;
+
+    return getAddressPointerFromATag(a);
   });
 }
+
+/** Returns the stringified event in the content of a kind 6 or 16 share event */
+export function getEmbededSharedEvent(event: NostrEvent): NostrEvent | undefined {
+  return getOrComputeCachedValue(event, SharedEventSymbol, () => nip18.getRepostedEvent(event));
+}
+
+/** @deprecated use getEmbededSharedEvent instead */
+export const parseSharedEvent = getEmbededSharedEvent;

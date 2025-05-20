@@ -103,11 +103,6 @@ export function getRelaysFromPointers(pointers: AddressPointerWithoutD[]) {
   return relays;
 }
 
-/** @deprecated use createReplaceableAddress instead */
-export function getAddressPointerId<T extends AddressPointerWithoutD>(pointer: T): string {
-  return createReplaceableAddress(pointer.kind, pointer.pubkey, pointer.identifier);
-}
-
 /** deep clone a loadable pointer to ensure its safe to modify */
 function cloneLoadablePointer(pointer: LoadableAddressPointer): LoadableAddressPointer {
   const clone = { ...pointer };

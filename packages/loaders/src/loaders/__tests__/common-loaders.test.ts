@@ -3,7 +3,7 @@ import { NostrEvent } from "nostr-tools";
 import { bufferTime, EMPTY, Subject } from "rxjs";
 import { describe, expect, it, Mock, vi } from "vitest";
 
-import { batchLoader } from "../common-loaders.js";
+import { batchLoader } from "../../helpers/loaders.js";
 import { AddressPointersLoader } from "../address-loader.js";
 import { FakeUser } from "../../__tests__/fake-user.js";
 

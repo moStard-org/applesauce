@@ -24,6 +24,15 @@ export default function SideNav() {
             </li>
           ))}
         </ul>
+
+        <ul className="menu menu-horizontal px-1 mt-auto">
+          <li>
+            <a href="https://hzrd149.github.io/applesauce">Documentation</a>
+          </li>
+          <li>
+            <a href="https://hzrd149.github.io/applesauce/typedoc/">Reference</a>
+          </li>
+        </ul>
       </div>
     </div>
   );

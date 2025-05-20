@@ -1,7 +1,14 @@
+import { mergeRelaySets } from "applesauce-core/helpers";
 import { ChangeEvent, useMemo, useState } from "react";
 
 // Common relay URLs that users might want to use
-const COMMON_RELAYS = ["wss://relay.damus.io", "wss://relay.snort.social", "wss://nos.lol", "wss://relay.nostr.band"];
+const COMMON_RELAYS = mergeRelaySets([
+  "wss://relay.damus.io",
+  "wss://relay.snort.social",
+  "wss://nos.lol",
+  "wss://relay.nostr.band",
+  "wss://relay.primal.net",
+]);
 
 function RelayPickerModal({
   isOpen,

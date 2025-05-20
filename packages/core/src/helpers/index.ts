@@ -28,6 +28,7 @@ export * from "./mutes.js";
 export * from "./picture-post.js";
 export * from "./pointers.js";
 export * from "./profile.js";
+export * from "./reactions.js";
 export * from "./relays.js";
 export * from "./share.js";
 export * from "./string.js";

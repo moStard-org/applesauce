@@ -6,9 +6,20 @@ describe("exports", () => {
     expect(Object.keys(exports).sort()).toMatchInlineSnapshot(`
       [
         "IdentityStatus",
+        "batchLoader",
+        "consolidateAddressPointers",
+        "consolidateEventPointers",
+        "createFilterFromAddressPointers",
+        "createFiltersFromAddressPointers",
         "getIdentitiesFromJson",
         "getIdentityFromJson",
+        "getRelaysFromPointers",
+        "groupAddressPointersByKind",
+        "groupAddressPointersByPubkey",
+        "groupAddressPointersByPubkeyOrKind",
+        "isLoadableAddressPointer",
         "normalizeIdentityJson",
+        "unwrapCacheRequest",
       ]
     `);
   });
