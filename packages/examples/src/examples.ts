@@ -1,5 +1,8 @@
 const modules = import.meta.glob("./examples/**/*.tsx");
-const sources = import.meta.glob("./examples/**/*.tsx", { as: "raw" });
+const sources = import.meta.glob("./examples/**/*.tsx", { query: "?raw" }) as Record<
+  string,
+  () => Promise<{ default: string }>
+>;
 
 function basename(path: string) {
   return path.split("/").pop()?.replace(/\..+$/, "") ?? "";
@@ -16,7 +19,7 @@ export type Example = {
 const examples: Example[] = [];
 
 for (const [path, load] of Object.entries(modules)) {
-  const source = sources[path] as () => Promise<string>;
+  const source = async () => (await sources[path]()).default as string;
 
   const id = basename(path);
   // Convert kebab-case or snake_case to Title Case

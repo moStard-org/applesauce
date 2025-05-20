@@ -88,9 +88,9 @@ function ReactionEvent({ event }: { event: NostrEvent }) {
         <div className="card bg-base-100 shadow-md">
           <div className="card-body">
             <div className="flex items-center gap-4">
-              <Avatar pubkey={event.pubkey} />
+              <Avatar pubkey={reactedTo.pubkey} />
               <h2 className="card-title">
-                <Username pubkey={event.pubkey} />
+                <Username pubkey={reactedTo.pubkey} />
               </h2>
             </div>
             <p>{reactedTo.content}</p>
