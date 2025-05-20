@@ -30,6 +30,7 @@ export * from "./pointers.js";
 export * from "./profile.js";
 export * from "./reactions.js";
 export * from "./relays.js";
+export * from "./reports.js";
 export * from "./share.js";
 export * from "./string.js";
 export * from "./tags.js";
