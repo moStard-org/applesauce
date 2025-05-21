@@ -170,6 +170,7 @@ describe("exports", () => {
         "getZapRequest",
         "getZapSender",
         "getZapSplits",
+        "groupMessageEvents",
         "hasHiddenContent",
         "hasHiddenTags",
         "interpretThreadTags",

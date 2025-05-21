@@ -4,6 +4,7 @@ import {
   getDisplayName,
   getProfileContent,
   getSeenRelays,
+  groupMessageEvents,
   GroupPointer,
   mergeRelaySets,
 } from "applesauce-core/helpers";
@@ -25,13 +26,15 @@ const addressLoader = addressPointerLoader(pool.request.bind(pool), {
   lookupRelays: ["wss://purplepag.es/"],
 });
 
-function ChatMessage({ message }: { message: NostrEvent }) {
+function ChatMessageGroup({ messages }: { messages: NostrEvent[] }) {
   const profile$ = useMemo(
-    () => addressLoader({ pubkey: message.pubkey, kind: 0, relays: mergeRelaySets(getSeenRelays(message)) }),
-    [message.pubkey],
+    () => addressLoader({ pubkey: messages[0].pubkey, kind: 0, relays: mergeRelaySets(getSeenRelays(messages[0])) }),
+    [messages[0].pubkey],
   );
   const profile = useObservable(profile$);
   const metadata = useMemo(() => profile && getProfileContent(profile), [profile]);
+
+  const time = messages[0].created_at;
 
   return (
     <div className="chat chat-start">
@@ -42,9 +45,13 @@ function ChatMessage({ message }: { message: NostrEvent }) {
       </div>
       <div className="chat-header">
         {getDisplayName(profile)}
-        <time className="text-xs opacity-50">{new Date(message.created_at * 1000).toLocaleString()}</time>
+        <time className="text-xs opacity-50">{new Date(time * 1000).toLocaleString()}</time>
       </div>
-      <div className="chat-bubble">{message.content}</div>
+      <div className="flex flex-col gap-2">
+        {messages.map((message) => (
+          <div className="chat-bubble">{message.content}</div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -67,10 +74,16 @@ function ChatLog({ pointer }: { pointer: GroupPointer }) {
   );
 
   const messages = useObservable(timeline);
+  const groups = groupMessageEvents(messages ? Array.from(messages).reverse() : []).reverse();
 
   return (
-    <div className="flex flex-col gap-2 max-w-full overflow-x-hidden overflow-y-auto h-full">
-      {messages?.map((message) => <ChatMessage key={message.id} message={message} />)}
+    <div
+      className="flex gap-2 flex-col-reverse overflow-y-auto overflow-x-hidden border p-4 border-base-300 rounded-lg"
+      style={{ height: "calc(100vh - 12rem)" }}
+    >
+      {groups.map((group) => (
+        <ChatMessageGroup key={group[0].id} messages={group} />
+      ))}
     </div>
   );
 }
@@ -92,7 +105,7 @@ export default function RelayGroupExample() {
   return (
     <QueryStoreProvider queryStore={queryStore}>
       <div className="container mx-auto">
-        <div className="form-control w-full max-w-xl">
+        <div className="form-control w-full max-w-xl mb-4">
           <label className="label">
             <span className="label-text">Group Identifier</span>
           </label>
@@ -109,14 +122,14 @@ export default function RelayGroupExample() {
               <option value="groups.0xchat.com'chachi">chachi</option>
               <option value="groups.hzrd149.com'0a3991">blossom</option>
               <option value="relay.groups.nip29.com'Miz7w4srsmygbqy2">zap.stream</option>
+              <option value="groups.0xchat.com'925b1aa20cd1b68dd9a0130e35808d66772fe082cf3f95294dd5755c7ea1ed59">
+                Robosats
+              </option>
             </select>
             <button className="btn join-item btn-primary" onClick={() => load(identifier)}>
               Load
             </button>
           </div>
-          <label className="label">
-            <span className="label-text-alt">The NIP-29 group identifier</span>
-          </label>
         </div>
 
         {pointer && <ChatLog pointer={pointer} />}

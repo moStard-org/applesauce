@@ -25,6 +25,7 @@ export * from "./lists.js";
 export * from "./lnurl.js";
 export * from "./lru.js";
 export * from "./mailboxes.js";
+export * from "./messages.js";
 export * from "./mutes.js";
 export * from "./picture-post.js";
 export * from "./pointers.js";
