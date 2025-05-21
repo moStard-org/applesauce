@@ -43,7 +43,7 @@ export function getProfileContent(event: NostrEvent): ProfileContent {
 /** Checks if the content of the kind 0 event is valid JSON */
 export function isValidProfile(profile?: NostrEvent) {
   if (!profile) return false;
-  if (profile.kind !== kinds.Metadata) return false;
+  if (profile.kind !== kinds.Metadata && profile.kind !== kinds.Handlerinformation) return false;
   try {
     getProfileContent(profile);
 
