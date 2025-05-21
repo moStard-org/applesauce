@@ -1,8 +1,9 @@
-import { Transformer } from "unified";
+import { DecodeResult } from "applesauce-core/helpers";
 import { Link, Nodes } from "mdast";
-
 import { findAndReplace } from "mdast-util-find-and-replace";
-import { decode, DecodeResult } from "nostr-tools/nip19";
+import { decode } from "nostr-tools/nip19";
+import { Transformer } from "unified";
+
 import { Tokens } from "../helpers/regexp.js";
 
 export interface NostrMention extends Link {
