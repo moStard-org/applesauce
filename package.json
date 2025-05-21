@@ -13,19 +13,19 @@
     "test:browser": "vitest"
   },
   "dependencies": {
-    "@changesets/cli": "^2.29.2",
+    "@changesets/cli": "^2.29.4",
     "typedoc": "^0.27.9"
   },
   "devDependencies": {
     "@changesets/changelog-git": "^0.2.1",
     "@changesets/types": "^6.1.0",
-    "@vitest/browser": "^3.1.2",
+    "@vitest/browser": "^3.1.4",
     "@vitest/coverage-v8": "2.1.8",
     "playwright": "^1.52.0",
     "prettier": "^3.5.3",
-    "turbo": "^2.5.2",
+    "turbo": "^2.5.3",
     "typescript": "^5.8.3",
-    "vitest": "^3.1.2"
+    "vitest": "^3.1.4"
   },
   "engines": {
     "node": ">=20"

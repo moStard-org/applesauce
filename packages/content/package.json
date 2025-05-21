@@ -60,7 +60,7 @@
     "@types/unist": "^3.0.3",
     "applesauce-core": "^1.2.0",
     "mdast-util-find-and-replace": "^3.0.2",
-    "nostr-tools": "^2.10.4",
+    "nostr-tools": "^2.13",
     "remark": "^15.0.1",
     "remark-parse": "^11.0.0",
     "unified": "^11.0.5",

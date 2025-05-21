@@ -128,7 +128,6 @@ describe("exports", () => {
         "getParentEventStore",
         "getPicturePostAttachments",
         "getPointerForEvent",
-        "getPointerFromTag",
         "getProfileContent",
         "getProfilePicture",
         "getProfilePointerFromPTag",
