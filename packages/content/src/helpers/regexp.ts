@@ -22,13 +22,13 @@ export const Expressions = {
 /** A list of Regular Expressions that match tokens surrounded by whitespace to avoid matching in URLs */
 export const Tokens = {
   get link() {
-    return new RegExp(`(?<=\\s|^)${Expressions.link.source}(?=\\s|$)`, "gu");
+    return new RegExp(`\\b${Expressions.link.source}\\b`, "gu");
   },
   get cashu() {
-    return new RegExp(`(?<=\\s|^)${Expressions.cashu.source}(?=\\s|$)`, "gi");
+    return new RegExp(`\\b${Expressions.cashu.source}\\b`, "gi");
   },
   get nostrLink() {
-    return new RegExp(`(?<=\\s|^)${Expressions.nostrLink.source}(?=\\s|$)`, "gi");
+    return new RegExp(`\\b${Expressions.nostrLink.source}\\b`, "gi");
   },
   get emoji() {
     return Expressions.emoji;
@@ -37,6 +37,6 @@ export const Tokens = {
     return Expressions.hashtag;
   },
   get lightning() {
-    return new RegExp(`(?<=\\s|^)${Expressions.lightning.source}(?=\\s|$)`, "gim");
+    return new RegExp(`\\b${Expressions.lightning.source}\\b`, "gim");
   },
 };

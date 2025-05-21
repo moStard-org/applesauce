@@ -248,6 +248,9 @@ importers:
       '@fontsource/roboto':
         specifier: ^5.1.1
         version: 5.2.5
+      applesauce-content:
+        specifier: ^1.0.0
+        version: link:../content
       applesauce-core:
         specifier: ^1.2.0
         version: link:../core
@@ -261,7 +264,7 @@ importers:
         specifier: ^1.0.0
         version: link:../react
       applesauce-relay:
-        specifier: ^1
+        specifier: ^1.0.0
         version: link:../relay
       applesauce-signers:
         specifier: ^1.0.0
