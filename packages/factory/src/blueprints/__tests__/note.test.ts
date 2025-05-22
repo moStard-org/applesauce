@@ -139,6 +139,22 @@ describe("NoteBlueprint", () => {
     );
   });
 
+  it("should not change nip-19 pointers in URLs", async () => {
+    expect(
+      await factory.create(
+        NoteBlueprint,
+        "Checkout my app https://zap.stream/naddr1qqjx2wtzx93rycmz94nrqvf3956rqep3943xgvec956xxvnxxucxze33v93rvq3qeaz6dwsnvwkha5sn5puwwyxjgy26uusundrm684lg3vw4ma5c2jsxpqqqpmxw6td7rf",
+      ),
+    ).toEqual(
+      expect.objectContaining({
+        kind: 1,
+        content:
+          "Checkout my app https://zap.stream/naddr1qqjx2wtzx93rycmz94nrqvf3956rqep3943xgvec956xxvnxxucxze33v93rvq3qeaz6dwsnvwkha5sn5puwwyxjgy26uusundrm684lg3vw4ma5c2jsxpqqqpmxw6td7rf",
+        tags: [],
+      }),
+    );
+  });
+
   it('should include "q" tags for quotes', async () => {
     expect(
       await factory.create(
