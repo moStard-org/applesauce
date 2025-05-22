@@ -7,7 +7,7 @@ describe("addGroupTag", () => {
     const group: GroupPointer = { id: "testing", relay: "wss://relay.com", name: "new-name" };
 
     expect(addGroupTag(group)([["group", "testing", "wss://relay.com"]], {})).toEqual([
-      ["group", "testing", "wss://relay.com", "new-name"],
+      ["group", "testing", "wss://relay.com/", "new-name"],
     ]);
   });
 
@@ -16,7 +16,7 @@ describe("addGroupTag", () => {
 
     expect(addGroupTag(group)([["group", "testing", "wss://other.relay.com"]], {})).toEqual([
       ["group", "testing", "wss://other.relay.com"],
-      ["group", "testing", "wss://relay.com", "new-name"],
+      ["group", "testing", "wss://relay.com/", "new-name"],
     ]);
   });
 });

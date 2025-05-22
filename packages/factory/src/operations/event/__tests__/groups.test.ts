@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { unixNow } from "applesauce-core/helpers";
+import { finalizeEvent, generateSecretKey, NostrEvent } from "nostr-tools";
 
 import { includeGroupHTag, includeGroupPreviousTags } from "../groups.js";
-import { finalizeEvent, generateSecretKey, NostrEvent } from "nostr-tools";
 
 describe("includeGroupHTag", () => {
   it('should include "h" tag', () => {
@@ -11,7 +11,7 @@ describe("includeGroupHTag", () => {
         { kind: 9, content: "hello world", created_at: unixNow(), tags: [] },
         {},
       ),
-    ).toEqual(expect.objectContaining({ tags: expect.arrayContaining([["h", "group"]]) }));
+    ).toEqual(expect.objectContaining({ tags: expect.arrayContaining([["h", "group", "wss://groups.relay.com/"]]) }));
   });
 
   it('should override "h" tag if it exists', () => {
@@ -20,7 +20,7 @@ describe("includeGroupHTag", () => {
         { kind: 9, content: "hello world", created_at: unixNow(), tags: [["h", "other-group"]] },
         {},
       ),
-    ).toEqual(expect.objectContaining({ tags: expect.arrayContaining([["h", "group"]]) }));
+    ).toEqual(expect.objectContaining({ tags: expect.arrayContaining([["h", "group", "wss://groups.relay.com/"]]) }));
   });
 });
 

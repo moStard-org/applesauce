@@ -10,6 +10,7 @@ describe("exports", () => {
         "createCommentTagsFromCommentPointer",
         "createETagFromEventPointer",
         "createETagWithMarkerFromEventPointer",
+        "createGroupHTagFromGroupPointer",
         "createGroupTagFromGroupPointer",
         "createPTagFromProfilePointer",
         "createQTagFromEventPointer",
