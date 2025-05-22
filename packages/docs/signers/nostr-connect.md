@@ -51,12 +51,25 @@ const uri = signer.getNostrConnectURI({
 });
 console.log(uri);
 
-// wait for the remote signer to connect
-await signer.waitForSigner();
-console.log("Connected!");
+// Create an optional AbortSignal to cancel the waiting process if needed
+const controller = new AbortController();
+const signal = controller.signal;
 
-const pubkey = await signer.getPublicKey();
-console.log("Users pubkey is", pubkey);
+try {
+  // wait for the remote signer to connect, optionally passing an AbortSignal
+  await signer.waitForSigner(signal);
+  console.log("Connected!");
+
+  const pubkey = await signer.getPublicKey();
+  console.log("Users pubkey is", pubkey);
+} catch (error) {
+  console.error("Connection was aborted:", error);
+}
+
+// Later, if you need to abort the waiting process:
+setTimeout(() => {
+  controller.abort();
+}, 10_000);
 ```
 
 ## Relay Communication
