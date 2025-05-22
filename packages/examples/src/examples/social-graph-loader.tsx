@@ -1,7 +1,6 @@
 import { EventStore, IEventStore, mapEventsToStore } from "applesauce-core";
 import { getProfilePointersFromList, mergeRelaySets } from "applesauce-core/helpers";
-import { AddressPointerLoader } from "applesauce-loaders";
-import { addressPointerLoader } from "applesauce-loaders";
+import { addressPointerLoader, AddressPointerLoader } from "applesauce-loaders/loaders";
 import { LoadableAddressPointer } from "applesauce-loaders/helpers/address-pointer";
 import { wrapGeneratorFunction } from "applesauce-loaders/operators";
 import { useObservable } from "applesauce-react/hooks";

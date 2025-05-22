@@ -1,5 +1,5 @@
 import { EventStore, mapEventsToStore } from "applesauce-core";
-import { eventPointerLoader } from "applesauce-loaders";
+import { eventPointerLoader } from "applesauce-loaders/loaders";
 import { ComponentMap, useObservable, useRenderedContent } from "applesauce-react/hooks";
 import { onlyEvents, RelayPool } from "applesauce-relay";
 import { NostrEvent } from "nostr-tools";

@@ -1,5 +1,5 @@
 import { getSeenRelays, mergeRelaySets } from "applesauce-core/helpers";
-import { timelineLoader } from "applesauce-loaders";
+import { timelineLoader } from "applesauce-loaders/loaders";
 import { RelayPool } from "applesauce-relay";
 
 const pool = new RelayPool();

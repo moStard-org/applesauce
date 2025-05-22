@@ -9,7 +9,7 @@ import {
   getZapSender,
 } from "applesauce-core/helpers";
 import { ProfileQuery } from "applesauce-core/queries";
-import { addressPointerLoader, eventPointerLoader } from "applesauce-loaders";
+import { addressPointerLoader, eventPointerLoader } from "applesauce-loaders/loaders";
 import { useObservable } from "applesauce-react/hooks";
 import { onlyEvents, RelayPool } from "applesauce-relay";
 import { kinds, NostrEvent } from "nostr-tools";

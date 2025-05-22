@@ -1,5 +1,6 @@
 import { EventStore, mapEventsToStore, mapEventsToTimeline, QueryStore } from "applesauce-core";
 import { getDisplayName, getProfilePicture, getSeenRelays } from "applesauce-core/helpers";
+import { addressPointerLoader } from "applesauce-loaders/loaders";
 import { useObservable } from "applesauce-react/hooks";
 import { onlyEvents, RelayPool } from "applesauce-relay";
 import { NostrEvent } from "nostr-tools";
@@ -7,7 +8,6 @@ import { useEffect, useMemo, useState } from "react";
 import { map } from "rxjs";
 
 import { RelayPicker } from "../components/relay-picker";
-import { addressPointerLoader } from "applesauce-loaders";
 
 // Create an event store for all events
 const eventStore = new EventStore();

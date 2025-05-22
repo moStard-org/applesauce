@@ -1,6 +1,6 @@
 import { EventStore } from "applesauce-core";
 import { getSeenRelays, mergeRelaySets, unixNow } from "applesauce-core/helpers";
-import { timelineLoader } from "applesauce-loaders";
+import { timelineLoader } from "applesauce-loaders/loaders";
 import { RelayPool } from "applesauce-relay";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useThrottle } from "react-use";

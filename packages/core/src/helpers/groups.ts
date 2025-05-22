@@ -8,8 +8,11 @@ export const GROUP_MESSAGE_KIND = 9;
 
 /** NIP-29 group pointer */
 export type GroupPointer = {
+  /** the id of the group */
   id: string;
+  /** The url to the relay with wss:// or ws:// protocol */
   relay: string;
+  /** The name of the group */
   name?: string;
 };
 
@@ -18,8 +21,11 @@ export type GroupPointer = {
  * @throws
  */
 export function decodeGroupPointer(str: string): GroupPointer {
-  const [relay, id] = str.split("'");
+  let [relay, id] = str.split("'");
   if (!relay) throw new Error("Group pointer missing relay");
+
+  // Prepend wss:// if missing
+  if (!relay.match(/^wss?:/)) relay = `wss://${relay}`;
 
   return { relay, id: id || "_" };
 }
@@ -33,6 +39,13 @@ export function encodeGroupPointer(pointer: GroupPointer) {
 
 export const GroupsPublicSymbol = Symbol.for("groups-public");
 export const GroupsHiddenSymbol = Symbol.for("groups-hidden");
+
+/** gets a {@link GroupPointer} from a "h" tag if it has a relay hint */
+export function getGroupPointerFromHTag(tag: string[]): GroupPointer | undefined {
+  const [_, id, relay] = tag;
+  if (!id || !relay) return undefined;
+  return { id, relay };
+}
 
 /** gets a {@link GroupPointer} from a "group" tag */
 export function getGroupPointerFromGroupTag(tag: string[]): GroupPointer {
