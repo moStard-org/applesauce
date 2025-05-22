@@ -189,6 +189,13 @@ describe("Regular Expressions", () => {
       expect(matches[0][1]).toBe("世界");
       expect(matches[1][1]).toBe("привет");
     });
+
+    it("should not match hashtags in URLs", () => {
+      const text =
+        "testing urls wss://relay.damus.io ircs://irc.zeronode.net:6697/#nostr https://github.com/hzrd149/applesauce?tab=readme-ov-file#running-tests";
+      const matches = Array.from(text.matchAll(Expressions.hashtag));
+      expect(matches).toHaveLength(0);
+    });
   });
 
   describe("Expressions.lightning", () => {

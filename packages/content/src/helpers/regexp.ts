@@ -16,7 +16,7 @@ export const Expressions = {
   },
   get hashtag() {
     // NOTE: cant use \b here because it uses \w which only matches latin letters
-    return /(?<=^|[^\p{L}#])#([\p{L}\p{N}\p{M}]+)(?=\p{Z}|$|\s)/gu;
+    return /(?<=^|[^\p{L}#\/])#([\p{L}\p{N}\p{M}]+)(?=\p{Z}|$|\s)/gu;
   },
   get lightning() {
     return /(?:lightning:)?(LNBC[A-Za-z0-9]+)/gim;
