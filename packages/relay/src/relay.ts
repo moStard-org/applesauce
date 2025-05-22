@@ -16,6 +16,7 @@ import {
   map,
   merge,
   mergeMap,
+  mergeWith,
   NEVER,
   Observable,
   of,
@@ -139,7 +140,7 @@ export class Relay implements IRelay {
     if (this.receivedAuthRequiredForEvent.value) this.receivedAuthRequiredForEvent.next(false);
   }
 
-  /** An internal observable that is responsible for watching all messages and updating state */
+  /** An internal observable that is responsible for watching all messages and updating state, subscribing to it will trigger a connection to the relay */
   protected watchTower: Observable<never>;
 
   constructor(
@@ -273,13 +274,15 @@ export class Relay implements IRelay {
       .subscribe(() => this.ready$.next(true));
   }
 
-  /** Wait for ready and authenticated */
+  /** Wait for authentication state, make connection and then wait for authentication if required */
   protected waitForAuth<T extends unknown = unknown>(
     // NOTE: require BehaviorSubject so it always has a value
     requireAuth: Observable<boolean>,
     observable: Observable<T>,
   ): Observable<T> {
     return combineLatest([requireAuth, this.authenticated$]).pipe(
+      // Once the auth state is known, make a connection and watch for auth challenges
+      mergeWith(this.watchTower),
       // wait for auth not required or authenticated
       filter(([required, authenticated]) => !required || authenticated),
       // complete after the first value so this does not repeat
@@ -389,11 +392,8 @@ export class Relay implements IRelay {
       );
     });
 
-    // Start the watch tower with the observable
-    const withWatchTower = merge(this.watchTower, base);
-
-    // Add complete operators
-    const observable = withWatchTower.pipe(
+    // Start the watch tower and add complete operators
+    const observable = merge(this.watchTower, base).pipe(
       // complete on first value
       take(1),
       // listen for OK auth-required
