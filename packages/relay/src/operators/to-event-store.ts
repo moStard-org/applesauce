@@ -6,7 +6,10 @@ import { mapEventsToStore, mapEventsToTimeline } from "applesauce-core/observabl
 import { SubscriptionResponse } from "../types.js";
 import { completeOnEose } from "./complete-on-eose.js";
 
-/** Adds all events to event store and returns a deduplicated timeline when EOSE is received */
+/**
+ * Adds all events to event store and returns a deduplicated timeline when EOSE is received
+ * @deprecated use `mapEventsToStore` and `mapEventsToTimeline` instead
+ */
 export function toEventStore(eventStore: IEventStore): OperatorFunction<SubscriptionResponse, NostrEvent[]> {
   return (source) =>
     source.pipe(

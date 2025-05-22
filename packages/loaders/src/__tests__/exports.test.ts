@@ -5,16 +5,27 @@ describe("exports", () => {
   it("should export the expected functions", () => {
     expect(Object.keys(exports).sort()).toMatchInlineSnapshot(`
       [
-        "CacheTimelineLoader",
+        "COMMON_LIST_KINDS",
+        "COMMON_SET_KINDS",
         "DnsIdentityLoader",
-        "Loader",
         "Operators",
-        "RelayTimelineLoader",
-        "ReplaceableLoader",
-        "SingleEventLoader",
         "TagValueLoader",
-        "TimelineLoader",
-        "UserSetsLoader",
+        "addressPointerLoader",
+        "addressPointerLoadingSequence",
+        "cacheAddressPointersLoader",
+        "cacheEventPointersLoader",
+        "cacheTimelineLoader",
+        "eventPointerLoader",
+        "eventPointersLoadingSequence",
+        "filterBlockLoader",
+        "relayEventPointersLoader",
+        "relayHintsAddressPointersLoader",
+        "relayHintsEventPointersLoader",
+        "relaysAddressPointersLoader",
+        "relaysEventPointersLoader",
+        "relaysTimelineLoader",
+        "timelineLoader",
+        "userListsLoader",
       ]
     `);
   });

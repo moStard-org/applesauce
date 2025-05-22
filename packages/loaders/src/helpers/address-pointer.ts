@@ -1,9 +1,9 @@
-import { AddressPointerWithoutD, getReplaceableUID, mergeRelaySets } from "applesauce-core/helpers";
+import { AddressPointerWithoutD, createReplaceableAddress, mergeRelaySets } from "applesauce-core/helpers";
 import { Filter } from "nostr-tools";
 import { isAddressableKind, isReplaceableKind } from "nostr-tools/kinds";
 
-import { unique } from "./array.js";
 import { AddressPointer } from "nostr-tools/nip19";
+import { unique } from "./array.js";
 
 export type LoadableAddressPointer = {
   kind: number;
@@ -12,7 +12,7 @@ export type LoadableAddressPointer = {
   identifier?: string;
   /** Relays to load from */
   relays?: string[];
-  /** Load this address pointer even if it has already been loaded */
+  /** Ignore all forms of caching */
   force?: boolean;
 };
 
@@ -89,6 +89,7 @@ export function groupAddressPointersByPubkeyOrKind(pointers: AddressPointerWitho
   return pubkeys.size < kinds.size ? groupAddressPointersByPubkey(pointers) : groupAddressPointersByKind(pointers);
 }
 
+/** @deprecated use mergeRelaySets instead */
 export function getRelaysFromPointers(pointers: AddressPointerWithoutD[]) {
   const relays = new Set<string>();
 
@@ -102,10 +103,6 @@ export function getRelaysFromPointers(pointers: AddressPointerWithoutD[]) {
   return relays;
 }
 
-export function getAddressPointerId<T extends AddressPointerWithoutD>(pointer: T): string {
-  return getReplaceableUID(pointer.kind, pointer.pubkey, pointer.identifier);
-}
-
 /** deep clone a loadable pointer to ensure its safe to modify */
 function cloneLoadablePointer(pointer: LoadableAddressPointer): LoadableAddressPointer {
   const clone = { ...pointer };
@@ -115,13 +112,13 @@ function cloneLoadablePointer(pointer: LoadableAddressPointer): LoadableAddressP
 
 /** deduplicates an array of address pointers and merges their relays array */
 export function consolidateAddressPointers(pointers: LoadableAddressPointer[]): LoadableAddressPointer[] {
-  const byId = new Map<string, LoadableAddressPointer>();
+  const byAddress = new Map<string, LoadableAddressPointer>();
 
   for (const pointer of pointers) {
-    const id = getAddressPointerId(pointer);
-    if (byId.has(id)) {
+    const addr = createReplaceableAddress(pointer.kind, pointer.pubkey, pointer.identifier);
+    if (byAddress.has(addr)) {
       // duplicate, merge pointers
-      const current = byId.get(id)!;
+      const current = byAddress.get(addr)!;
 
       // merge relays
       if (pointer.relays) {
@@ -133,9 +130,9 @@ export function consolidateAddressPointers(pointers: LoadableAddressPointer[]): 
       if (pointer.force !== undefined) {
         current.force = current.force || pointer.force;
       }
-    } else byId.set(id, cloneLoadablePointer(pointer));
+    } else byAddress.set(addr, cloneLoadablePointer(pointer));
   }
 
   // return consolidated pointers
-  return Array.from(byId.values());
+  return Array.from(byAddress.values());
 }

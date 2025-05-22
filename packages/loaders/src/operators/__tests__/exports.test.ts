@@ -5,10 +5,14 @@ describe("exports", () => {
   it("should export the expected functions", () => {
     expect(Object.keys(exports).sort()).toMatchInlineSnapshot(`
       [
+        "concatGeneratorMap",
         "distinctRelays",
         "distinctRelaysBatch",
         "distinctTimeout",
-        "generatorSequence",
+        "fromGenerator",
+        "generator",
+        "switchGeneratorMap",
+        "wrapGeneratorFunction",
       ]
     `);
   });

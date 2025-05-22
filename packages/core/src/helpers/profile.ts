@@ -24,7 +24,7 @@ export type ProfileContent = {
 };
 
 /** Returns the parsed profile content for a kind 0 event */
-export function getProfileContent(event: NostrEvent) {
+export function getProfileContent(event: NostrEvent): ProfileContent {
   return getOrComputeCachedValue(event, ProfileContentSymbol, () => {
     const profile = JSON.parse(event.content) as ProfileContent;
 
@@ -43,7 +43,7 @@ export function getProfileContent(event: NostrEvent) {
 /** Checks if the content of the kind 0 event is valid JSON */
 export function isValidProfile(profile?: NostrEvent) {
   if (!profile) return false;
-  if (profile.kind !== kinds.Metadata) return false;
+  if (profile.kind !== kinds.Metadata && profile.kind !== kinds.Handlerinformation) return false;
   try {
     getProfileContent(profile);
 
@@ -53,7 +53,30 @@ export function isValidProfile(profile?: NostrEvent) {
   }
 }
 
-/** Gets the display name from a profile with fallbacks */
+/** Gets the profile picture from a nostr event or profile content with fallback */
+export function getProfilePicture(metadata: ProfileContent | NostrEvent | undefined): string | undefined;
+export function getProfilePicture(metadata: ProfileContent | NostrEvent | undefined, fallback: string): string;
+export function getProfilePicture(
+  metadata: ProfileContent | NostrEvent | undefined,
+  fallback?: string,
+): string | undefined;
+export function getProfilePicture(
+  metadata: ProfileContent | NostrEvent | undefined,
+  fallback?: string,
+): string | undefined {
+  if (!metadata) return fallback;
+
+  // Get the metadata from the nostr event
+  if ("pubkey" in metadata && "id" in metadata && "sig" in metadata) {
+    if (isValidProfile(metadata)) metadata = getProfileContent(metadata);
+    else metadata = undefined;
+  }
+
+  // Return the display name or fallback
+  return (metadata?.picture || metadata?.image || fallback)?.trim();
+}
+
+/** Gets the display name from a profile with fallback */
 export function getDisplayName(metadata: NostrEvent, fallback?: string): string;
 export function getDisplayName(metadata: undefined): undefined;
 export function getDisplayName(metadata: ProfileContent | undefined): string | undefined;

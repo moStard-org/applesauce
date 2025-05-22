@@ -197,7 +197,7 @@ describe("req", () => {
     expect(secondSub.getValues()).toEqual([expect.objectContaining(mockEvent), "EOSE"]);
   });
 
-  it("should wait for authentication if relay info document has limitations.auth_required = true", async () => {
+  it("should open connection and wait for authentication if relay info document has limitations.auth_required = true", async () => {
     // Mock the fetchInformationDocument method to return a document with auth_required = true
     vi.spyOn(Relay, "fetchInformationDocument").mockImplementation(() =>
       of({
@@ -220,11 +220,26 @@ describe("req", () => {
     // Wait 10ms to ensure the information document is fetched
     await new Promise((resolve) => setTimeout(resolve, 10));
 
+    // Wait for connection
+    await server.connected;
+
     // Verify no REQ message was sent yet (waiting for auth)
     expect(server).not.toHaveReceivedMessages(["REQ", "sub1", { kinds: [1] }]);
 
+    // Send AUTH challenge
+    server.send(["AUTH", "challenge"]);
+
+    // Send auth response
+    subscribeSpyTo(relay.auth(mockEvent));
+
+    // Verify the auth event was sent
+    await expect(server.nextMessage).resolves.toEqual(["AUTH", mockEvent]);
+
+    // Accept auth
+    server.send(["OK", mockEvent.id, true, ""]);
+
     // Simulate successful authentication
-    relay.authenticated$.next(true);
+    expect(relay.authenticated).toBe(true);
 
     // Now the REQ should be sent
     await expect(server).toReceiveMessage(["REQ", "sub1", { kinds: [1] }]);

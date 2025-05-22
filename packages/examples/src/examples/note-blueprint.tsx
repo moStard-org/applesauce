@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useAsync } from "react-use";
-import { Container, Typography } from "@mui/material";
 import { EventFactory } from "applesauce-factory";
 import JsonBlock from "../components/json-block";
 
@@ -11,23 +10,18 @@ export default function NoteBlueprintExample() {
   const { value: output } = useAsync(() => factory.note(input), [input]);
 
   return (
-    <Container>
-      <Typography variant="h5" gutterBottom>
-        NoteBlueprint
-      </Typography>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">NoteBlueprint</h1>
 
       <textarea
-        rows={6}
-        cols={120}
+        className="textarea textarea-bordered w-full h-48 mb-4"
         placeholder="Enter text here..."
         value={input}
         onChange={(e) => setInput(e.target.value)}
       />
 
-      <Typography variant="h6" gutterBottom>
-        Event template
-      </Typography>
+      <h2 className="text-xl font-semibold mb-2">Event template</h2>
       {output && <JsonBlock value={output} />}
-    </Container>
+    </div>
   );
 }

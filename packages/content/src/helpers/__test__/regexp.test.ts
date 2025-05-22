@@ -111,6 +111,19 @@ describe("Regular Expressions", () => {
       expect(matches).toHaveLength(1);
       expect(matches[0][1]).toBe("npub180cvv07tjdrrgpa0j7j7tmnyl2yr6yr7l8j4s3evf6u64th6gkwsyjh6w6");
     });
+
+    it("should match nostr links in URLs", () => {
+      const text =
+        "https://npub1wyuh3scfgzqmxn709a2fzuemps389rxnk7nfgege6s847zze3tuqfl87ez.nsite.lol/n/nevent1qvzqqqqqqypzp022u0n8u2vkf4y5zu3xrhz989wgna4a9em5vshrvcf8zuwlhq04qyghwumn8ghj7mn0wd68ytnhd9hx2tcppemhxue69uhkummn9ekx7mp0qqsz7ck33xzlpcf2338ufrarks2cxqzk2rp925qe38wvlevhxv9pg6syy7gc7";
+      const matches = Array.from(text.matchAll(Expressions.nostrLink));
+      expect(matches).toHaveLength(2);
+      expect(matches).toEqual([
+        expect.arrayContaining(["npub1wyuh3scfgzqmxn709a2fzuemps389rxnk7nfgege6s847zze3tuqfl87ez"]),
+        expect.arrayContaining([
+          "nevent1qvzqqqqqqypzp022u0n8u2vkf4y5zu3xrhz989wgna4a9em5vshrvcf8zuwlhq04qyghwumn8ghj7mn0wd68ytnhd9hx2tcppemhxue69uhkummn9ekx7mp0qqsz7ck33xzlpcf2338ufrarks2cxqzk2rp925qe38wvlevhxv9pg6syy7gc7",
+        ]),
+      ]);
+    });
   });
 
   describe("Expressions.emoji", () => {
@@ -175,6 +188,13 @@ describe("Regular Expressions", () => {
       expect(matches).toHaveLength(2);
       expect(matches[0][1]).toBe("世界");
       expect(matches[1][1]).toBe("привет");
+    });
+
+    it("should not match hashtags in URLs", () => {
+      const text =
+        "testing urls wss://relay.damus.io ircs://irc.zeronode.net:6697/#nostr https://github.com/hzrd149/applesauce?tab=readme-ov-file#running-tests";
+      const matches = Array.from(text.matchAll(Expressions.hashtag));
+      expect(matches).toHaveLength(0);
     });
   });
 
@@ -251,6 +271,13 @@ describe("Token Regular Expressions", () => {
       const matches = Array.from(text.matchAll(Tokens.nostrLink));
       expect(matches).toHaveLength(1);
       expect(matches[0][0].trim()).toBe(npub);
+    });
+
+    it("should not match links in URLs", async () => {
+      const text =
+        "Checkout my app https://zap.stream/naddr1qqjx2wtzx93rycmz94nrqvf3956rqep3943xgvec956xxvnxxucxze33v93rvq3qeaz6dwsnvwkha5sn5puwwyxjgy26uusundrm684lg3vw4ma5c2jsxpqqqpmxw6td7rf";
+      const matches = Array.from(text.matchAll(Tokens.nostrLink));
+      expect(matches).toHaveLength(0);
     });
   });
 

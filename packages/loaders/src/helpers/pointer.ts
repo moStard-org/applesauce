@@ -1,5 +1,6 @@
 import { mergeRelaySets } from "applesauce-core/helpers";
 
+/** Takes an array of objects with a `relays` property and returns a map of relays to the objects */
 export function groupByRelay<T extends { relays?: string[] }>(pointers: T[], extraRelays?: string[]): Map<string, T[]> {
   let byRelay = new Map<string, T[]>();
   for (const pointer of pointers) {

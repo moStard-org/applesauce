@@ -21,9 +21,6 @@ function getFollowSetEvent(events: ISyncEventStore, self: string, identifier: No
 
 /**
  * An action that creates a new follow set
- * @param identifier the "d" tag of the follow set
- * @param pubkeys the pubkeys to add to the follow set
- * @param hidden set to true to create a hidden follow set
  * @throws if a follow set already exists
  */
 export function CreateFollowSet(

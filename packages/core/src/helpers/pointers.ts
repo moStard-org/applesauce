@@ -1,20 +1,23 @@
 import {
   AddressPointer,
-  DecodeResult,
   EventPointer,
   naddrEncode,
+  ProfilePointer,
   neventEncode,
   noteEncode,
   nprofileEncode,
   npubEncode,
   nsecEncode,
-  ProfilePointer,
+  decode,
 } from "nostr-tools/nip19";
 import { getPublicKey, kinds, NostrEvent } from "nostr-tools";
 
 import { getReplaceableIdentifier } from "./event.js";
 import { isAddressableKind } from "nostr-tools/kinds";
-import { isSafeRelayURL } from "./relays.js";
+import { isSafeRelayURL, mergeRelaySets } from "./relays.js";
+import { isHexKey } from "./string.js";
+
+export type DecodeResult = ReturnType<typeof decode>;
 
 export type AddressPointerWithoutD = Omit<AddressPointer, "identifier"> & {
   identifier?: string;
@@ -102,7 +105,7 @@ export function getEventPointerFromETag(tag: string[]): EventPointer {
 }
 
 /**
- * Gets an EventPointer form a "q" tag
+ * Gets an EventPointer form a common "q" tag
  * @throws
  */
 export function getEventPointerFromQTag(tag: string[]): EventPointer {
@@ -115,7 +118,7 @@ export function getEventPointerFromQTag(tag: string[]): EventPointer {
 }
 
 /**
- * Get an AddressPointer from an "a" tag
+ * Get an AddressPointer from a common "a" tag
  * @throws
  */
 export function getAddressPointerFromATag(tag: string[]): AddressPointer {
@@ -126,41 +129,18 @@ export function getAddressPointerFromATag(tag: string[]): AddressPointer {
 }
 
 /**
- * Gets a ProfilePointer from a "p" tag
+ * Gets a ProfilePointer from a common "p" tag
  * @throws
  */
 export function getProfilePointerFromPTag(tag: string[]): ProfilePointer {
   if (!tag[1]) throw new Error("Missing pubkey in tag");
+  if (!isHexKey(tag[1])) throw new Error("Invalid pubkey");
   const pointer: ProfilePointer = { pubkey: tag[1] };
   if (tag[2] && isSafeRelayURL(tag[2])) pointer.relays = [tag[2]];
   return pointer;
 }
 
-/** Parses "e", "a", "p", and "q" tags into a pointer */
-export function getPointerFromTag(tag: string[]): DecodeResult | null {
-  try {
-    switch (tag[0]) {
-      case "e":
-        return { type: "nevent", data: getEventPointerFromETag(tag) };
-
-      case "a":
-        return {
-          type: "naddr",
-          data: getAddressPointerFromATag(tag),
-        };
-
-      case "p":
-        return { type: "nprofile", data: getProfilePointerFromPTag(tag) };
-
-      // NIP-18 quote tags
-      case "q":
-        return { type: "nevent", data: getEventPointerFromETag(tag) };
-    }
-  } catch (error) {}
-
-  return null;
-}
-
+/** Checks if a pointer is an AddressPointer */
 export function isAddressPointer(pointer: DecodeResult["data"]): pointer is AddressPointer {
   return (
     typeof pointer !== "string" &&
@@ -169,6 +149,8 @@ export function isAddressPointer(pointer: DecodeResult["data"]): pointer is Addr
     Reflect.has(pointer, "kind")
   );
 }
+
+/** Checks if a pointer is an EventPointer */
 export function isEventPointer(pointer: DecodeResult["data"]): pointer is EventPointer {
   return typeof pointer !== "string" && Reflect.has(pointer, "id");
 }
@@ -194,10 +176,7 @@ export function getAddressPointerForEvent(event: NostrEvent, relays?: string[]):
   };
 }
 
-/**
- * Returns an EventPointer for an event
- * @throws
- */
+/** Returns an EventPointer for an event */
 export function getEventPointerForEvent(event: NostrEvent, relays?: string[]): EventPointer {
   return {
     id: event.id,
@@ -207,29 +186,26 @@ export function getEventPointerForEvent(event: NostrEvent, relays?: string[]): E
   };
 }
 
-/** Returns a pointer for a given event */
+/**
+ * Returns a pointer for a given event
+ * @throws
+ */
 export function getPointerForEvent(event: NostrEvent, relays?: string[]): DecodeResult {
   if (kinds.isAddressableKind(event.kind)) {
-    const d = getReplaceableIdentifier(event);
-
     return {
       type: "naddr",
-      data: {
-        identifier: d,
-        kind: event.kind,
-        pubkey: event.pubkey,
-        relays,
-      },
+      data: getAddressPointerForEvent(event, relays),
     };
   } else {
     return {
       type: "nevent",
-      data: {
-        id: event.id,
-        kind: event.kind,
-        author: event.pubkey,
-        relays,
-      },
+      data: getEventPointerForEvent(event, relays),
     };
   }
+}
+
+/** Adds relay hints to a pointer object that has a relays array */
+export function addRelayHintsToPointer<T extends { relays?: string[] }>(pointer: T, relays?: Iterable<string>): T {
+  if (!relays) return pointer;
+  else return { ...pointer, relays: mergeRelaySets(relays, pointer.relays) };
 }
