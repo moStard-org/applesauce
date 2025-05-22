@@ -98,8 +98,11 @@ type Subscribable<T extends unknown> = {
   subscribe: (observer: Partial<Observer<T>>) => Unsubscribable;
 };
 
-export type NostrSubscriptionMethod = (relays: string[], filters: Filter[]) => Subscribable<NostrEvent>;
-export type NostrPublishMethod = (relays: string[], event: NostrEvent) => any | Promise<any>;
+/** A method used to subscribe to events on a set of relays */
+export type NostrSubscriptionMethod = (relays: string[], filters: Filter[]) => Subscribable<NostrEvent | string>;
+
+/** A method used for publishing an event, can return a Promise that completes when published or an Observable that completes when published*/
+export type NostrPublishMethod = (relays: string[], event: NostrEvent) => Promise<any> | Subscribable<any>;
 
 export type NostrConnectAppMetadata = {
   name?: string;
@@ -208,7 +211,7 @@ export class NostrConnectSigner implements Nip07Interface {
         "#p": [pubkey],
       },
     ]).subscribe({
-      next: (event) => this.handleEvent(event),
+      next: (event) => typeof event !== "string" && this.handleEvent(event),
     });
 
     this.log("Opened", this.relays);
@@ -308,12 +311,18 @@ export class NostrConnectSigner implements Nip07Interface {
     const request: NostrConnectRequest<T> = { id, method, params };
     const encrypted = await this.signer.nip44.encrypt(this.remote, JSON.stringify(request));
     const event = await this.createRequestEvent(encrypted, this.remote, kind);
-    this.log(`Sending request ${id} (${method}) ${JSON.stringify(params)}`);
+    this.log(`Sending ${id} (${method}) ${JSON.stringify(params)}`);
 
     const p = createDefer<ResponseResults[T]>();
     this.requests.set(id, p);
 
-    await this.publishMethod?.(this.relays, event);
+    const result = this.publishMethod?.(this.relays, event);
+
+    // Handle returned Promise or Observable
+    if (result instanceof Promise) await result;
+    else if ("subscribe" in result) await new Promise<void>((res) => result.subscribe({ complete: res }));
+
+    this.log(`Sent ${id} (${method})`);
 
     return p;
   }
@@ -398,6 +407,7 @@ export class NostrConnectSigner implements Nip07Interface {
     await this.requireConnection();
     return this.makeRequest(NostrConnectMethod.GetPublicKey, []);
   }
+
   /** Request to sign an event */
   async signEvent(template: EventTemplate & { pubkey?: string }) {
     await this.requireConnection();

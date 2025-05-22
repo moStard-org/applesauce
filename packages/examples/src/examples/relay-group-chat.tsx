@@ -2,11 +2,12 @@ import { EventStore, mapEventsToStore, mapEventsToTimeline, QueryStore } from "a
 import {
   decodeGroupPointer,
   getDisplayName,
-  getProfileContent,
+  getProfilePicture,
   getSeenRelays,
   groupMessageEvents,
   GroupPointer,
   mergeRelaySets,
+  ProfileContent,
 } from "applesauce-core/helpers";
 import { EventFactory } from "applesauce-factory";
 import { GroupMessageBlueprint } from "applesauce-factory/blueprints";
@@ -16,8 +17,9 @@ import { useObservable } from "applesauce-react/hooks";
 import { onlyEvents, RelayPool } from "applesauce-relay";
 import { ExtensionSigner } from "applesauce-signers";
 import { NostrEvent } from "nostr-tools";
+import { ProfilePointer } from "nostr-tools/nip19";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { lastValueFrom, map, startWith } from "rxjs";
+import { ignoreElements, lastValueFrom, map, mergeWith, Observable, shareReplay, startWith } from "rxjs";
 
 const eventStore = new EventStore();
 const queryStore = new QueryStore(eventStore);
@@ -33,13 +35,33 @@ const addressLoader = addressPointerLoader(pool.request.bind(pool), {
   lookupRelays: ["wss://purplepag.es/"],
 });
 
+const queries = new Map<string, Observable<ProfileContent | undefined>>();
+function profileQuery(user: ProfilePointer): Observable<ProfileContent | undefined> {
+  const key = `${user.pubkey}-${user.relays?.join(",")}`;
+  if (queries.has(key)) return queries.get(key)!;
+
+  let observable: Observable<ProfileContent | undefined>;
+  const model = queryStore.profile(user.pubkey);
+  if (eventStore.hasReplaceable(0, user.pubkey)) {
+    observable = model;
+  } else {
+    observable = addressLoader({ pubkey: user.pubkey, kind: 0, relays: user.relays }).pipe(
+      ignoreElements(),
+      mergeWith(model),
+    );
+  }
+
+  // Cache results
+  observable = observable.pipe(shareReplay(1));
+
+  queries.set(key, observable);
+  return observable;
+}
+
 function ChatMessageGroup({ messages }: { messages: NostrEvent[] }) {
-  const profile$ = useMemo(
-    () => addressLoader({ pubkey: messages[0].pubkey, kind: 0, relays: mergeRelaySets(getSeenRelays(messages[0])) }),
-    [messages[0].pubkey],
+  const profile = useObservable(
+    profileQuery({ pubkey: messages[0].pubkey, relays: mergeRelaySets(getSeenRelays(messages[0])) }),
   );
-  const profile = useObservable(profile$);
-  const metadata = useMemo(() => profile && getProfileContent(profile), [profile]);
 
   const time = messages[0].created_at;
 
@@ -47,7 +69,10 @@ function ChatMessageGroup({ messages }: { messages: NostrEvent[] }) {
     <div className="chat chat-start">
       <div className="chat-image avatar">
         <div className="w-10 rounded-full">
-          <img alt={getDisplayName(profile)} src={metadata?.picture || metadata?.image} />
+          <img
+            alt={getDisplayName(profile)}
+            src={getProfilePicture(profile, `https://robohash.org/${messages[0].pubkey}`)}
+          />
         </div>
       </div>
       <div className="chat-header">
