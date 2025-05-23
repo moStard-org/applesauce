@@ -7,23 +7,39 @@ import { decode, EventPointer } from "nostr-tools/nip19";
 import { useMemo, useState } from "react";
 import { merge } from "rxjs";
 import { RelayPicker } from "../components/relay-picker";
+import { isAudioURL, isImageURL, isVideoURL } from "applesauce-core/helpers";
+import { Link } from "applesauce-content/nast";
 
 // Create stores and relay pool
 const eventStore = new EventStore();
 const pool = new RelayPool();
 
+/** Create a component for rendering media links */
+function LinkRenderer({ node: link }: { node: Link }) {
+  if (isImageURL(link.href))
+    return (
+      <a href={link.href} target="_blank">
+        <img src={link.href} className="max-h-64 rounded" alt="Gallery image" />
+      </a>
+    );
+  else if (isVideoURL(link.href)) return <video src={link.href} className="max-h-64 rounded" controls />;
+  else if (isAudioURL(link.href)) return <audio src={link.href} className="max-h-64 rounded" controls />;
+  else
+    return (
+      <a href={link.href} target="_blank" className="text-blue-500 hover:underline">
+        {link.value}
+      </a>
+    );
+}
+
 // Create components for rendering content
 const components: ComponentMap = {
   text: ({ node }) => <span>{node.value}</span>,
-  link: ({ node }) => (
-    <a href={node.href} target="_blank" className="text-blue-500 hover:underline">
-      {node.value}
-    </a>
-  ),
+  link: LinkRenderer,
   mention: ({ node }) => (
-    <span className="text-purple-500">
-      @{node.encoded.slice(0, 10)}...{node.encoded.slice(-5)}
-    </span>
+    <a href={`https://njump.me/${node.encoded}`} target="_blank" className="text-purple-500 hover:underline">
+      @{node.encoded.slice(0, 8)}...
+    </a>
   ),
   hashtag: ({ node }) => <span className="text-orange-500">#{node.hashtag}</span>,
   emoji: ({ node }) => (

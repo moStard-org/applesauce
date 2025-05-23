@@ -9,7 +9,7 @@ import { scan } from "rxjs";
 import { Link } from "applesauce-content/nast";
 import { isAudioURL, isImageURL, isVideoURL } from "applesauce-core/helpers";
 import { RelayPicker } from "../components/relay-picker";
-import { neventEncode } from "nostr-tools/nip19";
+import { neventEncode, npubEncode } from "nostr-tools/nip19";
 
 // Create an event store for all events
 const eventStore = new EventStore();
@@ -43,7 +43,7 @@ const components: ComponentMap = {
   link: LinkRenderer,
   mention: ({ node }) => (
     <a href={`https://njump.me/${node.encoded}`} target="_blank" className="text-purple-500 hover:underline">
-      @{node.encoded.slice(0, 8)}...
+      @{node.encoded.slice(0, 9)}...{node.encoded.slice(-4)}
     </a>
   ),
   hashtag: ({ node }) => <span className="text-orange-500">#{node.hashtag}</span>,
@@ -62,6 +62,7 @@ const components: ComponentMap = {
 /** A component for rendering note events */
 function Note({ note }: { note: NostrEvent }) {
   const content = useRenderedContent(note, components);
+  const npub = npubEncode(note.pubkey);
 
   return (
     <div className="card bg-base-100 shadow-md">
@@ -72,7 +73,9 @@ function Note({ note }: { note: NostrEvent }) {
               <img src={`https://robohash.org/${note.pubkey}.png`} alt="Profile" />
             </div>
           </div>
-          <h2 className="card-title">{note.pubkey.slice(0, 8)}...</h2>
+          <h2 className="card-title">
+            {npub.slice(0, 9)}...{npub.slice(-4)}
+          </h2>
           <a href={`https://njump.me/${neventEncode(note)}`} target="_blank" className="text-blue-500 hover:underline">
             Open in Njump
           </a>
@@ -86,6 +89,7 @@ function Note({ note }: { note: NostrEvent }) {
 export default function AlgorithmicRelayFeed() {
   const [relay, setRelay] = useState(PRESET_RELAYS[0]);
   const [refresh, setRefresh] = useState(0);
+  const [pubkey, setPubkey] = useState<string | null>(null);
 
   // Subscribe to authentication state
   const challenge = useObservable(pool.relay(relay).challenge$);
@@ -99,6 +103,9 @@ export default function AlgorithmicRelayFeed() {
 
     try {
       const signer = new ExtensionSigner();
+
+      // get the users pubkey
+      setPubkey(await signer.getPublicKey());
 
       // Instead of storing the relay, get it from the pool when needed
       // This is a better pattern for real applications
@@ -135,10 +142,11 @@ export default function AlgorithmicRelayFeed() {
 
   // Subscribe to the timeline and get the events
   const events = useObservable(timeline$);
+  const npub = pubkey && npubEncode(pubkey);
 
   return (
     <div className="container mx-auto px-4">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center gap-2">
         <div className="join">
           <RelayPicker value={relay} onChange={setRelay} common={PRESET_RELAYS} />
 
@@ -160,6 +168,15 @@ export default function AlgorithmicRelayFeed() {
             </svg>
           </button>
         </div>
+
+        {authenticated && npub && (
+          <p>
+            Authenticated as{" "}
+            <span className="font-bold text-purple-500">
+              {npub.slice(0, 9)}...{npub.slice(-4)}
+            </span>
+          </p>
+        )}
       </div>
 
       {needsAuth && !authenticated ? (
