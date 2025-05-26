@@ -4,6 +4,7 @@ import { Link, Root } from "../nast/types.js";
 import { Tokens } from "../helpers/regexp.js";
 import { findAndReplace } from "../nast/find-and-replace.js";
 
+/** Finds and creates web links in the tree */
 export function links(): Transformer<Root> {
   return (tree) => {
     findAndReplace(tree, [

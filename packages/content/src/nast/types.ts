@@ -52,7 +52,8 @@ export interface Hashtag extends Node {
   name: string;
   /** The lowercase canonical name */
   hashtag: string;
-  tag: ["t", ...string[]];
+  /** The indexable tag for the hashtag. will be undefined if none was found */
+  tag?: ["t", ...string[]];
 }
 
 export interface Emoji extends Node {

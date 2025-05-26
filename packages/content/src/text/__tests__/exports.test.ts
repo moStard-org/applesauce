@@ -7,6 +7,7 @@ describe("exports", () => {
       [
         "TextNoteContentSymbol",
         "cashuTokens",
+        "createEventContentTree",
         "createTextNoteATS",
         "emojis",
         "galleries",

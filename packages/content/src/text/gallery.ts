@@ -3,7 +3,7 @@ import { convertToUrl, getURLFilename, IMAGE_EXT } from "applesauce-core/helpers
 
 import { Link, Root } from "../nast/types.js";
 
-/** Groups images into galleries in an ATS tree */
+/** Group images into galleries in an ATS tree */
 export function galleries(types = IMAGE_EXT): Transformer<Root> {
   return (tree) => {
     let links: Link[] = [];

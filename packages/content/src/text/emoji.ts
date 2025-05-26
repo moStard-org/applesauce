@@ -5,7 +5,7 @@ import { Emoji, Root } from "../nast/types.js";
 import { Tokens } from "../helpers/regexp.js";
 import { findAndReplace } from "../nast/find-and-replace.js";
 
-/** Adds emoji tags to text ATS */
+/** Finds and creates emoji nodes in the tree */
 export function emojis(): Transformer<Root> {
   return (tree) => {
     const event = tree.event;

@@ -3,7 +3,7 @@ import { EventTemplate, NostrEvent } from "nostr-tools";
 import { Root } from "../nast/types.js";
 
 /** Creates a {@link Root} ATS node for a text note */
-export function createTextNoteATS(event: NostrEvent | EventTemplate | string, content?: string): Root {
+export function createEventContentTree(event: NostrEvent | EventTemplate | string, content?: string): Root {
   return {
     type: "root",
     event: typeof event !== "string" ? event : undefined,
@@ -15,3 +15,6 @@ export function createTextNoteATS(event: NostrEvent | EventTemplate | string, co
     ],
   };
 }
+
+/** @deprecated use createEventContentTree instead */
+export const createTextNoteATS = createEventContentTree;
