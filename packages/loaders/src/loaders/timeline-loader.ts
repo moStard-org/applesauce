@@ -2,7 +2,8 @@ import { IEventStore, mapEventsToStore } from "applesauce-core";
 import { NostrEvent } from "nostr-tools";
 import { EMPTY, finalize, identity, merge, Observable, tap } from "rxjs";
 
-import { FilterRequest, NostrRequest, TimelessFilter } from "../types.js";
+import { makeCacheRequest } from "../helpers/cache.js";
+import { CacheRequest, FilterRequest, NostrRequest, TimelessFilter } from "../types.js";
 
 /** A loader that optionally takes a timestamp to load till and returns a stream of events */
 export type TimelineLoader = (since?: number) => Observable<NostrEvent>;
@@ -51,11 +52,11 @@ export function filterBlockLoader(
 
 /** Creates a loader that loads a timeline from a cache */
 export function cacheTimelineLoader(
-  request: FilterRequest,
+  request: CacheRequest,
   filters: TimelessFilter[],
   opts?: CommonTimelineLoaderOptions,
 ): TimelineLoader {
-  return filterBlockLoader(request, filters, opts);
+  return filterBlockLoader((filters) => makeCacheRequest(request, filters), filters, opts);
 }
 
 /** Creates a timeline loader that loads the same filters from multiple relays */

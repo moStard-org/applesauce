@@ -27,15 +27,18 @@ const addressLoader = addressPointerLoader(pool.request.bind(pool), {
 });
 
 function Note({ note }: { note: NostrEvent }) {
+  // Subscribe to the request and wait for the profile event
+  const profile = useObservable(queryStore.profile(note.pubkey));
+
+  // Load the profile if its not already loaded
   useEffect(() => {
+    if (profile) return;
+
     // Get the relays the event was from
     const relays = getSeenRelays(note);
     // Make a request to the address loader for the users profile
     addressLoader({ kind: 0, pubkey: note.pubkey, relays: relays && Array.from(relays) }).subscribe();
-  }, [note.pubkey]);
-
-  // Subscribe to the request and wait for the profile event
-  const profile = useObservable(queryStore.profile(note.pubkey));
+  }, [note.pubkey, profile]);
 
   return (
     <div className="card bg-base-100 shadow-md">

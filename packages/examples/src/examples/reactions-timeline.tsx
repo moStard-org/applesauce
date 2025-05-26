@@ -5,35 +5,76 @@ import {
   getProfilePicture,
   getReactionEventPointer,
   getSeenRelays,
+  isFromCache,
+  mergeRelaySets,
 } from "applesauce-core/helpers";
 import { ProfileQuery } from "applesauce-core/queries";
 import { addressPointerLoader, eventPointerLoader } from "applesauce-loaders/loaders";
 import { useObservable } from "applesauce-react/hooks";
 import { onlyEvents, RelayPool } from "applesauce-relay";
-import { kinds, NostrEvent } from "nostr-tools";
+import { getEventsForFilters, openDB, addEvents } from "nostr-idb";
+import { Filter, kinds, NostrEvent } from "nostr-tools";
 import { useEffect, useMemo, useState } from "react";
-import { map } from "rxjs";
+import { bufferTime, filter, map } from "rxjs";
 
 import { RelayPicker } from "../components/relay-picker";
 
+// Setup event store
 const eventStore = new EventStore();
 const queryStore = new QueryStore(eventStore);
 
+// Create a relay pool for connections
 const pool = new RelayPool();
 
+// Setup a local event cache
+const cache = await openDB();
+function cacheRequest(filters: Filter[]) {
+  return getEventsForFilters(cache, filters).then((events) => {
+    console.log("loaded events from cache", events.length);
+    return events;
+  });
+}
+
+// Save all new events to the cache
+eventStore.inserts
+  .pipe(
+    // Only select events that are not from the cache
+    filter((e) => !isFromCache(e)),
+    // Buffer events for 5 seconds
+    bufferTime(5_000),
+    // Only select buffers with events
+    filter((b) => b.length > 0),
+  )
+  .subscribe((events) => {
+    // Save all new events to the cache
+    addEvents(cache, events).then(() => {
+      console.log("Saved events to cache", events.length);
+    });
+  });
+
+// Create some loaders using the cache method and the event store
 const addressLoader = addressPointerLoader(pool.request.bind(pool), {
   eventStore,
+  cacheRequest,
   lookupRelays: ["wss://purplepag.es/"],
 });
-const eventLoader = eventPointerLoader(pool.request.bind(pool), { eventStore });
+const eventLoader = eventPointerLoader(pool.request.bind(pool), { eventStore, cacheRequest });
 
-function Avatar({ pubkey }: { pubkey: string }) {
-  useEffect(() => {
-    const sub = addressLoader({ kind: 0, pubkey }).subscribe();
-    return () => sub.unsubscribe();
-  }, [pubkey]);
+/** A hook for loading profiles */
+function useProfile(pubkey: string, relays?: string[]) {
+  const observable$ = useMemo(() => {
+    // Request the profile if it's not in the store
+    if (!eventStore.hasReplaceable(0, pubkey)) addressLoader({ kind: 0, pubkey, relays }).subscribe();
 
-  const profile = useObservable(queryStore.createQuery(ProfileQuery, pubkey));
+    return queryStore.createQuery(ProfileQuery, pubkey);
+  }, [pubkey, relays?.join(",")]);
+
+  return useObservable(observable$);
+}
+
+/** A component for rendering user avatars */
+function Avatar({ pubkey, relays }: { pubkey: string; relays?: string[] }) {
+  const profile = useProfile(pubkey, relays);
 
   return (
     <div className="avatar">
@@ -44,20 +85,19 @@ function Avatar({ pubkey }: { pubkey: string }) {
   );
 }
 
-function Username({ pubkey }: { pubkey: string }) {
-  // TODO: this isn't clean, need a better solution to "request" events to be loaded
-  useEffect(() => {
-    const sub = addressLoader({ kind: 0, pubkey }).subscribe();
-    return () => sub.unsubscribe();
-  }, [pubkey]);
-
-  const profile = useObservable(queryStore.createQuery(ProfileQuery, pubkey));
+/** A component for rendering usernames */
+function Username({ pubkey, relays }: { pubkey: string; relays?: string[] }) {
+  const profile = useProfile(pubkey, relays);
 
   return <>{getDisplayName(profile, "unknown")}</>;
 }
 
 function ReactionEvent({ event }: { event: NostrEvent }) {
   const pointer = getReactionEventPointer(event);
+
+  const relays = useMemo(() => {
+    return mergeRelaySets(getSeenRelays(event), pointer?.relays);
+  }, [event, pointer]);
 
   // Load the shared event from the pointer
   useEffect(() => {
@@ -74,10 +114,10 @@ function ReactionEvent({ event }: { event: NostrEvent }) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex gap-2 items-center">
-        <Avatar pubkey={event.pubkey} />
+        <Avatar pubkey={event.pubkey} relays={relays} />
         <h2>
           <span className="font-bold">
-            <Username pubkey={event.pubkey} />
+            <Username pubkey={event.pubkey} relays={relays} />
           </span>
           <span> reacted {event.content} to</span>
         </h2>
@@ -88,9 +128,9 @@ function ReactionEvent({ event }: { event: NostrEvent }) {
         <div className="card bg-base-100 shadow-md">
           <div className="card-body">
             <div className="flex items-center gap-4">
-              <Avatar pubkey={reactedTo.pubkey} />
+              <Avatar pubkey={reactedTo.pubkey} relays={relays} />
               <h2 className="card-title">
-                <Username pubkey={reactedTo.pubkey} />
+                <Username pubkey={reactedTo.pubkey} relays={relays} />
               </h2>
             </div>
             <p>{reactedTo.content}</p>

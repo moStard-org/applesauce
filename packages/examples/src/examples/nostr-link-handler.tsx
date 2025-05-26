@@ -14,6 +14,7 @@ import { Filter, kinds, nip19, NostrEvent } from "nostr-tools";
 import { AddressPointer, EventPointer, ProfilePointer } from "nostr-tools/nip19";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { map } from "rxjs";
+
 import { RelayPicker } from "../components/relay-picker";
 
 // Create stores and relay pool

@@ -18,6 +18,7 @@ describe("exports", () => {
         "groupAddressPointersByPubkey",
         "groupAddressPointersByPubkeyOrKind",
         "isLoadableAddressPointer",
+        "makeCacheRequest",
         "normalizeIdentityJson",
         "unwrapCacheRequest",
       ]

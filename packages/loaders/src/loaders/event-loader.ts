@@ -17,19 +17,19 @@ import {
   tap,
 } from "rxjs";
 
-import { unwrapCacheRequest } from "../helpers/cache.js";
+import { makeCacheRequest } from "../helpers/cache.js";
 import { consolidateEventPointers } from "../helpers/event-pointer.js";
 import { batchLoader } from "../helpers/loaders.js";
 import { groupByRelay } from "../helpers/pointer.js";
 import { wrapGeneratorFunction } from "../operators/generator.js";
-import { CacheRequest, FilterRequest, NostrRequest } from "../types.js";
+import { CacheRequest, NostrRequest } from "../types.js";
 
 export type EventPointerLoader = (pointer: EventPointer) => Observable<NostrEvent>;
 export type EventPointersLoader = (pointers: EventPointer[]) => Observable<NostrEvent>;
 
 /** Creates a loader that gets a single event from the cache */
 export function cacheEventPointersLoader(request: CacheRequest): EventPointersLoader {
-  return (pointers) => unwrapCacheRequest(request, [{ ids: pointers.map((p) => p.id) }]);
+  return (pointers) => makeCacheRequest(request, [{ ids: pointers.map((p) => p.id) }]);
 }
 
 /** Creates a loader that gets an array of events from a list of relays */
@@ -112,7 +112,7 @@ export type EventPointerLoaderOptions = Partial<{
   /** An event store used to deduplicate events */
   eventStore: IEventStore;
   /** A method used to load events from a local cache */
-  cacheRequest: FilterRequest;
+  cacheRequest: CacheRequest;
   /** Whether to follow relay hints ( default true ) */
   followRelayHints: boolean;
   /** An array of relays to always fetch from */

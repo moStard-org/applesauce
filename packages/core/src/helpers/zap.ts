@@ -3,31 +3,37 @@ import { getOrComputeCachedValue } from "./cache.js";
 import { getTagValue } from "./event.js";
 import { isATag, isETag } from "./tags.js";
 import { getAddressPointerFromATag, getEventPointerFromETag } from "./pointers.js";
-import { parseBolt11 } from "./bolt11.js";
+import { parseBolt11, ParsedInvoice } from "./bolt11.js";
+import { AddressPointer, EventPointer } from "nostr-tools/nip19";
 
 export const ZapRequestSymbol = Symbol.for("zap-request");
-export const ZapFromSymbol = Symbol.for("zap-from");
+export const ZapSenderSymbol = Symbol.for("zap-sender");
+export const ZapReceiverSymbol = Symbol.for("zap-receiver");
 export const ZapInvoiceSymbol = Symbol.for("zap-bolt11");
 export const ZapEventPointerSymbol = Symbol.for("zap-event-pointer");
 export const ZapAddressPointerSymbol = Symbol.for("zap-address-pointer");
 
 /** Returns the senders pubkey */
-export function getZapSender(zap: NostrEvent) {
-  return getTagValue(zap, "P") || getZapRequest(zap).pubkey;
+export function getZapSender(zap: NostrEvent): string {
+  return getOrComputeCachedValue(zap, ZapSenderSymbol, () => {
+    return getTagValue(zap, "P") || getZapRequest(zap).pubkey;
+  });
 }
 
 /**
  * Gets the receivers pubkey
  * @throws
  */
-export function getZapRecipient(zap: NostrEvent) {
-  const recipient = getTagValue(zap, "p");
-  if (!recipient) throw new Error("Missing recipient");
-  return recipient;
+export function getZapRecipient(zap: NostrEvent): string {
+  return getOrComputeCachedValue(zap, ZapReceiverSymbol, () => {
+    const recipient = getTagValue(zap, "p");
+    if (!recipient) throw new Error("Missing recipient");
+    return recipient;
+  });
 }
 
 /** Returns the parsed bolt11 invoice */
-export function getZapPayment(zap: NostrEvent) {
+export function getZapPayment(zap: NostrEvent): ParsedInvoice | undefined {
   return getOrComputeCachedValue(zap, ZapInvoiceSymbol, () => {
     const bolt11 = getTagValue(zap, "bolt11");
     return bolt11 ? parseBolt11(bolt11) : undefined;
@@ -35,7 +41,7 @@ export function getZapPayment(zap: NostrEvent) {
 }
 
 /** Gets the AddressPointer that was zapped */
-export function getZapAddressPointer(zap: NostrEvent) {
+export function getZapAddressPointer(zap: NostrEvent): AddressPointer | null {
   return getOrComputeCachedValue(zap, ZapAddressPointerSymbol, () => {
     const a = zap.tags.find(isATag);
     return a ? getAddressPointerFromATag(a) : null;
@@ -43,7 +49,7 @@ export function getZapAddressPointer(zap: NostrEvent) {
 }
 
 /** Gets the EventPointer that was zapped */
-export function getZapEventPointer(zap: NostrEvent) {
+export function getZapEventPointer(zap: NostrEvent): EventPointer | null {
   return getOrComputeCachedValue(zap, ZapEventPointerSymbol, () => {
     const e = zap.tags.find(isETag);
     return e ? getEventPointerFromETag(e) : null;
@@ -51,7 +57,7 @@ export function getZapEventPointer(zap: NostrEvent) {
 }
 
 /** Gets the preimage for the bolt11 invoice */
-export function getZapPreimage(zap: NostrEvent) {
+export function getZapPreimage(zap: NostrEvent): string | undefined {
   return getTagValue(zap, "preimage");
 }
 
@@ -59,7 +65,7 @@ export function getZapPreimage(zap: NostrEvent) {
  * Returns the zap request event inside the zap receipt
  * @throws
  */
-export function getZapRequest(zap: NostrEvent) {
+export function getZapRequest(zap: NostrEvent): NostrEvent {
   return getOrComputeCachedValue(zap, ZapRequestSymbol, () => {
     const description = getTagValue(zap, "description");
     if (!description) throw new Error("Missing description tag");

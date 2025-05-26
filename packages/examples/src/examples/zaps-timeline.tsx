@@ -3,39 +3,79 @@ import {
   addRelayHintsToPointer,
   getDisplayName,
   getProfilePicture,
-  getZapEventPointer,
   getSeenRelays,
+  getZapEventPointer,
   getZapPayment,
   getZapSender,
+  isFromCache,
+  mergeRelaySets,
 } from "applesauce-core/helpers";
 import { ProfileQuery } from "applesauce-core/queries";
 import { addressPointerLoader, eventPointerLoader } from "applesauce-loaders/loaders";
 import { useObservable } from "applesauce-react/hooks";
 import { onlyEvents, RelayPool } from "applesauce-relay";
-import { kinds, NostrEvent } from "nostr-tools";
+import { addEvents, getEventsForFilters, openDB } from "nostr-idb";
+import { Filter, kinds, NostrEvent } from "nostr-tools";
 import { useEffect, useMemo, useState } from "react";
-import { map } from "rxjs";
+import { bufferTime, filter, map } from "rxjs";
 
 import { RelayPicker } from "../components/relay-picker";
 
+// Setup event store
 const eventStore = new EventStore();
 const queryStore = new QueryStore(eventStore);
 
 const pool = new RelayPool();
 
+// Setup a local event cache
+const cache = await openDB();
+function cacheRequest(filters: Filter[]) {
+  return getEventsForFilters(cache, filters).then((events) => {
+    console.log("loaded events from cache", events.length);
+    return events;
+  });
+}
+
+// Save all new events to the cache
+eventStore.inserts
+  .pipe(
+    // Only select events that are not from the cache
+    filter((e) => !isFromCache(e)),
+    // Buffer events for 5 seconds
+    bufferTime(5_000),
+    // Only select buffers with events
+    filter((b) => b.length > 0),
+  )
+  .subscribe((events) => {
+    // Save all new events to the cache
+    addEvents(cache, events).then(() => {
+      console.log("Saved events to cache", events.length);
+    });
+  });
+
+// Create loaders that load events from relays and cache
 const addressLoader = addressPointerLoader(pool.request.bind(pool), {
   eventStore,
+  cacheRequest,
   lookupRelays: ["wss://purplepag.es/"],
 });
-const eventLoader = eventPointerLoader(pool.request.bind(pool), { eventStore });
+const eventLoader = eventPointerLoader(pool.request.bind(pool), { eventStore, cacheRequest });
 
-function Avatar({ pubkey }: { pubkey: string }) {
-  useEffect(() => {
-    const sub = addressLoader({ kind: 0, pubkey }).subscribe();
-    return () => sub.unsubscribe();
-  }, [pubkey]);
+/** A hook for loading profiles */
+function useProfile(pubkey: string, relays?: string[]) {
+  const observable$ = useMemo(() => {
+    // Request the profile if it's not in the store
+    if (!eventStore.hasReplaceable(0, pubkey)) addressLoader({ kind: 0, pubkey, relays }).subscribe();
 
-  const profile = useObservable(queryStore.createQuery(ProfileQuery, pubkey));
+    return queryStore.createQuery(ProfileQuery, pubkey);
+  }, [pubkey, relays?.join(",")]);
+
+  return useObservable(observable$);
+}
+
+/** A component for rendering user avatars */
+function Avatar({ pubkey, relays }: { pubkey: string; relays?: string[] }) {
+  const profile = useProfile(pubkey, relays);
 
   return (
     <div className="avatar">
@@ -46,13 +86,9 @@ function Avatar({ pubkey }: { pubkey: string }) {
   );
 }
 
-function Username({ pubkey }: { pubkey: string }) {
-  useEffect(() => {
-    const sub = addressLoader({ kind: 0, pubkey }).subscribe();
-    return () => sub.unsubscribe();
-  }, [pubkey]);
-
-  const profile = useObservable(queryStore.createQuery(ProfileQuery, pubkey));
+/** A component for rendering usernames */
+function Username({ pubkey, relays }: { pubkey: string; relays?: string[] }) {
+  const profile = useProfile(pubkey, relays);
 
   return <>{getDisplayName(profile, "unknown")}</>;
 }
@@ -73,15 +109,17 @@ function ZapEvent({ event }: { event: NostrEvent }) {
     return () => sub.unsubscribe();
   }, [pointer, event]);
 
+  const relays = useMemo(() => mergeRelaySets(getSeenRelays(event), pointer?.relays), [event, pointer]);
+
   const zappedEvent = useObservable(pointer && queryStore.event(pointer.id));
 
   return (
     <div className="flex flex-col gap-2">
       <div className="flex gap-2 items-center">
-        <Avatar pubkey={senderPubkey} />
+        <Avatar pubkey={senderPubkey} relays={relays} />
         <h2>
           <span className="font-bold">
-            <Username pubkey={senderPubkey} />
+            <Username pubkey={senderPubkey} relays={relays} />
           </span>
           <span> zapped </span>
           <span className="text-warning font-bold">{zapAmount} sats</span>
@@ -93,9 +131,9 @@ function ZapEvent({ event }: { event: NostrEvent }) {
         <div className="card card-sm bg-base-100 shadow-md">
           <div className="card-body">
             <div className="flex items-center gap-4">
-              <Avatar pubkey={zappedEvent.pubkey} />
+              <Avatar pubkey={zappedEvent.pubkey} relays={relays} />
               <h2 className="card-title">
-                <Username pubkey={zappedEvent.pubkey} />
+                <Username pubkey={zappedEvent.pubkey} relays={relays} />
               </h2>
             </div>
             <p>{zappedEvent.content}</p>

@@ -4,10 +4,22 @@ import {
   getReplaceableAddress,
   getReplaceableIdentifier,
   isReplaceable,
-  mergeRelaySets,
+  mergeRelaySets
 } from "applesauce-core/helpers";
 import { NostrEvent } from "nostr-tools";
-import { bufferTime, catchError, EMPTY, filter, isObservable, map, Observable, of, pipe, switchMap, take } from "rxjs";
+import {
+  bufferTime,
+  catchError,
+  EMPTY,
+  filter,
+  isObservable,
+  map,
+  Observable,
+  of,
+  pipe,
+  switchMap,
+  take
+} from "rxjs";
 
 import {
   consolidateAddressPointers,
@@ -15,10 +27,10 @@ import {
   isLoadableAddressPointer,
   LoadableAddressPointer,
 } from "../helpers/address-pointer.js";
-import { wrapGeneratorFunction } from "../operators/generator.js";
-import { CacheRequest, FilterRequest, NostrRequest } from "../types.js";
+import { makeCacheRequest } from "../helpers/cache.js";
 import { batchLoader } from "../helpers/loaders.js";
-import { unwrapCacheRequest } from "../helpers/cache.js";
+import { wrapGeneratorFunction } from "../operators/generator.js";
+import { CacheRequest, NostrRequest } from "../types.js";
 
 /** A method that takes address pointers and returns an observable of events */
 export type AddressPointersLoader = (pointers: LoadableAddressPointer[]) => Observable<NostrEvent>;
@@ -30,14 +42,14 @@ export type AddressPointerLoader = (pointer: LoadableAddressPointer) => Observab
  */
 export function cacheAddressPointersLoader(request: CacheRequest): AddressPointersLoader {
   return (pointers) =>
-    unwrapCacheRequest(
+    makeCacheRequest(
       request,
       createFiltersFromAddressPointers(
         pointers
           // Ignore pointers that want to skip cache
           .filter((p) => p.force !== true),
       ),
-    );
+    )
 }
 
 /** Loads address pointers from the relay hints */
@@ -110,7 +122,7 @@ export type AddressLoaderOptions = Partial<{
   /** An event store used to deduplicate events */
   eventStore: IEventStore;
   /** A method used to load events from a local cache */
-  cacheRequest: FilterRequest;
+  cacheRequest: CacheRequest;
   /** Whether to follow relay hints ( default true ) */
   followRelayHints: boolean;
   /** Fallback lookup relays to check when event cant be found */

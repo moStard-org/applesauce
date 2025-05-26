@@ -1,7 +1,9 @@
+import { EventStore } from "applesauce-core";
 import { getSeenRelays, mergeRelaySets } from "applesauce-core/helpers";
 import { timelineLoader } from "applesauce-loaders/loaders";
 import { RelayPool } from "applesauce-relay";
 
+const eventStore = new EventStore();
 const pool = new RelayPool();
 
 import { nip19, NostrEvent } from "nostr-tools";
@@ -42,7 +44,7 @@ export default function InfiniteMultiRelayTimeline() {
   const [relays, _setRelays] = useState(mergeRelaySets(["wss://relay.damus.io", "wss://nos.lol", "wss://nostr.land"]));
 
   const loader = useMemo(() => {
-    return timelineLoader(pool.request.bind(pool), relays, [{ kinds: [1] }], { limit });
+    return timelineLoader(pool.request.bind(pool), relays, [{ kinds: [1] }], { limit, eventStore });
   }, [relays, limit]);
 
   const [events, setEvents] = useState<NostrEvent[]>([]);

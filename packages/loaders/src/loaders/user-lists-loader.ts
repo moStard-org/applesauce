@@ -4,8 +4,8 @@ import { Filter, kinds, NostrEvent } from "nostr-tools";
 import { ProfilePointer } from "nostr-tools/nip19";
 import { EMPTY, identity, merge, Observable } from "rxjs";
 
-import { NostrRequest } from "../types.js";
-import { CacheRequest } from "./loader.js";
+import { makeCacheRequest } from "../helpers/cache.js";
+import { CacheRequest, NostrRequest } from "../types.js";
 
 /** A list of NIP-51 list kinds that most clients will use */
 export const COMMON_LIST_KINDS = [kinds.Contacts, kinds.Mutelist, kinds.Pinlist, kinds.BookmarkList];
@@ -43,7 +43,7 @@ export function userListsLoader(request: NostrRequest, opts?: UserListsLoaderOpt
 
     return merge(
       // Load from cache
-      opts?.cacheRequest?.([filter]) ?? EMPTY,
+      opts?.cacheRequest ? makeCacheRequest(opts.cacheRequest, [filter]) : EMPTY,
       // Load from relays
       relays ? request(relays, [filter]) : EMPTY,
     ).pipe(
