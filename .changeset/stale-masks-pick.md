@@ -2,4 +2,4 @@
 "applesauce-core": major
 ---
 
-Removed `getPointerFromTag` method
+Remove `getPointerFromTag` method

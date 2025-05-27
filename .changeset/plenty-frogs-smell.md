@@ -2,4 +2,4 @@
 "applesauce-core": minor
 ---
 
-Renamed `parseSharedEvent` to `getEmbededSharedEvent`
+Rename `parseSharedEvent` to `getEmbededSharedEvent`

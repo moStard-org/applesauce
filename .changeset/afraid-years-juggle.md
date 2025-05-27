@@ -2,4 +2,4 @@
 "applesauce-core": minor
 ---
 
-Added `groupMessageEvents` helper
+Add `groupMessageEvents` helper
