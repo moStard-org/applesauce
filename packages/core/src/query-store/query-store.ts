@@ -8,7 +8,7 @@ import { IEventStore } from "../event-store/interface.js";
 import * as Queries from "../queries/index.js";
 import { withImmediateValueOrDefault } from "../observable/with-immediate-value.js";
 
-export type Query<T extends unknown> = (events: IEventStore, store: QueryStore) => Observable<T>;
+export type Query<T extends unknown> = (events: IEventStore) => Observable<T>;
 
 export type QueryConstructor<T extends unknown, Args extends Array<any>> = ((...args: Args) => Query<T>) & {
   getKey?: (...args: Args) => string;
@@ -47,7 +47,7 @@ export class QueryStore {
         if (observables.get(key) === observable) observables.delete(key);
       };
 
-      observable = queryConstructor(...args)(this.store, this).pipe(
+      observable = queryConstructor(...args)(this.store).pipe(
         // always emit undefined so the observable is sync
         withImmediateValueOrDefault(undefined),
         // remove the observable when its unsubscribed

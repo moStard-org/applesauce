@@ -19,3 +19,13 @@ export function EventZapsQuery(id: string | EventPointer | AddressPointer): Quer
     }
   };
 }
+
+/** Returns all zaps sent by a user */
+export function SentZapsQuery(pubkey: string): Query<NostrEvent[]> {
+  return (events) => events.timeline([{ kinds: [kinds.Zap], authors: [pubkey] }]);
+}
+
+/** Returns all zaps received by a user */
+export function ReceivedZapsQuery(pubkey: string): Query<NostrEvent[]> {
+  return (events) => events.timeline([{ kinds: [kinds.Zap], "#a": [pubkey] }]);
+}

@@ -83,7 +83,7 @@
     }
   },
   "dependencies": {
-    "@cashu/cashu-ts": "2.0.0-rc1",
+    "@cashu/cashu-ts": "^2.5.2",
     "@gandlaf21/bc-ur": "^1.1.12",
     "@noble/hashes": "^1.7.1",
     "applesauce-actions": "^1.0.0",
