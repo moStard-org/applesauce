@@ -4,9 +4,10 @@ import { finalizeEvent, kinds, nip04 } from "nostr-tools";
 import { FakeUser } from "./fake-user.js";
 import { addEventTag, removeEventTag } from "../operations/tag/common.js";
 import { setListTitle } from "../operations/event/list.js";
-import { setContent, setEncryptedContent } from "../operations/event/content.js";
+import { setContent } from "../operations/event/content.js";
 import { includeAltTag } from "../operations/event/tags.js";
 import { EncryptedContentSymbol, getHiddenTags, unlockHiddenTags } from "applesauce-core/helpers";
+import { setEncryptedContent } from "../operations/event/encryption.js";
 
 let factory = new EventFactory();
 let user = new FakeUser();

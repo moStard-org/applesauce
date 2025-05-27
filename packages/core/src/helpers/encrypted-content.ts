@@ -17,6 +17,7 @@ export interface EncryptedContentSigner {
 /** Various event kinds that can have encrypted content and which encryption method they use */
 export const EventContentEncryptionMethod: Record<number, "nip04" | "nip44"> = {
   [kinds.EncryptedDirectMessage]: "nip04",
+  [kinds.Seal]: "nip44",
   [kinds.GiftWrap]: "nip44",
 };
 

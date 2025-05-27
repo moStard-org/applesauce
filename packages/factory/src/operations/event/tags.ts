@@ -3,7 +3,7 @@ import {
   getHiddenTags,
   getHiddenTagsEncryptionMethods,
   hasHiddenTags,
-  HiddenContentSymbol,
+  EncryptedContentSymbol,
   unlockHiddenTags,
 } from "applesauce-core/helpers";
 import { EventOperation, TagOperation } from "../../event-factory.js";
@@ -75,13 +75,13 @@ export function modifyHiddenTags(...operations: (TagOperation | undefined)[]): E
     let newHidden = Array.from(hidden);
     for (const operation of operations) if (operation) newHidden = await operation(newHidden, ctx);
 
-    const encryption = getHiddenTagsEncryptionMethods(draft.kind, ctx.signer);
+    const methods = getHiddenTagsEncryptionMethods(draft.kind, ctx.signer);
 
     const pubkey = await ctx.signer.getPublicKey();
     const plaintext = JSON.stringify(newHidden);
-    const content = await encryption.encrypt(pubkey, plaintext);
+    const content = await methods.encrypt(pubkey, plaintext);
 
     // add the plaintext content on the draft so it can be carried forward
-    return { ...draft, content, tags, [HiddenContentSymbol]: plaintext };
+    return { ...draft, content, tags, [EncryptedContentSymbol]: plaintext };
   };
 }

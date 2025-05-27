@@ -8,6 +8,10 @@ import {
 } from "./encrypted-content.js";
 import { getHiddenContent } from "./hidden-content.js";
 
+export type Rumor = UnsignedEvent & {
+  id: string;
+};
+
 export const GiftWrapSealSymbol = Symbol.for("gift-wrap-seal");
 export const GiftWrapEventSymbol = Symbol.for("gift-wrap-event");
 
@@ -28,7 +32,7 @@ export function getGiftWrapSeal(gift: NostrEvent): NostrEvent | undefined {
 }
 
 /** Returns the unsigned event in the gift-wrap seal */
-export function getGiftWrapEvent(gift: NostrEvent): UnsignedEvent | undefined {
+export function getGiftWrapEvent(gift: NostrEvent): Rumor | undefined {
   if (isEncryptedContentLocked(gift)) return undefined;
 
   return getOrComputeCachedValue(gift, GiftWrapEventSymbol, () => {
@@ -36,7 +40,7 @@ export function getGiftWrapEvent(gift: NostrEvent): UnsignedEvent | undefined {
     if (!seal) throw new Error("Gift is locked");
     const plaintext = getHiddenContent(seal);
     if (!plaintext) throw new Error("Gift-wrap seal is locked");
-    const event = JSON.parse(plaintext) as UnsignedEvent;
+    const event = JSON.parse(plaintext) as Rumor;
 
     if (event.pubkey !== seal.pubkey) throw new Error("Seal author does not match content");
 

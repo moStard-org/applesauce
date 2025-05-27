@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { EventFactory } from "applesauce-factory";
+import { EncryptedContentSymbol, unixNow } from "applesauce-core/helpers";
 
 import { FakeUser } from "../../__tests__/fake-user.js";
 import { WalletTokenBlueprint } from "../../blueprints/tokens.js";
 import { decodeTokenFromEmojiString, dumbTokenSelection, encodeTokenToEmoji, unlockTokenContent } from "../tokens.js";
-import { HiddenContentSymbol, unixNow } from "applesauce-core/helpers";
 
 const user = new FakeUser();
 const factory = new EventFactory({ signer: user });
@@ -79,7 +79,7 @@ describe("dumbTokenSelection", () => {
     const b = await user.signEvent(bDraft);
 
     // manually remove the hidden content to lock it again
-    Reflect.deleteProperty(b, HiddenContentSymbol);
+    Reflect.deleteProperty(b, EncryptedContentSymbol);
 
     expect(dumbTokenSelection([a, b], 20).events).toEqual([a]);
   });

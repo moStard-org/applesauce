@@ -1,30 +1,19 @@
+import { getPubkeyFromDecodeResult, EncryptedContentSymbol } from "applesauce-core/helpers";
 import { Emoji } from "applesauce-core/helpers/emoji";
-import { getPubkeyFromDecodeResult, HiddenContentSymbol } from "applesauce-core/helpers";
 
 import { EventOperation } from "../../event-factory.js";
-import { includeQuoteTags } from "./quote.js";
-import { includeContentHashtags } from "./hashtags.js";
-import { includeContentEmojiTags } from "./emojis.js";
-import { getContentPointers } from "../../helpers/content.js";
 import { ensureProfilePointerTag } from "../../helpers/common-tags.js";
+import { getContentPointers } from "../../helpers/content.js";
+import { includeContentEmojiTags } from "./emojis.js";
+import { includeContentHashtags } from "./hashtags.js";
+import { includeQuoteTags } from "./quote.js";
 
 /** Override the event content */
 export function setContent(content: string): EventOperation {
   return async (draft) => {
     draft = { ...draft, content };
-    Reflect.deleteProperty(draft, HiddenContentSymbol);
+    Reflect.deleteProperty(draft, EncryptedContentSymbol);
     return draft;
-  };
-}
-
-/** Encrypts the content to a pubkey */
-export function setEncryptedContent(pubkey: string, content: string, method: "nip04" | "nip44"): EventOperation {
-  return async (draft, { signer }) => {
-    if (!signer) throw new Error("Signer required for encrypted content");
-    if (!signer[method]) throw new Error(`Signer does not support ${method} encryption`);
-
-    // add the plaintext content on the draft so it can be carried forward
-    return { ...draft, content: await signer[method].encrypt(pubkey, content), [HiddenContentSymbol]: content };
   };
 }
 

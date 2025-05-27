@@ -208,6 +208,7 @@ describe("exports", () => {
         "isHiddenTagsLocked",
         "isImageURL",
         "isLegacyDirectMessageLocked",
+        "isNIP04Encrypted",
         "isNameValueTag",
         "isNip05",
         "isPTag",

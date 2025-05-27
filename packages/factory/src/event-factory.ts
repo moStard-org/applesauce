@@ -1,4 +1,4 @@
-import { Emoji, EncryptedContentSymbol, HiddenContentSymbol, unixNow } from "applesauce-core/helpers";
+import { Emoji, EncryptedContentSymbol, unixNow } from "applesauce-core/helpers";
 import { EventTemplate, NostrEvent, UnsignedEvent } from "nostr-tools";
 import { isAddressableKind } from "nostr-tools/kinds";
 import { AddressPointer } from "nostr-tools/nip19";
@@ -20,16 +20,18 @@ export type EventFactoryTemplate = {
 };
 
 /** A single operation in the factory process */
-export type EventOperation = (
-  draft: EventTemplate,
-  context: EventFactoryContext,
-) => EventTemplate | Promise<EventTemplate>;
+export type EventOperation<
+  Input extends EventTemplate | UnsignedEvent | NostrEvent = EventTemplate,
+  Output extends EventTemplate | UnsignedEvent | NostrEvent = EventTemplate,
+> = (draft: Input, context: EventFactoryContext) => Output | Promise<Output>;
 
 /** A single operation that modifies an events public or hidden tags array */
 export type TagOperation = (tags: string[][], ctx: EventFactoryContext) => string[][] | Promise<string[][]>;
 
-/** A prebuilt event template */
-export type EventBlueprint = (context: EventFactoryContext) => EventTemplate | Promise<EventTemplate>;
+/** A method that creates an event template using a context */
+export type EventBlueprint = (
+  context: EventFactoryContext,
+) => EventTemplate | UnsignedEvent | NostrEvent | Promise<EventTemplate | UnsignedEvent | NostrEvent>;
 
 export type EventFactorySigner = {
   getPublicKey: () => Promise<string> | string;
@@ -176,7 +178,7 @@ export class EventFactory {
   }
 
   /** Attaches the signers pubkey to an event template */
-  async stamp(draft: EventTemplate): Promise<UnsignedEvent> {
+  async stamp(draft: EventTemplate | UnsignedEvent): Promise<UnsignedEvent> {
     if (!this.context.signer) throw new Error("Missing signer");
 
     // Remove old fields from signed nostr event
@@ -186,22 +188,21 @@ export class EventFactory {
     const newDraft = { ...draft, pubkey: await this.context.signer.getPublicKey() };
 
     // copy the plaintext hidden content if its on the draft
-    if (Reflect.has(draft, HiddenContentSymbol)) {
-      Reflect.set(newDraft, HiddenContentSymbol, Reflect.get(draft, HiddenContentSymbol)!);
-    }
+    if (Reflect.has(draft, EncryptedContentSymbol))
+      Reflect.set(newDraft, EncryptedContentSymbol, Reflect.get(draft, EncryptedContentSymbol)!);
 
     return newDraft;
   }
 
+  /** Signs a event template with the signer */
   async sign(draft: EventTemplate | UnsignedEvent): Promise<NostrEvent> {
     if (!this.context.signer) throw new Error("Missing signer");
     draft = await this.stamp(draft);
     const signed = await this.context.signer.signEvent(draft);
 
     // copy the plaintext hidden content if its on the draft
-    if (Reflect.has(draft, HiddenContentSymbol)) {
-      Reflect.set(signed, HiddenContentSymbol, Reflect.get(draft, HiddenContentSymbol)!);
-    }
+    if (Reflect.has(draft, EncryptedContentSymbol))
+      Reflect.set(signed, EncryptedContentSymbol, Reflect.get(draft, EncryptedContentSymbol)!);
 
     return signed;
   }

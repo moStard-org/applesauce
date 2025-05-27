@@ -11,6 +11,7 @@ export * from "./delete.js";
 export * from "./dns-identity.js";
 export * from "./emoji.js";
 export * from "./encrypted-content.js";
+export * from "./encryption.js";
 export * from "./event.js";
 export * from "./expiration.js";
 export * from "./external-id.js";

@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { repairContentNostrLinks, setContent, setEncryptedContent } from "../content.js";
+import { EncryptedContentSymbol } from "applesauce-core/helpers";
+
+import { repairContentNostrLinks, setContent } from "../content.js";
 import { FakeUser } from "../../../__tests__/fake-user.js";
-import { HiddenContentSymbol } from "applesauce-core/helpers";
 
 let user: FakeUser;
 
@@ -68,49 +69,15 @@ describe("repairContentNostrLinks", () => {
 });
 
 describe("setContent", () => {
-  it("should remove HiddenContentSymbol", async () => {
+  it("should remove EncryptedContentSymbol", async () => {
     const operation = setContent("secret message");
     const draft = await operation({ kind: 1, content: "", tags: [], created_at: 0 }, { signer: user });
-    expect(Reflect.has(draft, HiddenContentSymbol)).toBe(false);
+    expect(Reflect.has(draft, EncryptedContentSymbol)).toBe(false);
   });
 
   it("should set content", async () => {
     const operation = setContent("message");
     const draft = await operation({ kind: 1, content: "", tags: [], created_at: 0 }, { signer: user });
     expect(draft.content).toBe("message");
-  });
-});
-
-describe("setEncryptedContent", () => {
-  it("should set HiddenContentSymbol with plaintext content for nip04", async () => {
-    const operation = setEncryptedContent(user.pubkey, "secret message", "nip04");
-    const draft = await operation({ kind: 1, content: "", tags: [], created_at: 0 }, { signer: user });
-
-    expect(Reflect.get(draft, HiddenContentSymbol)).toBe("secret message");
-  });
-
-  it("should set HiddenContentSymbol with plaintext content for nip44", async () => {
-    const operation = setEncryptedContent(user.pubkey, "secret message", "nip44");
-    const draft = await operation({ kind: 1, content: "", tags: [], created_at: 0 }, { signer: user });
-
-    expect(Reflect.get(draft, HiddenContentSymbol)).toBe("secret message");
-  });
-
-  it("should throw error if no signer provided", async () => {
-    const operation = setEncryptedContent(user.pubkey, "secret message", "nip04");
-    await expect(operation({ kind: 1, content: "", tags: [], created_at: 0 }, { signer: undefined })).rejects.toThrow(
-      "Signer required for encrypted content",
-    );
-  });
-
-  it("should throw error if signer does not support encryption method", async () => {
-    const operation = setEncryptedContent(user.pubkey, "secret message", "nip44");
-
-    // @ts-expect-error
-    delete user.nip44;
-
-    await expect(operation({ kind: 1, content: "", tags: [], created_at: 0 }, { signer: user })).rejects.toThrow(
-      "Signer does not support nip44 encryption",
-    );
   });
 });
