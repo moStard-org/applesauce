@@ -1,14 +1,10 @@
 import { NostrEvent } from "nostr-tools";
 import { getOrComputeCachedValue } from "./cache.js";
-import { processTags } from "./tags.js";
 import { getHiddenTags } from "./hidden-tags.js";
-import { setHiddenContentEncryptionMethod } from "./hidden-content.js";
+import { processTags } from "./tags.js";
 
 export const GROUPS_LIST_KIND = 10009;
 export const GROUP_MESSAGE_KIND = 9;
-
-// Enable hidden tags for group list kind
-setHiddenContentEncryptionMethod(GROUPS_LIST_KIND, "nip04");
 
 /** NIP-29 group pointer */
 export type GroupPointer = {

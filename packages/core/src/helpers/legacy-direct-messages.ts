@@ -1,15 +1,11 @@
-import { kinds, NostrEvent } from "nostr-tools";
+import { NostrEvent } from "nostr-tools";
 import {
   EncryptedContentSigner,
   getEncryptedContent,
   isEncryptedContentLocked,
   lockEncryptedContent,
-  setEncryptedContentEncryptionMethod,
   unlockEncryptedContent,
 } from "./encrypted-content.js";
-
-// Enable encrypted content for legacy direct messages
-setEncryptedContentEncryptionMethod(kinds.EncryptedDirectMessage, "nip04");
 
 /** A signer interface for unlocking direct messages */
 export interface LegacyDirectMessageSigner extends EncryptedContentSigner {

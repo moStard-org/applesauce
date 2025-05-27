@@ -6,7 +6,7 @@ import {
   isHiddenContentLocked,
   isHiddenTagsLocked,
   lockHiddenTags,
-  setHiddenContentEncryptionMethod,
+  setHiddenTagsEncryptionMethod,
   unlockHiddenTags,
 } from "applesauce-core/helpers";
 import { NostrEvent } from "nostr-tools";
@@ -14,7 +14,7 @@ import { NostrEvent } from "nostr-tools";
 export const WALLET_HISTORY_KIND = 7376;
 
 // Enable hidden content for wallet history kind
-setHiddenContentEncryptionMethod(WALLET_HISTORY_KIND, "nip44");
+setHiddenTagsEncryptionMethod(WALLET_HISTORY_KIND, "nip44");
 
 export type HistoryDirection = "in" | "out";
 

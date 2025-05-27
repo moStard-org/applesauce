@@ -1,15 +1,15 @@
-import { Emoji, getHiddenContent, HiddenContentSymbol, unixNow } from "applesauce-core/helpers";
-import { AddressPointer } from "nostr-tools/nip19";
-import { isAddressableKind } from "nostr-tools/kinds";
+import { Emoji, EncryptedContentSymbol, HiddenContentSymbol, unixNow } from "applesauce-core/helpers";
 import { EventTemplate, NostrEvent, UnsignedEvent } from "nostr-tools";
+import { isAddressableKind } from "nostr-tools/kinds";
+import { AddressPointer } from "nostr-tools/nip19";
 
-import { includeClientTag } from "./operations/event/client.js";
 import { CommentBlueprint } from "./blueprints/comment.js";
+import { DeleteBlueprint } from "./blueprints/delete.js";
 import { NoteBlueprint } from "./blueprints/note.js";
 import { ReactionBlueprint } from "./blueprints/reaction.js";
-import { DeleteBlueprint } from "./blueprints/delete.js";
 import { NoteReplyBlueprint } from "./blueprints/reply.js";
 import { ShareBlueprint } from "./blueprints/share.js";
+import { includeClientTag } from "./operations/event/client.js";
 import { includeReplaceableIdentifier, modifyHiddenTags, modifyPublicTags } from "./operations/event/index.js";
 
 export type EventFactoryTemplate = {
@@ -75,14 +75,15 @@ export class EventFactory {
       tags: template.tags ? Array.from(template.tags) : [],
     };
 
-    // preserve the existing hidden content
-    if (Reflect.has(template, HiddenContentSymbol)) Reflect.set(draft, HiddenContentSymbol, getHiddenContent(template));
+    // preserve the existing encrypted content
+    if (Reflect.has(template, EncryptedContentSymbol))
+      Reflect.set(draft, EncryptedContentSymbol, Reflect.get(template, EncryptedContentSymbol) as string);
 
     // make sure parameterized replaceable events have "d" tags
     if (isAddressableKind(draft.kind)) draft = await includeReplaceableIdentifier()(draft, context);
 
-    // get the existing hidden content
-    let hiddenContent = getHiddenContent(template);
+    // get the existing encrypted content
+    let encryptedContent = Reflect.get(template, EncryptedContentSymbol) as string | undefined;
 
     // run operations
     for (const operation of operations) {
@@ -90,7 +91,8 @@ export class EventFactory {
         draft = await operation(draft, context);
 
         // if the operation has set encrypted content and left the plaintext version, carry it forward
-        if (Reflect.has(draft, HiddenContentSymbol)) hiddenContent = Reflect.get(draft, HiddenContentSymbol) as string;
+        if (Reflect.has(draft, EncryptedContentSymbol))
+          encryptedContent = Reflect.get(draft, EncryptedContentSymbol) as string;
       }
     }
 
@@ -100,7 +102,7 @@ export class EventFactory {
     }
 
     // if there was hidden content set, carry it forward
-    if (hiddenContent !== undefined) Reflect.set(draft, HiddenContentSymbol, hiddenContent);
+    if (encryptedContent !== undefined) Reflect.set(draft, EncryptedContentSymbol, encryptedContent);
 
     return draft;
   }

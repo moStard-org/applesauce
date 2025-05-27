@@ -1,8 +1,8 @@
 import { kinds, NostrEvent } from "nostr-tools";
-import { isETag, isPTag, isTTag } from "./tags.js";
 import { getOrComputeCachedValue } from "./cache.js";
 import { getHiddenTags, isHiddenTagsLocked } from "./hidden-tags.js";
 import { getIndexableTags, getNip10References } from "./index.js";
+import { isETag, isPTag, isTTag } from "./tags.js";
 
 export const MutePublicSymbol = Symbol.for("mute-public");
 export const MuteHiddenSymbol = Symbol.for("mute-hidden");

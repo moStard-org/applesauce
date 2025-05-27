@@ -4,10 +4,6 @@ const sources = import.meta.glob("./examples/**/*.tsx", { query: "?raw" }) as Re
   () => Promise<{ default: string }>
 >;
 
-function basename(path: string) {
-  return path.split("/").pop()?.replace(/\..+$/, "") ?? "";
-}
-
 export type Example = {
   id: string;
   name: string;

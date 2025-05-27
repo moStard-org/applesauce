@@ -1,3 +1,4 @@
+import { kinds } from "nostr-tools";
 import { getParentEventStore, isEvent } from "./event.js";
 
 export const EncryptedContentSymbol = Symbol.for("encrypted-content");
@@ -14,7 +15,10 @@ export interface EncryptedContentSigner {
 }
 
 /** Various event kinds that can have encrypted content and which encryption method they use */
-export const EventContentEncryptionMethod: Record<number, "nip04" | "nip44"> = {};
+export const EventContentEncryptionMethod: Record<number, "nip04" | "nip44"> = {
+  [kinds.EncryptedDirectMessage]: "nip04",
+  [kinds.GiftWrap]: "nip44",
+};
 
 /** Sets the encryption method that is used for the contents of a specific event kind */
 export function setEncryptedContentEncryptionMethod(kind: number, method: "nip04" | "nip44"): number {
@@ -37,21 +41,19 @@ export function canHaveEncryptedContent(kind: number): boolean {
 }
 
 /** Checks if an event has encrypted content */
-export function hasEncryptedContent<T extends EncryptedContentEvent>(event: T): boolean {
+export function hasEncryptedContent<T extends { content: string }>(event: T): boolean {
   return event.content.length > 0;
 }
 
 /** Returns the encrypted content for an event if it is unlocked */
-export function getEncryptedContent<T extends EncryptedContentEvent>(event: T): string | undefined {
+export function getEncryptedContent<T extends object>(event: T): string | undefined {
   return Reflect.get(event, EncryptedContentSymbol) as string | undefined;
 }
 
 /** Checks if the encrypted content is locked */
-export function isEncryptedContentLocked<T extends EncryptedContentEvent>(event: T): boolean {
+export function isEncryptedContentLocked<T extends object>(event: T): boolean {
   return Reflect.has(event, EncryptedContentSymbol) === false;
 }
-
-export type EncryptedContentEvent = { kind: number; content: string };
 
 /**
  * Unlocks the encrypted content in an event and caches it
@@ -59,7 +61,7 @@ export type EncryptedContentEvent = { kind: number; content: string };
  * @param pubkey The other pubkey that encrypted the content
  * @param signer A signer to use to decrypt the content
  */
-export async function unlockEncryptedContent<T extends EncryptedContentEvent>(
+export async function unlockEncryptedContent<T extends { kind: number; content: string }>(
   event: T,
   pubkey: string,
   signer: EncryptedContentSigner,
@@ -72,7 +74,7 @@ export async function unlockEncryptedContent<T extends EncryptedContentEvent>(
 }
 
 /** Sets the encrypted content on an event and updates it if its part of an event store */
-export function setEncryptedContentCache<T extends EncryptedContentEvent>(event: T, plaintext: string) {
+export function setEncryptedContentCache<T extends object>(event: T, plaintext: string) {
   Reflect.set(event, EncryptedContentSymbol, plaintext);
 
   // if the event has been added to an event store, notify it

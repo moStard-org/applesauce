@@ -1,10 +1,10 @@
+import { kinds } from "nostr-tools";
 import { getOrComputeCachedValue } from "./cache.js";
 import {
   canHaveHiddenContent,
   getHiddenContent,
   getHiddenContentEncryptionMethods,
   hasHiddenContent,
-  HiddenContentEvent,
   HiddenContentSigner,
   isHiddenContentLocked,
   lockHiddenContent,
@@ -12,11 +12,27 @@ import {
   setHiddenContentEncryptionMethod,
   unlockHiddenContent,
 } from "./hidden-content.js";
+import { GROUPS_LIST_KIND } from "./groups.js";
 
 export const HiddenTagsSymbol = Symbol.for("hidden-tags");
 
 /** Various event kinds that can have hidden tags */
-export const HiddenTagsKinds = new Set<number>();
+export const HiddenTagsKinds = new Set<number>([
+  // NIP-51 lists
+  setHiddenContentEncryptionMethod(kinds.BookmarkList, "nip04"),
+  setHiddenContentEncryptionMethod(kinds.InterestsList, "nip04"),
+  setHiddenContentEncryptionMethod(kinds.Mutelist, "nip04"),
+  setHiddenContentEncryptionMethod(kinds.CommunitiesList, "nip04"),
+  setHiddenContentEncryptionMethod(kinds.PublicChatsList, "nip04"),
+  setHiddenContentEncryptionMethod(kinds.SearchRelaysList, "nip04"),
+  setHiddenContentEncryptionMethod(GROUPS_LIST_KIND, "nip04"),
+  // NIP-51 sets
+  setHiddenContentEncryptionMethod(kinds.Bookmarksets, "nip04"),
+  setHiddenContentEncryptionMethod(kinds.Relaysets, "nip04"),
+  setHiddenContentEncryptionMethod(kinds.Followsets, "nip04"),
+  setHiddenContentEncryptionMethod(kinds.Curationsets, "nip04"),
+  setHiddenContentEncryptionMethod(kinds.Interestsets, "nip04"),
+]);
 
 /** Checks if an event can have hidden tags */
 export function canHaveHiddenTags(kind: number): boolean {
@@ -30,12 +46,12 @@ export function setHiddenTagsEncryptionMethod(kind: number, method: "nip04" | "n
 }
 
 /** Checks if an event has hidden tags */
-export function hasHiddenTags<T extends HiddenContentEvent>(event: T): boolean {
+export function hasHiddenTags<T extends { kind: number; content: string }>(event: T): boolean {
   return canHaveHiddenTags(event.kind) && hasHiddenContent(event);
 }
 
 /** Returns the hidden tags for an event if they are unlocked */
-export function getHiddenTags<T extends HiddenContentEvent>(event: T): string[][] | undefined {
+export function getHiddenTags<T extends { kind: number; content: string }>(event: T): string[][] | undefined {
   if (!canHaveHiddenTags(event.kind) || isHiddenTagsLocked(event)) return undefined;
 
   return getOrComputeCachedValue(event, HiddenTagsSymbol, () => {
@@ -50,7 +66,7 @@ export function getHiddenTags<T extends HiddenContentEvent>(event: T): string[][
 }
 
 /** Checks if the hidden tags are locked */
-export function isHiddenTagsLocked<T extends HiddenContentEvent>(event: T): boolean {
+export function isHiddenTagsLocked<T extends object>(event: T): boolean {
   return isHiddenContentLocked(event);
 }
 
@@ -66,7 +82,7 @@ export function getHiddenTagsEncryptionMethods(kind: number, signer: HiddenConte
  * @param store An optional EventStore to notify about the update
  * @throws
  */
-export async function unlockHiddenTags<T extends HiddenContentEvent>(
+export async function unlockHiddenTags<T extends { kind: number; pubkey: string; content: string }>(
   event: T,
   signer: HiddenContentSigner,
 ): Promise<string[][]> {
@@ -82,7 +98,7 @@ export async function unlockHiddenTags<T extends HiddenContentEvent>(
  * Sets the hidden tags on an event and updates it if its part of an event store
  * @throws
  */
-export function setHiddenTagsCache<T extends HiddenContentEvent>(event: T, tags: string[][]) {
+export function setHiddenTagsCache<T extends { kind: number }>(event: T, tags: string[][]) {
   if (!canHaveHiddenTags(event.kind)) throw new Error("Event kind does not support hidden tags");
 
   const plaintext = JSON.stringify(tags);

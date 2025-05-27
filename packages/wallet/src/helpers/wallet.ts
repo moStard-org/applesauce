@@ -5,7 +5,7 @@ import {
   HiddenContentSigner,
   isHiddenTagsLocked,
   lockHiddenTags,
-  setHiddenContentEncryptionMethod,
+  setHiddenTagsEncryptionMethod,
   unlockHiddenTags,
 } from "applesauce-core/helpers";
 import { NostrEvent } from "nostr-tools";
@@ -14,8 +14,8 @@ export const WALLET_KIND = 17375;
 export const WALLET_BACKUP_KIND = 375;
 
 // Enable hidden content for wallet kinds
-setHiddenContentEncryptionMethod(WALLET_KIND, "nip44");
-setHiddenContentEncryptionMethod(WALLET_BACKUP_KIND, "nip44");
+setHiddenTagsEncryptionMethod(WALLET_KIND, "nip44");
+setHiddenTagsEncryptionMethod(WALLET_BACKUP_KIND, "nip44");
 
 export const WalletPrivateKeySymbol = Symbol.for("wallet-private-key");
 export const WalletMintsSymbol = Symbol.for("wallet-mints");

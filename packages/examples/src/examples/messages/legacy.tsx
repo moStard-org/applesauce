@@ -337,7 +337,7 @@ function HomeView({ pubkey, signer, storage }: { pubkey: string; signer: Extensi
 
   return (
     <div className="flex bg-base-200 overflow-hidden" style={{ height: "calc(100vh - 10rem)" }}>
-      <div className="w-1/5 bg-base-100 p-2 overflow-y-auto flex flex-col gap-2 shrink-0">
+      <div className="w-xs bg-base-100 p-2 overflow-y-auto flex flex-col gap-2 shrink-0">
         <div className="flex gap-2 w-full">
           <RelayPicker className="w-full" value={relay} onChange={setRelay} />
           <button className="btn" onClick={clearCache}>

@@ -1,37 +1,19 @@
-import { AddressPointer, EventPointer, ProfilePointer } from "nostr-tools/nip19";
+import { NostrEvent } from "nostr-tools";
 import { isAddressableKind, isReplaceableKind } from "nostr-tools/kinds";
-import { kinds, NostrEvent } from "nostr-tools";
+import { AddressPointer, EventPointer, ProfilePointer } from "nostr-tools/nip19";
 
-import { getHiddenTags, setHiddenTagsEncryptionMethod } from "./hidden-tags.js";
+import { getReplaceableIdentifier } from "./event.js";
+import { getHiddenTags } from "./hidden-tags.js";
 import {
   getAddressPointerFromATag,
   getCoordinateFromAddressPointer,
   getEventPointerFromETag,
   getProfilePointerFromPTag,
 } from "./pointers.js";
-import { isATag, isETag, isPTag, processTags } from "./tags.js";
-import { getReplaceableIdentifier } from "./event.js";
 import { mergeRelaySets } from "./relays.js";
-import { GROUPS_LIST_KIND } from "./groups.js";
+import { isATag, isETag, isPTag, processTags } from "./tags.js";
 
 export const FAVORITE_RELAYS_KIND = 10012;
-
-// Enable hidden tags for lists and sets
-
-// NIP-51 lists
-setHiddenTagsEncryptionMethod(kinds.BookmarkList, "nip04");
-setHiddenTagsEncryptionMethod(kinds.InterestsList, "nip04");
-setHiddenTagsEncryptionMethod(kinds.Mutelist, "nip04");
-setHiddenTagsEncryptionMethod(kinds.CommunitiesList, "nip04");
-setHiddenTagsEncryptionMethod(kinds.PublicChatsList, "nip04");
-setHiddenTagsEncryptionMethod(kinds.SearchRelaysList, "nip04");
-setHiddenTagsEncryptionMethod(GROUPS_LIST_KIND, "nip04");
-// NIP-51 sets
-setHiddenTagsEncryptionMethod(kinds.Bookmarksets, "nip04");
-setHiddenTagsEncryptionMethod(kinds.Relaysets, "nip04");
-setHiddenTagsEncryptionMethod(kinds.Followsets, "nip04");
-setHiddenTagsEncryptionMethod(kinds.Curationsets, "nip04");
-setHiddenTagsEncryptionMethod(kinds.Interestsets, "nip04");
 
 export type ReadListTags = "public" | "hidden" | "all";
 

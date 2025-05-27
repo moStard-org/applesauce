@@ -1,6 +1,6 @@
+import { kinds } from "nostr-tools";
 import {
   canHaveEncryptedContent,
-  EncryptedContentEvent,
   EncryptedContentSigner,
   EncryptedContentSymbol,
   getEncryptedContent,
@@ -17,16 +17,8 @@ export const HiddenContentSymbol = EncryptedContentSymbol;
 export interface HiddenContentSigner extends EncryptedContentSigner {}
 export const getHiddenContentEncryptionMethods = getEncryptedContentEncryptionMethods;
 
-/** Nessesary evnet structure for hidden content */
-export type HiddenContentEvent = EncryptedContentEvent & { pubkey: string };
-
 /** Various event kinds that can have hidden content */
-export const HiddenContentKinds = new Set<number>();
-
-/** Checks if an event can have hidden content */
-export function canHaveHiddenContent(kind: number): boolean {
-  return canHaveEncryptedContent(kind) && HiddenContentKinds.has(kind);
-}
+export const HiddenContentKinds = new Set<number>([setEncryptedContentEncryptionMethod(kinds.DraftLong, "nip04")]);
 
 /** Sets the encryption method for hidden content on a kind */
 export function setHiddenContentEncryptionMethod(kind: number, method: "nip04" | "nip44") {
@@ -34,18 +26,23 @@ export function setHiddenContentEncryptionMethod(kind: number, method: "nip04" |
   return kind;
 }
 
+/** Checks if an event can have hidden content */
+export function canHaveHiddenContent(kind: number): boolean {
+  return canHaveEncryptedContent(kind) && HiddenContentKinds.has(kind);
+}
+
 /** Checks if an event has hidden content */
-export function hasHiddenContent<T extends HiddenContentEvent>(event: T): boolean {
+export function hasHiddenContent<T extends { kind: number; content: string }>(event: T): boolean {
   return canHaveHiddenContent(event.kind) && hasEncryptedContent(event);
 }
 
 /** Checks if the hidden content is locked */
-export function isHiddenContentLocked<T extends HiddenContentEvent>(event: T): boolean {
+export function isHiddenContentLocked<T extends object>(event: T): boolean {
   return isEncryptedContentLocked(event);
 }
 
 /** Returns the hidden content for an event if they are unlocked */
-export function getHiddenContent<T extends HiddenContentEvent>(event: T): string | undefined {
+export function getHiddenContent<T extends { kind: number; content: string }>(event: T): string | undefined {
   if (!canHaveHiddenContent(event.kind) || isHiddenContentLocked(event)) return undefined;
   return getEncryptedContent(event);
 }
@@ -56,7 +53,7 @@ export function getHiddenContent<T extends HiddenContentEvent>(event: T): string
  * @param signer A signer to use to decrypt the content
  * @throws
  */
-export async function unlockHiddenContent<T extends HiddenContentEvent>(
+export async function unlockHiddenContent<T extends { kind: number; pubkey: string; content: string }>(
   event: T,
   signer: EncryptedContentSigner,
 ): Promise<string> {
@@ -72,7 +69,7 @@ export async function unlockHiddenContent<T extends HiddenContentEvent>(
  * Sets the hidden content on an event and updates it if its part of an event store
  * @throws
  */
-export function setHiddenContentCache<T extends HiddenContentEvent>(event: T, plaintext: string) {
+export function setHiddenContentCache<T extends { kind: number }>(event: T, plaintext: string) {
   if (!canHaveHiddenContent(event.kind)) throw new Error("Event kind does not support hidden content");
 
   // Set the encrypted content

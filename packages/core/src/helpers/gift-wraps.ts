@@ -1,19 +1,15 @@
-import { kinds, NostrEvent, UnsignedEvent, verifyEvent } from "nostr-tools";
-import { getHiddenContent } from "./hidden-content.js";
+import { NostrEvent, UnsignedEvent, verifyEvent } from "nostr-tools";
 import { getOrComputeCachedValue } from "./cache.js";
 import {
   EncryptedContentSigner,
   isEncryptedContentLocked,
   lockEncryptedContent,
-  setEncryptedContentEncryptionMethod,
   unlockEncryptedContent,
 } from "./encrypted-content.js";
+import { getHiddenContent } from "./hidden-content.js";
 
 export const GiftWrapSealSymbol = Symbol.for("gift-wrap-seal");
 export const GiftWrapEventSymbol = Symbol.for("gift-wrap-event");
-
-// Enable encrypted content for gift-wraps
-setEncryptedContentEncryptionMethod(kinds.GiftWrap, "nip44");
 
 /** Returns the unsigned seal event in a gift-wrap event */
 export function getGiftWrapSeal(gift: NostrEvent): NostrEvent | undefined {

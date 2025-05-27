@@ -2,11 +2,11 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { EventFactory } from "../event-factory.js";
 import { finalizeEvent, kinds, nip04 } from "nostr-tools";
 import { FakeUser } from "./fake-user.js";
-import { getHiddenTags, HiddenContentSymbol, unlockHiddenTags } from "applesauce-core/helpers";
 import { addEventTag, removeEventTag } from "../operations/tag/common.js";
 import { setListTitle } from "../operations/event/list.js";
 import { setContent, setEncryptedContent } from "../operations/event/content.js";
 import { includeAltTag } from "../operations/event/tags.js";
+import { EncryptedContentSymbol, getHiddenTags, unlockHiddenTags } from "applesauce-core/helpers";
 
 let factory = new EventFactory();
 let user = new FakeUser();
@@ -39,7 +39,7 @@ describe("runProcess", () => {
     });
   });
 
-  it("should preserve plaintext hidden content", async () => {
+  it("should preserve plaintext encrypted content", async () => {
     const user = new FakeUser();
     const draft = await EventFactory.runProcess(
       { kind: kinds.PrivateDirectMessage },
@@ -48,7 +48,7 @@ describe("runProcess", () => {
       includeAltTag("direct message"),
     );
 
-    expect(Reflect.get(draft, HiddenContentSymbol)).toEqual("hello world");
+    expect(Reflect.get(draft, EncryptedContentSymbol)).toEqual("hello world");
   });
 
   it("should not carry over generic symbols", async () => {
@@ -60,7 +60,7 @@ describe("runProcess", () => {
     expect(Reflect.has(draft, symbol)).toBe(false);
   });
 
-  it("should carry over hidden-content symbol", async () => {
+  it("should carry over encrypted content symbol", async () => {
     const user = new FakeUser();
     const draft = await EventFactory.runProcess(
       { kind: 4 },
@@ -68,7 +68,7 @@ describe("runProcess", () => {
       setEncryptedContent(user.pubkey, "testing", "nip04"),
     );
 
-    expect(Reflect.get(draft, HiddenContentSymbol)).toBe("testing");
+    expect(Reflect.get(draft, EncryptedContentSymbol)).toBe("testing");
   });
 
   it("should override created_at", async () => {
@@ -122,7 +122,7 @@ describe("modifyTags", () => {
     ).not.toEqual(expect.objectContaining({ tags: expect.arrayContaining(["e", "event-id"]) }));
   });
 
-  it("should throw error when modify hidden tags without signer", async () => {
+  it("should throw error when modifing hidden tags without signer", async () => {
     factory = new EventFactory();
 
     await expect(async () => {
@@ -192,6 +192,6 @@ describe("sign", () => {
     const draft = await factory.build({ kind: 4 }, setEncryptedContent(user.pubkey, "testing", "nip04"));
     const signed = await factory.sign(draft);
 
-    expect(Reflect.get(signed, HiddenContentSymbol)).toBe("testing");
+    expect(Reflect.get(signed, EncryptedContentSymbol)).toBe("testing");
   });
 });
