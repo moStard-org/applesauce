@@ -1,30 +1,42 @@
+import { getOrComputeCachedValue } from "./cache.js";
 import {
   canHaveHiddenContent,
   getHiddenContent,
   getHiddenContentEncryptionMethods,
+  hasHiddenContent,
   HiddenContentEvent,
   HiddenContentSigner,
   isHiddenContentLocked,
   lockHiddenContent,
+  setHiddenContentCache,
+  setHiddenContentEncryptionMethod,
   unlockHiddenContent,
 } from "./hidden-content.js";
-import { getOrComputeCachedValue } from "./cache.js";
 
 export const HiddenTagsSymbol = Symbol.for("hidden-tags");
 
+/** Various event kinds that can have hidden tags */
+export const HiddenTagsKinds = new Set<number>();
+
 /** Checks if an event can have hidden tags */
 export function canHaveHiddenTags(kind: number): boolean {
-  return canHaveHiddenContent(kind);
+  return canHaveHiddenContent(kind) && HiddenTagsKinds.has(kind);
+}
+
+/** Sets the type of encryption to use for hidden tags on a kind */
+export function setHiddenTagsEncryptionMethod(kind: number, method: "nip04" | "nip44") {
+  HiddenTagsKinds.add(setHiddenContentEncryptionMethod(kind, method));
+  return kind;
 }
 
 /** Checks if an event has hidden tags */
-export function hasHiddenTags<T extends { content: string; kind: number }>(event: T): boolean {
-  return canHaveHiddenTags(event.kind) && event.content.length > 0;
+export function hasHiddenTags<T extends HiddenContentEvent>(event: T): boolean {
+  return canHaveHiddenTags(event.kind) && hasHiddenContent(event);
 }
 
 /** Returns the hidden tags for an event if they are unlocked */
-export function getHiddenTags<T extends object>(event: T): string[][] | undefined {
-  if (isHiddenTagsLocked(event)) return undefined;
+export function getHiddenTags<T extends HiddenContentEvent>(event: T): string[][] | undefined {
+  if (!canHaveHiddenTags(event.kind) || isHiddenTagsLocked(event)) return undefined;
 
   return getOrComputeCachedValue(event, HiddenTagsSymbol, () => {
     const plaintext = getHiddenContent(event)!;
@@ -38,7 +50,7 @@ export function getHiddenTags<T extends object>(event: T): string[][] | undefine
 }
 
 /** Checks if the hidden tags are locked */
-export function isHiddenTagsLocked<T extends object>(event: T): boolean {
+export function isHiddenTagsLocked<T extends HiddenContentEvent>(event: T): boolean {
   return isHiddenContentLocked(event);
 }
 
@@ -66,6 +78,18 @@ export async function unlockHiddenTags<T extends HiddenContentEvent>(
   return getHiddenTags(event)!;
 }
 
+/**
+ * Sets the hidden tags on an event and updates it if its part of an event store
+ * @throws
+ */
+export function setHiddenTagsCache<T extends HiddenContentEvent>(event: T, tags: string[][]) {
+  if (!canHaveHiddenTags(event.kind)) throw new Error("Event kind does not support hidden tags");
+
+  const plaintext = JSON.stringify(tags);
+  setHiddenContentCache(event, plaintext);
+}
+
+/** Clears the cached hidden tags on an event */
 export function lockHiddenTags<T extends object>(event: T) {
   Reflect.deleteProperty(event, HiddenTagsSymbol);
   lockHiddenContent(event);

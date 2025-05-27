@@ -7,7 +7,7 @@ import { NostrEvent } from "nostr-tools";
 import { useEffect, useMemo, useState } from "react";
 import { map } from "rxjs";
 
-import { RelayPicker } from "../components/relay-picker";
+import { RelayPicker } from "../../components/relay-picker";
 
 // Create an event store for all events
 const eventStore = new EventStore();

@@ -2,6 +2,7 @@ import { Nip07Interface } from "applesauce-signers";
 import { EventTemplate, NostrEvent } from "nostr-tools";
 import { Observable } from "rxjs";
 
+/** A signer class that proxies requests to another signer that isn't created yet */
 export class ProxySigner<T extends Nip07Interface> implements Nip07Interface {
   private _signer: T | undefined;
   protected get signer(): T {

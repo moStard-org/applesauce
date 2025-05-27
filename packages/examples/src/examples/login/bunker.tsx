@@ -2,7 +2,7 @@ import { EventFactory } from "applesauce-factory";
 import { RelayPool } from "applesauce-relay";
 import { NostrConnectSigner } from "applesauce-signers";
 import { useState } from "react";
-import JsonBlock from "../components/json-block";
+import JsonBlock from "../../components/json-block";
 
 // Create a relay pool to make relay connections
 const pool = new RelayPool();

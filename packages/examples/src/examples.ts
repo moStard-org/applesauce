@@ -21,12 +21,8 @@ const examples: Example[] = [];
 for (const [path, load] of Object.entries(modules)) {
   const source = async () => (await sources[path]()).default as string;
 
-  const id = basename(path);
-  // Convert kebab-case or snake_case to Title Case
-  const name = id
-    .replace(/[-_]/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase())
-    .replace(/\s+/g, "");
+  const id = path.replace(/^.*\/examples\/|\.tsx$/g, "");
+  const name = id.replace(/\//g, " / ").replace(/[-_]/g, " ");
 
   examples.push({ id, name, path, load, source });
 }

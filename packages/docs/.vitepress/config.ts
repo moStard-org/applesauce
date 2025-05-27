@@ -19,6 +19,7 @@ export default defineConfig({
           { text: "Why applesauce", link: "/introduction/why-applesauce" },
           { text: "Getting Started", link: "/introduction/getting-started" },
           { text: "Packages", link: "/introduction/packages" },
+          { text: "Glossary", link: "/introduction/glossary" },
         ],
       },
       {

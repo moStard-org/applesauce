@@ -6,9 +6,15 @@ import {
   isHiddenContentLocked,
   isHiddenTagsLocked,
   lockHiddenContent,
+  setHiddenContentEncryptionMethod,
   unlockHiddenContent,
 } from "applesauce-core/helpers";
 import { NostrEvent } from "nostr-tools";
+
+export const WALLET_TOKEN_KIND = 7375;
+
+// Enable hidden content for wallet token kind
+setHiddenContentEncryptionMethod(WALLET_TOKEN_KIND, "nip44");
 
 /** Internal method for creating a unique id for each proof */
 export function getProofUID(proof: Proof): string {
@@ -26,8 +32,6 @@ export function ignoreDuplicateProofs(seen = new Set<string>()): (proof: Proof) 
     }
   };
 }
-
-export const WALLET_TOKEN_KIND = 7375;
 
 export type TokenContent = {
   /** Cashu mint for the proofs */

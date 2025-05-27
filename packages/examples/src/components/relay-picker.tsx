@@ -62,10 +62,12 @@ export function RelayPicker({
   value,
   onChange,
   common = COMMON_RELAYS,
+  className,
 }: {
   value: string;
   onChange: (relay: string) => void;
   common?: string[];
+  className?: string;
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -85,7 +87,7 @@ export function RelayPicker({
 
   return (
     <>
-      <div className="join">
+      <div className={`join ${className}`}>
         <select className="select select-bordered join-item" value={value} onChange={handleSelectChange}>
           <option value="" disabled>
             Select a relay

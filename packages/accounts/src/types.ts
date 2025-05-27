@@ -1,4 +1,5 @@
 import { Nip07Interface } from "applesauce-signers";
+import { NostrEvent } from "nostr-tools";
 
 export type EventTemplate = {
   kind: number;
@@ -7,6 +8,7 @@ export type EventTemplate = {
   created_at: number;
 };
 
+/** A type for serializing an account */
 export type SerializedAccount<SignerData, Metadata extends unknown> = {
   /** Internal account ID */
   id: string;
@@ -20,6 +22,7 @@ export type SerializedAccount<SignerData, Metadata extends unknown> = {
   metadata?: Metadata;
 };
 
+/** An interface for an account */
 export interface IAccount<
   Signer extends Nip07Interface = Nip07Interface,
   SignerData = any,
@@ -38,8 +41,15 @@ export interface IAccount<
   toJSON(): SerializedAccount<SignerData, Metadata>;
 }
 
+/** A constructor for an account */
 export interface IAccountConstructor<Signer extends Nip07Interface, SignerData, Metadata extends unknown> {
   readonly type: string;
   new (pubkey: string, signer: Signer): IAccount<Signer, SignerData, Metadata>;
   fromJSON(json: SerializedAccount<SignerData, Metadata>): IAccount<Signer, SignerData, Metadata>;
+}
+
+/** An interface for caching decrypted content of events */
+export interface DecryptionCache {
+  getContent(event: NostrEvent): Promise<string>;
+  setContent(event: NostrEvent, content: string): Promise<void>;
 }

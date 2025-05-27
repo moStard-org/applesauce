@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { useHash } from "react-use";
 import examples from "../examples";
 
 export default function SideNav() {
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [hash] = useHash();
 
   const filtered = examples.filter((item) => item.id.toLowerCase().includes(searchTerm.toLowerCase()));
 
@@ -17,10 +19,12 @@ export default function SideNav() {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-        <ul className="menu menu-lg">
+        <ul className="menu menu-lg px-0 font-mono w-xs">
           {filtered.map((item) => (
             <li key={item.id}>
-              <a href={"#" + item.id}>{item.id}</a>
+              <a href={"#" + item.id} className={"text-sm " + (hash === "#" + item.id ? "menu-active" : "")}>
+                {item.name}
+              </a>
             </li>
           ))}
         </ul>

@@ -6,7 +6,7 @@ import { NostrEvent } from "nostr-tools";
 import { decode, EventPointer } from "nostr-tools/nip19";
 import { useMemo, useState } from "react";
 import { merge } from "rxjs";
-import { RelayPicker } from "../components/relay-picker";
+import { RelayPicker } from "../../components/relay-picker";
 import { isAudioURL, isImageURL, isVideoURL } from "applesauce-core/helpers";
 import { Link } from "applesauce-content/nast";
 

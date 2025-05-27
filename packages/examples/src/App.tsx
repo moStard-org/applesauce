@@ -133,7 +133,7 @@ function HomeView() {
           >
             <div className="card-body">
               <h2 className="card-title">{example.name}</h2>
-              <p className="text-sm opacity-70">{example.path.replace(/^\.\/examples\//, "")}</p>
+              <p className="text-sm opacity-70">{example.id}</p>
               <div className="card-actions justify-end mt-2">
                 <button className="btn btn-primary btn-sm">View Example</button>
               </div>

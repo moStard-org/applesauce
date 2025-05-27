@@ -8,7 +8,7 @@ import { scan } from "rxjs";
 
 import { Link } from "applesauce-content/nast";
 import { isAudioURL, isImageURL, isVideoURL } from "applesauce-core/helpers";
-import { RelayPicker } from "../components/relay-picker";
+import { RelayPicker } from "../../components/relay-picker";
 import { neventEncode, npubEncode } from "nostr-tools/nip19";
 
 // Create an event store for all events

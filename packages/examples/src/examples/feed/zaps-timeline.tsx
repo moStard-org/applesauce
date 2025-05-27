@@ -3,8 +3,10 @@ import {
   addRelayHintsToPointer,
   getDisplayName,
   getProfilePicture,
-  getReactionEventPointer,
   getSeenRelays,
+  getZapEventPointer,
+  getZapPayment,
+  getZapSender,
   isFromCache,
   mergeRelaySets,
 } from "applesauce-core/helpers";
@@ -12,18 +14,17 @@ import { ProfileQuery } from "applesauce-core/queries";
 import { addressPointerLoader, eventPointerLoader } from "applesauce-loaders/loaders";
 import { useObservable } from "applesauce-react/hooks";
 import { onlyEvents, RelayPool } from "applesauce-relay";
-import { getEventsForFilters, openDB, addEvents } from "nostr-idb";
+import { addEvents, getEventsForFilters, openDB } from "nostr-idb";
 import { Filter, kinds, NostrEvent } from "nostr-tools";
 import { useEffect, useMemo, useState } from "react";
 import { bufferTime, filter, map } from "rxjs";
 
-import { RelayPicker } from "../components/relay-picker";
+import { RelayPicker } from "../../components/relay-picker";
 
 // Setup event store
 const eventStore = new EventStore();
 const queryStore = new QueryStore(eventStore);
 
-// Create a relay pool for connections
 const pool = new RelayPool();
 
 // Setup a local event cache
@@ -52,7 +53,7 @@ eventStore.inserts
     });
   });
 
-// Create some loaders using the cache method and the event store
+// Create loaders that load events from relays and cache
 const addressLoader = addressPointerLoader(pool.request.bind(pool), {
   eventStore,
   cacheRequest,
@@ -92,12 +93,11 @@ function Username({ pubkey, relays }: { pubkey: string; relays?: string[] }) {
   return <>{getDisplayName(profile, "unknown")}</>;
 }
 
-function ReactionEvent({ event }: { event: NostrEvent }) {
-  const pointer = getReactionEventPointer(event);
-
-  const relays = useMemo(() => {
-    return mergeRelaySets(getSeenRelays(event), pointer?.relays);
-  }, [event, pointer]);
+function ZapEvent({ event }: { event: NostrEvent }) {
+  const pointer = getZapEventPointer(event) ?? undefined;
+  const payment = getZapPayment(event);
+  const senderPubkey = getZapSender(event);
+  const zapAmount = payment?.amount ? Math.round(payment.amount / 1000) : 0; // Convert msats to sats
 
   // Load the shared event from the pointer
   useEffect(() => {
@@ -109,35 +109,38 @@ function ReactionEvent({ event }: { event: NostrEvent }) {
     return () => sub.unsubscribe();
   }, [pointer, event]);
 
-  const reactedTo = useObservable(pointer && queryStore.event(pointer.id));
+  const relays = useMemo(() => mergeRelaySets(getSeenRelays(event), pointer?.relays), [event, pointer]);
+
+  const zappedEvent = useObservable(pointer && queryStore.event(pointer.id));
 
   return (
     <div className="flex flex-col gap-2">
       <div className="flex gap-2 items-center">
-        <Avatar pubkey={event.pubkey} relays={relays} />
+        <Avatar pubkey={senderPubkey} relays={relays} />
         <h2>
           <span className="font-bold">
-            <Username pubkey={event.pubkey} relays={relays} />
+            <Username pubkey={senderPubkey} relays={relays} />
           </span>
-          <span> reacted {event.content} to</span>
+          <span> zapped </span>
+          <span className="text-warning font-bold">{zapAmount} sats</span>
         </h2>
         <time className="ms-auto text-sm text-gray-500">{new Date(event.created_at * 1000).toLocaleString()}</time>
       </div>
 
-      {reactedTo ? (
-        <div className="card bg-base-100 shadow-md">
+      {zappedEvent ? (
+        <div className="card card-sm bg-base-100 shadow-md">
           <div className="card-body">
             <div className="flex items-center gap-4">
-              <Avatar pubkey={reactedTo.pubkey} relays={relays} />
+              <Avatar pubkey={zappedEvent.pubkey} relays={relays} />
               <h2 className="card-title">
-                <Username pubkey={reactedTo.pubkey} relays={relays} />
+                <Username pubkey={zappedEvent.pubkey} relays={relays} />
               </h2>
             </div>
-            <p>{reactedTo.content}</p>
+            <p>{zappedEvent.content}</p>
           </div>
         </div>
       ) : pointer ? (
-        <div className="card bg-base-200 shadow-md opacity-50">
+        <div className="card card-sm bg-base-200 shadow-md opacity-50">
           <div className="card-body">
             <div className="flex items-center gap-4">
               <span className="loading loading-dots loading-lg" />
@@ -151,9 +154,9 @@ function ReactionEvent({ event }: { event: NostrEvent }) {
           </div>
         </div>
       ) : (
-        <div className="card bg-error text-error-content shadow-md">
+        <div className="card card-sm bg-error text-error-content shadow-md">
           <div className="card-body">
-            <p>Invalid reaction: no event pointer found</p>
+            <p>Invalid zap: no event pointer found</p>
           </div>
         </div>
       )}
@@ -161,14 +164,14 @@ function ReactionEvent({ event }: { event: NostrEvent }) {
   );
 }
 
-export default function ReactionsTimeline() {
+export default function ZapsTimeline() {
   const [relay, setRelay] = useState<string>("wss://relay.primal.net/");
 
   const timeline$ = useMemo(
     () =>
       pool
         .relay(relay)
-        .subscription({ kinds: [kinds.Reaction], limit: 20 })
+        .subscription({ kinds: [kinds.Zap], limit: 20 })
         .pipe(
           onlyEvents(),
           mapEventsToStore(eventStore),
@@ -177,7 +180,7 @@ export default function ReactionsTimeline() {
         ),
     [relay],
   );
-  const reactions = useObservable(timeline$);
+  const zaps = useObservable(timeline$);
 
   return (
     <div className="container mx-auto">
@@ -185,9 +188,7 @@ export default function ReactionsTimeline() {
         <RelayPicker value={relay} onChange={setRelay} />
       </div>
 
-      <div className="flex flex-col gap-4">
-        {reactions?.map((event) => <ReactionEvent key={event.id} event={event} />)}
-      </div>
+      <div className="flex flex-col gap-4">{zaps?.map((event) => <ZapEvent key={event.id} event={event} />)}</div>
     </div>
   );
 }
