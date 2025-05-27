@@ -148,3 +148,8 @@ export function getReplaceableIdentifier(event: NostrEvent): string {
     return d;
   });
 }
+
+/** Checks if an event is a NIP-70 protected event */
+export function isProtectedEvent(event: NostrEvent): boolean {
+  return event.tags.some((t) => t[0] === "-");
+}

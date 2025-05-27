@@ -4,12 +4,15 @@ import { NostrEvent } from "nostr-tools";
 import { createTextContentOperations, TextContentOptions } from "../operations/event/content.js";
 import { EventFactory, EventBlueprint } from "../event-factory.js";
 import { includeGroupHTag, includeGroupPreviousTags } from "../operations/event/groups.js";
+import { createMetaTagOperations, MetaTagOptions } from "../operations/event/common.js";
+
+export type GroupMessageBlueprintOptions = { previous: NostrEvent[] } & TextContentOptions & MetaTagOptions;
 
 /** A blueprint for a NIP-29 group message */
 export function GroupMessageBlueprint(
   group: GroupPointer,
   content: string,
-  options?: { previous: NostrEvent[] } & TextContentOptions,
+  options?: GroupMessageBlueprintOptions,
 ): EventBlueprint {
   return (ctx) =>
     EventFactory.runProcess(
@@ -19,7 +22,9 @@ export function GroupMessageBlueprint(
       includeGroupHTag(group),
       // include "previous" events tags
       options?.previous && includeGroupPreviousTags(options.previous),
-      // set text content
+      // Set text content
       ...createTextContentOperations(content, options),
+      // Add common meta tags
+      ...createMetaTagOperations(options),
     );
 }

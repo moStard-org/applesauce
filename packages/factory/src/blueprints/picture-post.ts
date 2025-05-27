@@ -5,10 +5,12 @@ import { EventFactory, EventBlueprint } from "../event-factory.js";
 import { includeMediaAttachmentTags } from "../operations/event/media-attachment.js";
 import { includePicturePostImageTags } from "../operations/event/picture-post.js";
 import { includeHashtags } from "../operations/event/hashtags.js";
+import { createMetaTagOperations, MetaTagOptions } from "../operations/event/common.js";
 
-export type PicturePostBlueprintOptions = TextContentOptions & {
-  hashtags?: string[];
-};
+export type PicturePostBlueprintOptions = TextContentOptions &
+  MetaTagOptions & {
+    hashtags?: string[];
+  };
 
 /**
  * A blueprint to create a kind 20 picture post
@@ -29,6 +31,7 @@ export function PicturePostBlueprint(
       includeMediaAttachmentTags(pictures),
       includePicturePostImageTags(pictures),
       ...createTextContentOperations(content, options),
+      ...createMetaTagOperations(options),
       options?.hashtags ? includeHashtags(options.hashtags) : undefined,
     );
 }

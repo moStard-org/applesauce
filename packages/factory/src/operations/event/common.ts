@@ -3,6 +3,8 @@ import { nanoid } from "nanoid";
 
 import { EventOperation } from "../../event-factory.js";
 import { ensureSingletonTag } from "../../helpers/tag.js";
+import { setProtected } from "./protected.js";
+import { setExpirationTimestamp } from "./expiration.js";
 
 /** Ensures parameterized replaceable kinds have "d" tags */
 export function includeReplaceableIdentifier(identifier: string | (() => string) = nanoid): EventOperation {
@@ -19,4 +21,18 @@ export function includeReplaceableIdentifier(identifier: string | (() => string)
 
     return draft;
   };
+}
+
+/** Options for {@link createMetaTagOperations} */
+export type MetaTagOptions = {
+  protected?: boolean;
+  expiration?: number;
+};
+
+/** Creates the necessary operations for meta tag options */
+export function createMetaTagOperations(options?: MetaTagOptions): EventOperation[] {
+  return [
+    options?.protected ? setProtected(true) : undefined,
+    options?.expiration ? setExpirationTimestamp(options.expiration) : undefined,
+  ].filter((o) => !!o);
 }

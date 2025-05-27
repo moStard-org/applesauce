@@ -12,6 +12,7 @@ export * from "./direct-messages.js";
 export * from "./dns-identity.js";
 export * from "./emoji.js";
 export * from "./event.js";
+export * from "./expiration.js";
 export * from "./external-id.js";
 export * from "./file-metadata.js";
 export * from "./filter.js";

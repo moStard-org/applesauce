@@ -20,3 +20,13 @@ export function setZapSplit(splits: Omit<ZapSplit, "percent" | "relay">[]): Even
     return { ...draft, tags };
   };
 }
+
+/** Options for {@link createZapOperations} */
+export type ZapOptions = {
+  splits?: Omit<ZapSplit, "percent" | "relay">[];
+};
+
+/** Creates the necessary operations for zap options */
+export function createZapOperations(options?: ZapOptions): EventOperation[] {
+  return [options?.splits ? setZapSplit(options.splits) : undefined].filter((o) => !!o);
+}

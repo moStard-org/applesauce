@@ -1,11 +1,11 @@
 import { kinds } from "nostr-tools";
-import { ZapSplit } from "applesauce-core/helpers";
 
-import { EventFactory, EventBlueprint } from "../event-factory.js";
+import { EventBlueprint, EventFactory } from "../event-factory.js";
+import { createMetaTagOperations, MetaTagOptions } from "../operations/event/common.js";
 import { createTextContentOperations, TextContentOptions } from "../operations/event/content.js";
-import { setZapSplit } from "../operations/event/zap.js";
+import { createZapOperations, ZapOptions } from "../operations/event/zap.js";
 
-export type NoteBlueprintOptions = TextContentOptions & { splits?: Omit<ZapSplit, "percent" | "relay">[] };
+export type NoteBlueprintOptions = TextContentOptions & MetaTagOptions & ZapOptions;
 
 /** Short text note (kind 1) blueprint */
 export function NoteBlueprint(content: string, options?: NoteBlueprintOptions): EventBlueprint {
@@ -14,6 +14,7 @@ export function NoteBlueprint(content: string, options?: NoteBlueprintOptions): 
       { kind: kinds.ShortTextNote },
       ctx,
       ...createTextContentOperations(content, options),
-      options?.splits ? setZapSplit(options.splits) : undefined,
+      ...createZapOperations(options),
+      ...createMetaTagOperations(options),
     );
 }

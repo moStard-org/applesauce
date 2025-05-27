@@ -5,7 +5,9 @@ describe("exports", () => {
   it("should export the expected functions", () => {
     expect(Object.keys(exports).sort()).toMatchInlineSnapshot(`
       [
+        "createMetaTagOperations",
         "createTextContentOperations",
+        "createZapOperations",
         "includeAltTag",
         "includeChannelPointerTag",
         "includeClientTag",
@@ -31,10 +33,12 @@ describe("exports", () => {
         "setContent",
         "setContentWarning",
         "setEncryptedContent",
+        "setExpirationTimestamp",
         "setListDescription",
         "setListImage",
         "setListTitle",
         "setProfileContent",
+        "setProtected",
         "setReactionContent",
         "setZapSplit",
         "tagPubkeyMentionedInContent",

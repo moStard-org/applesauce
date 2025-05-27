@@ -174,4 +174,20 @@ describe("NoteBlueprint", () => {
       }),
     );
   });
+
+  it("should include protected tag when protected=true", async () => {
+    expect(await factory.create(NoteBlueprint, "hello world", { protected: true })).toEqual(
+      expect.objectContaining({
+        tags: [["-"]],
+      }),
+    );
+  });
+
+  it("should include expiration tag when expiration is set", async () => {
+    expect(await factory.create(NoteBlueprint, "hello world", { expiration: 1716883200 })).toEqual(
+      expect.objectContaining({
+        tags: [["expiration", "1716883200"]],
+      }),
+    );
+  });
 });
