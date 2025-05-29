@@ -1,9 +1,10 @@
 import { kinds, NostrEvent } from "nostr-tools";
 
-import { createTextContentOperations, TextContentOptions } from "../operations/event/content.js";
-import { EventFactory, EventBlueprint } from "../event-factory.js";
-import { includeNoteThreadingNotifyTags, includeNoteThreadingTags } from "../operations/event/note.js";
+import { EventFactory } from "../event-factory.js";
 import { includeChannelPointerTag } from "../operations/event/channels.js";
+import { setShortTextContent, TextContentOptions } from "../operations/event/content.js";
+import { includeNoteThreadingNotifyTags, includeNoteThreadingTags } from "../operations/event/note.js";
+import { EventBlueprint } from "../types.js";
 
 /** Creates a NIP-28 channel message */
 export function ChannelMessageBlueprint(
@@ -16,7 +17,7 @@ export function ChannelMessageBlueprint(
       { kind: kinds.ChannelMessage },
       ctx,
       includeChannelPointerTag(channel),
-      ...createTextContentOperations(message, options),
+      setShortTextContent(message, options),
     );
 }
 
@@ -32,6 +33,6 @@ export function ChannelMessageReplyBlueprint(
       ctx,
       includeNoteThreadingTags(parent),
       includeNoteThreadingNotifyTags(parent),
-      ...createTextContentOperations(message, options),
+      setShortTextContent(message, options),
     );
 }

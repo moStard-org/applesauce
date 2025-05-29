@@ -1,8 +1,9 @@
 import { kinds, NostrEvent } from "nostr-tools";
-import { EventFactory, EventBlueprint } from "../event-factory.js";
+import { EventFactory } from "../event-factory.js";
+import { MetaTagOptions, setMetaTags } from "../operations/event/common.js";
 import { includeShareTags, setShareContent, setShareKind } from "../operations/event/share.js";
-import { createMetaTagOperations, MetaTagOptions } from "../operations/event/common.js";
-import { createZapOperations, ZapOptions } from "../operations/event/zap.js";
+import { setZapSplit, ZapOptions } from "../operations/event/zap.js";
+import { EventBlueprint } from "../types.js";
 
 export type ShareBlueprintOptions = MetaTagOptions & ZapOptions;
 
@@ -15,7 +16,7 @@ export function ShareBlueprint(event: NostrEvent, options?: ShareBlueprintOption
       setShareKind(event),
       setShareContent(event),
       includeShareTags(event),
-      ...createMetaTagOperations(options),
-      ...createZapOperations(options),
+      setMetaTags(options),
+      setZapSplit(options),
     );
 }

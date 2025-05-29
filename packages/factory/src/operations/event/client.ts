@@ -2,9 +2,9 @@ import { AddressPointer } from "nostr-tools/nip19";
 import { getCoordinateFromAddressPointer } from "applesauce-core/helpers";
 import { kinds } from "nostr-tools";
 
-import { EventOperation } from "../../event-factory.js";
 import { includeSingletonTag } from "./tags.js";
 import { fillAndTrimTag } from "../../helpers/tag.js";
+import { EventOperation } from "../../types.js";
 
 // A list of event kinds to never attach the "client" tag to
 const NEVER_ATTACH_CLIENT_TAG = [kinds.EncryptedDirectMessage, kinds.GiftWrap];

@@ -1,7 +1,7 @@
 import { Emoji } from "applesauce-core/helpers/emoji";
 import { Expressions } from "applesauce-content/helpers";
 
-import { EventOperation } from "../../event-factory.js";
+import { EventOperation } from "../../types.js";
 
 /** Adds "emoji" tags for NIP-30 emojis used in the content */
 export function includeContentEmojiTags(emojis?: Emoji[]): EventOperation {

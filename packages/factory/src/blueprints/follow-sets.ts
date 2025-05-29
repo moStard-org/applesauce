@@ -2,9 +2,10 @@ import { ProfilePointer } from "nostr-tools/nip19";
 import { kinds } from "nostr-tools";
 
 import { addPubkeyTag } from "../operations/tag/common.js";
-import { EventBlueprint, EventFactory } from "../event-factory.js";
+import { EventFactory } from "../event-factory.js";
 import { modifyHiddenTags, modifyPublicTags } from "../operations/event/tags.js";
 import { setListDescription, setListImage, setListTitle } from "../operations/event/list.js";
+import { EventBlueprint } from "../types.js";
 
 /** Creates a new kind 30000 follow set */
 export function FollowSetBlueprint(

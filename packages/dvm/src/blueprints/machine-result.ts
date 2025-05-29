@@ -1,7 +1,8 @@
-import { NostrEvent } from "nostr-tools";
-import { EventBlueprint, EventFactory, EventOperation } from "applesauce-factory/event-factory";
+import { EventBlueprint, EventOperation } from "applesauce-factory";
+import { EventFactory } from "applesauce-factory/event-factory";
 import { setContent } from "applesauce-factory/operations/event/content";
 import { includeNameValueTag } from "applesauce-factory/operations/event/tags";
+import { NostrEvent } from "nostr-tools";
 
 // include copied "i" tags from request
 function includeInputTags(request: NostrEvent): EventOperation {

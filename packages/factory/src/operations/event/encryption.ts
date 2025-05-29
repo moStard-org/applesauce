@@ -1,6 +1,6 @@
 import { EventContentEncryptionMethod, EncryptedContentSymbol } from "applesauce-core/helpers";
 
-import { EventOperation } from "../../event-factory.js";
+import { EventOperation } from "../../types.js";
 
 /** Sets the content to be encrypted to the pubkey with optional override method */
 export function setEncryptedContent(pubkey: string, content: string, method?: "nip04" | "nip44"): EventOperation {

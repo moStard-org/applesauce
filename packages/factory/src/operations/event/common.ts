@@ -2,10 +2,11 @@ import { nanoid } from "nanoid";
 import { EventTemplate, NostrEvent, UnsignedEvent } from "nostr-tools";
 import { isAddressableKind } from "nostr-tools/kinds";
 
-import { EventOperation } from "../../event-factory.js";
 import { ensureSingletonTag } from "../../helpers/tag.js";
 import { setExpirationTimestamp } from "./expiration.js";
 import { setProtected } from "./protected.js";
+import { pipe, skip } from "../../helpers/pipeline.js";
+import { EventOperation } from "../../types.js";
 
 /** An operation that removes the signature from the event template */
 export function stripSignature<Input extends NostrEvent | UnsignedEvent | EventTemplate>(): EventOperation<
@@ -49,16 +50,16 @@ export function includeReplaceableIdentifier(identifier: string | (() => string)
   };
 }
 
-/** Options for {@link createMetaTagOperations} */
+/** Options for {@link setMetaTags} */
 export type MetaTagOptions = {
   protected?: boolean;
   expiration?: number;
 };
 
 /** Creates the necessary operations for meta tag options */
-export function createMetaTagOperations(options?: MetaTagOptions): EventOperation[] {
-  return [
-    options?.protected ? setProtected(true) : undefined,
-    options?.expiration ? setExpirationTimestamp(options.expiration) : undefined,
-  ].filter((o) => !!o);
+export function setMetaTags(options?: MetaTagOptions): EventOperation {
+  return pipe(
+    options?.protected ? setProtected(true) : skip(),
+    options?.expiration ? setExpirationTimestamp(options.expiration) : skip(),
+  );
 }

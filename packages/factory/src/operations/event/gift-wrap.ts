@@ -9,7 +9,7 @@ import {
   NostrEvent,
   UnsignedEvent,
 } from "nostr-tools";
-import { EventOperation } from "../../event-factory.js";
+import { EventOperation } from "../../types.js";
 import { setEncryptedContent } from "./encryption.js";
 import { includeNameValueTag } from "./tags.js";
 

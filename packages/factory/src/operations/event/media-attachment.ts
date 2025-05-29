@@ -1,6 +1,6 @@
 import { FileMetadata } from "applesauce-core/helpers";
 
-import { EventOperation } from "../../event-factory.js";
+import { EventOperation } from "../../types.js";
 import { createImetaTagForAttachment } from "../../helpers/file-metadata.js";
 
 /** Adds imeta tags onto the draft for attachments */

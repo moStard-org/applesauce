@@ -1,4 +1,4 @@
-import { EventOperation } from "../../event-factory.js";
+import { EventOperation } from "../../types.js";
 import { includeNameValueTag } from "./tags.js";
 
 /** Includes the nip-04 direct message "p" tag */

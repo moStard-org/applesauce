@@ -1,9 +1,10 @@
-import { getPubkeyFromDecodeResult, EncryptedContentSymbol } from "applesauce-core/helpers";
+import { EncryptedContentSymbol, getPubkeyFromDecodeResult } from "applesauce-core/helpers";
 import { Emoji } from "applesauce-core/helpers/emoji";
 
-import { EventOperation } from "../../event-factory.js";
 import { ensureProfilePointerTag } from "../../helpers/common-tags.js";
 import { getContentPointers } from "../../helpers/content.js";
+import { pipe, skip } from "../../helpers/pipeline.js";
+import { EventOperation } from "../../types.js";
 import { includeContentEmojiTags } from "./emojis.js";
 import { includeContentHashtags } from "./hashtags.js";
 import { includeQuoteTags } from "./quote.js";
@@ -63,9 +64,9 @@ export type TextContentOptions = {
   contentWarning?: boolean | string;
 };
 
-/** Create a set of operations for common text content */
-export function createTextContentOperations(content: string, options?: TextContentOptions): EventOperation[] {
-  return [
+/** Sets the text for a short text note and include hashtags and mentions */
+export function setShortTextContent(content: string, options?: TextContentOptions): EventOperation {
+  return pipe(
     // set text content
     setContent(content),
     // fix @ mentions
@@ -77,8 +78,8 @@ export function createTextContentOperations(content: string, options?: TextConte
     // include "t" tags for hashtags
     includeContentHashtags(),
     // include "emoji" tags
-    options?.emojis && includeContentEmojiTags(options.emojis),
+    options?.emojis ? includeContentEmojiTags(options.emojis) : skip(),
     // set "content-warning" tag
-    options?.contentWarning !== undefined ? setContentWarning(options.contentWarning) : undefined,
-  ].filter((o) => !!o);
+    options?.contentWarning !== undefined ? setContentWarning(options.contentWarning) : skip(),
+  );
 }

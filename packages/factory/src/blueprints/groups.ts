@@ -1,10 +1,11 @@
 import { GROUP_MESSAGE_KIND, GroupPointer } from "applesauce-core/helpers";
 import { NostrEvent } from "nostr-tools";
 
-import { createTextContentOperations, TextContentOptions } from "../operations/event/content.js";
-import { EventFactory, EventBlueprint } from "../event-factory.js";
+import { EventFactory } from "../event-factory.js";
+import { MetaTagOptions, setMetaTags } from "../operations/event/common.js";
+import { setShortTextContent, TextContentOptions } from "../operations/event/content.js";
 import { includeGroupHTag, includeGroupPreviousTags } from "../operations/event/groups.js";
-import { createMetaTagOperations, MetaTagOptions } from "../operations/event/common.js";
+import { EventBlueprint } from "../types.js";
 
 export type GroupMessageBlueprintOptions = { previous: NostrEvent[] } & TextContentOptions & MetaTagOptions;
 
@@ -23,8 +24,8 @@ export function GroupMessageBlueprint(
       // include "previous" events tags
       options?.previous && includeGroupPreviousTags(options.previous),
       // Set text content
-      ...createTextContentOperations(content, options),
+      setShortTextContent(content, options),
       // Add common meta tags
-      ...createMetaTagOperations(options),
+      setMetaTags(options),
     );
 }

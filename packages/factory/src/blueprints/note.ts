@@ -1,9 +1,10 @@
 import { kinds } from "nostr-tools";
 
-import { EventBlueprint, EventFactory } from "../event-factory.js";
-import { createMetaTagOperations, MetaTagOptions } from "../operations/event/common.js";
-import { createTextContentOperations, TextContentOptions } from "../operations/event/content.js";
-import { createZapOperations, ZapOptions } from "../operations/event/zap.js";
+import { EventFactory } from "../event-factory.js";
+import { MetaTagOptions, setMetaTags } from "../operations/event/common.js";
+import { setShortTextContent, TextContentOptions } from "../operations/event/content.js";
+import { setZapSplit, ZapOptions } from "../operations/event/zap.js";
+import { EventBlueprint } from "../types.js";
 
 export type NoteBlueprintOptions = TextContentOptions & MetaTagOptions & ZapOptions;
 
@@ -13,8 +14,8 @@ export function NoteBlueprint(content: string, options?: NoteBlueprintOptions): 
     EventFactory.runProcess(
       { kind: kinds.ShortTextNote },
       ctx,
-      ...createTextContentOperations(content, options),
-      ...createZapOperations(options),
-      ...createMetaTagOperations(options),
+      setShortTextContent(content, options),
+      setZapSplit(options),
+      setMetaTags(options),
     );
 }

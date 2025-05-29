@@ -1,7 +1,8 @@
-import { NostrEvent } from "nostr-tools";
-import { EventBlueprint, EventFactory } from "applesauce-factory/event-factory";
+import { EventBlueprint } from "applesauce-factory";
+import { EventFactory } from "applesauce-factory/event-factory";
 import { setContent } from "applesauce-factory/operations/event/content";
 import { includeNameValueTag, includeSingletonTag } from "applesauce-factory/operations/event/tags";
+import { NostrEvent } from "nostr-tools";
 
 import { DVM_STATUS_KIND } from "../helpers/kinds.js";
 import { JobStatus } from "../helpers/status.js";

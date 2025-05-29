@@ -25,6 +25,11 @@ describe("exports", () => {
         "ensureSingletonTag",
         "fillAndTrimTag",
         "getContentPointers",
+        "identity",
+        "pipe",
+        "pipeFromAsyncArray",
+        "skip",
+        "tagPipeline",
       ]
     `);
   });

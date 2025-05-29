@@ -1,7 +1,7 @@
 import { GroupPointer } from "applesauce-core/helpers";
 import { NostrEvent } from "nostr-tools";
 
-import { EventOperation } from "../../event-factory.js";
+import { EventOperation } from "../../types.js";
 import { ensureNamedValueTag } from "../../helpers/tag.js";
 import { createGroupHTagFromGroupPointer } from "../../helpers/groups.js";
 

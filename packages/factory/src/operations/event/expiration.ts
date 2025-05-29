@@ -1,4 +1,4 @@
-import { EventOperation } from "../../event-factory.js";
+import { EventOperation } from "../../types.js";
 import { includeSingletonTag } from "./tags.js";
 
 /** Sets the NIP-40 expiration timestamp for an event */

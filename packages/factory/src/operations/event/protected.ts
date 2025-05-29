@@ -1,4 +1,4 @@
-import { EventOperation } from "../../event-factory.js";
+import { EventOperation } from "../../types.js";
 import { removeSingletonTag, setSingletonTag } from "../tag/index.js";
 import { modifyPublicTags } from "./tags.js";
 

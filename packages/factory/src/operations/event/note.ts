@@ -1,9 +1,9 @@
-import { NostrEvent } from "nostr-tools";
 import { getNip10References, isPTag } from "applesauce-core/helpers";
+import { NostrEvent } from "nostr-tools";
 import { EventPointer } from "nostr-tools/nip19";
 
-import { EventOperation } from "../../event-factory.js";
 import { ensureMarkedEventPointerTag, ensureProfilePointerTag } from "../../helpers/common-tags.js";
+import { EventOperation } from "../../types.js";
 
 /** Includes NIP-10 reply tags */
 export function includeNoteThreadingTags(parent: NostrEvent): EventOperation {

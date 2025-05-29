@@ -2,7 +2,7 @@ import { NostrEvent } from "nostr-tools";
 import { isAddressableKind } from "nostr-tools/kinds";
 import { getAddressPointerForEvent } from "applesauce-core/helpers";
 
-import { EventOperation } from "../../event-factory.js";
+import { EventOperation } from "../../types.js";
 import { ensureAddressPointerTag, ensureEventPointerTag, ensureKTag } from "../../helpers/common-tags.js";
 
 /** Includes NIP-09 delete event tags */

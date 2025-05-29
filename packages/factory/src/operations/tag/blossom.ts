@@ -1,6 +1,6 @@
 import { areBlossomServersEqual } from "applesauce-core/helpers/blossom";
 import { addNameValueTag } from "./common.js";
-import { TagOperation } from "../../event-factory.js";
+import { TagOperation } from "../../types.js";
 
 /** Adds a server tag to a 10063 event */
 export function addBlossomServerTag(url: string | URL, replace = true): TagOperation {

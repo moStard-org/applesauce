@@ -1,6 +1,6 @@
-import { kinds, NostrEvent } from "nostr-tools";
-import { TagOperation } from "../../event-factory.js";
 import { getAddressPointerForEvent, isReplaceable } from "applesauce-core/helpers";
+import { kinds, NostrEvent } from "nostr-tools";
+import { TagOperation } from "../../types.js";
 import { addCoordinateTag, addEventTag, removeCoordinateTag, removeEventTag } from "./common.js";
 
 /** Adds an "e" or "a" tag to a bookmark list or set */

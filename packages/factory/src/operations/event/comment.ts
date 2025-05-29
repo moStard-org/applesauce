@@ -1,6 +1,6 @@
 import { NostrEvent } from "nostr-tools";
 
-import { EventOperation } from "../../event-factory.js";
+import { EventOperation } from "../../types.js";
 import { createCommentTagsForEvent } from "../../helpers/comment.js";
 
 /** Includes NIP-22 comment tags */

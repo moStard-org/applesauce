@@ -19,5 +19,6 @@ export * from "./profile.js";
 export * from "./protected.js";
 export * from "./quote.js";
 export * from "./reaction.js";
+export * from "./signer.js";
 export * from "./tags.js";
 export * from "./zap.js";

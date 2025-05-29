@@ -1,6 +1,6 @@
 import { isSameURL, normalizeURL } from "applesauce-core/helpers";
 import { addNameValueTag } from "./common.js";
-import { TagOperation } from "../../event-factory.js";
+import { TagOperation } from "../../types.js";
 
 /** Adds a relay tag */
 export function addRelayTag(url: string | URL, tagName = "relay", replace = true): TagOperation {

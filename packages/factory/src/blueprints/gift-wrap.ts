@@ -1,6 +1,7 @@
 import { kinds } from "nostr-tools";
-import { EventBlueprint, EventFactory } from "../event-factory.js";
+import { EventFactory } from "../event-factory.js";
 import { setGiftWrapAddress, setGiftWrapSeal, setSealRumor } from "../operations/event/gift-wrap.js";
+import { EventBlueprint } from "../types.js";
 
 /** Creates a gift wrapped event based on a blueprint */
 export function GiftWrapBlueprint(pubkey: string, blueprint: EventBlueprint): EventBlueprint {

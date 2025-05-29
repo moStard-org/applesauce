@@ -1,10 +1,11 @@
 import { NostrEvent } from "nostr-tools";
 import { COMMENT_KIND } from "applesauce-core/helpers";
 
-import { EventFactory, EventBlueprint } from "../event-factory.js";
-import { createTextContentOperations, TextContentOptions } from "../operations/event/content.js";
+import { EventFactory } from "../event-factory.js";
+import { setShortTextContent, TextContentOptions } from "../operations/event/content.js";
 import { includeCommentTags } from "../operations/event/comment.js";
-import { createMetaTagOperations, MetaTagOptions } from "../operations/event/common.js";
+import { setMetaTags, MetaTagOptions } from "../operations/event/common.js";
+import { EventBlueprint } from "../types.js";
 
 export type CommentBlueprintOptions = TextContentOptions & MetaTagOptions;
 
@@ -19,7 +20,7 @@ export function CommentBlueprint(
       { kind: COMMENT_KIND },
       ctx,
       includeCommentTags(parent),
-      ...createTextContentOperations(content, options),
-      ...createMetaTagOperations(options),
+      setShortTextContent(content, options),
+      setMetaTags(options),
     );
 }

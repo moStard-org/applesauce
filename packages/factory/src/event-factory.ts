@@ -1,7 +1,6 @@
-import { Emoji, EncryptedContentSymbol, unixNow } from "applesauce-core/helpers";
+import { EncryptedContentSymbol, unixNow } from "applesauce-core/helpers";
 import { EventTemplate, NostrEvent, UnsignedEvent } from "nostr-tools";
 import { isAddressableKind } from "nostr-tools/kinds";
-import { AddressPointer } from "nostr-tools/nip19";
 
 import { CommentBlueprint } from "./blueprints/comment.js";
 import { DeleteBlueprint } from "./blueprints/delete.js";
@@ -11,55 +10,13 @@ import { NoteReplyBlueprint } from "./blueprints/reply.js";
 import { ShareBlueprint } from "./blueprints/share.js";
 import { includeClientTag } from "./operations/event/client.js";
 import { includeReplaceableIdentifier, modifyHiddenTags, modifyPublicTags } from "./operations/event/index.js";
+import { EventBlueprint, EventFactoryContext, EventOperation, TagOperation } from "./types.js";
 
 export type EventFactoryTemplate = {
   kind: number;
   content?: string;
   tags?: string[][];
   created_at?: number;
-};
-
-/** A single operation in the factory process */
-export type EventOperation<
-  Input extends EventTemplate | UnsignedEvent | NostrEvent = EventTemplate,
-  Output extends EventTemplate | UnsignedEvent | NostrEvent = EventTemplate,
-> = (draft: Input, context: EventFactoryContext) => Output | Promise<Output>;
-
-/** A single operation that modifies an events public or hidden tags array */
-export type TagOperation = (tags: string[][], ctx: EventFactoryContext) => string[][] | Promise<string[][]>;
-
-/** A method that creates an event template using a context */
-export type EventBlueprint = (
-  context: EventFactoryContext,
-) => EventTemplate | UnsignedEvent | NostrEvent | Promise<EventTemplate | UnsignedEvent | NostrEvent>;
-
-export type EventFactorySigner = {
-  getPublicKey: () => Promise<string> | string;
-  signEvent: (template: EventTemplate) => Promise<NostrEvent> | NostrEvent;
-  nip04?: {
-    encrypt: (pubkey: string, plaintext: string) => Promise<string> | string;
-    decrypt: (pubkey: string, ciphertext: string) => Promise<string> | string;
-  };
-  nip44?: {
-    encrypt: (pubkey: string, plaintext: string) => Promise<string> | string;
-    decrypt: (pubkey: string, ciphertext: string) => Promise<string> | string;
-  };
-};
-
-export type EventFactoryClient = {
-  name: string;
-  address?: Omit<AddressPointer, "kind" | "relays">;
-};
-
-export type EventFactoryContext = {
-  /** NIP-89 client tag */
-  client?: EventFactoryClient;
-  getEventRelayHint?: (event: string) => string | undefined | Promise<string> | Promise<undefined>;
-  getPubkeyRelayHint?: (pubkey: string) => string | undefined | Promise<string> | Promise<undefined>;
-  /** A signer used to encrypt the content of some notes */
-  signer?: EventFactorySigner;
-  /** An array of custom emojis that will be used in text note content */
-  emojis?: Emoji[];
 };
 
 export class EventFactory {
@@ -209,14 +166,14 @@ export class EventFactory {
 
   // Helpers
 
-  /** Create a NIP-22 comment */
-  comment(...args: Parameters<typeof CommentBlueprint>) {
-    return this.create(CommentBlueprint, ...args);
-  }
-
   /** Creates a short text note */
   note(...args: Parameters<typeof NoteBlueprint>) {
     return this.create(NoteBlueprint, ...args);
+  }
+
+  /** Create a NIP-22 comment */
+  comment(...args: Parameters<typeof CommentBlueprint>) {
+    return this.create(CommentBlueprint, ...args);
   }
 
   /** Creates a short text note reply */

@@ -1,14 +1,16 @@
-import { kinds, NostrEvent } from "nostr-tools";
 import { getAddressPointerForEvent, getEventPointerForEvent } from "applesauce-core/helpers";
+import { kinds, NostrEvent } from "nostr-tools";
 import { isAddressableKind } from "nostr-tools/kinds";
 
-import { EventOperation } from "../../event-factory.js";
 import {
   ensureAddressPointerTag,
   ensureEventPointerTag,
   ensureKTag,
   ensureProfilePointerTag,
 } from "../../helpers/common-tags.js";
+import { EventOperation } from "../../types.js";
+
+// TODO: some of these operations should be refactored to use "modifyPublicTags"
 
 /** Includes NIP-18 repost tags */
 export function includeShareTags(event: NostrEvent): EventOperation {
