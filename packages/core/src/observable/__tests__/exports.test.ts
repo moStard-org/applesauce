@@ -15,6 +15,7 @@ describe("exports", () => {
         "mapEventsToTimeline",
         "simpleTimeout",
         "watchEventUpdates",
+        "watchEventsUpdates",
         "withImmediateValueOrDefault",
       ]
     `);

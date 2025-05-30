@@ -15,6 +15,7 @@ describe("exports", () => {
         "EventZapsQuery",
         "FavoriteRelaySets",
         "FavoriteRelays",
+        "GiftWrapQuery",
         "HiddenContactsQuery",
         "HiddenMuteQuery",
         "MailboxesQuery",

@@ -42,7 +42,7 @@ function UnlockView({ onUnlock }: { onUnlock: (storage: SecureStorage, pubkey?: 
 
       if (!isValid) return setError("Invalid PIN");
 
-      const pubkey = (await storage.getItem<string>("pubkey")) ?? undefined;
+      const pubkey = (await storage.getItem("pubkey")) ?? undefined;
       onUnlock(storage, pubkey);
     } catch (err) {
       setError("Failed to unlock storage");
@@ -175,7 +175,7 @@ function Message({
   );
   const decrypt = async () => {
     // Check if the plaintext was cached
-    const cached = await storage.getItem<string>(message.id);
+    const cached = await storage.getItem(message.id);
     if (cached) return setEncryptedContentCache(message, cached);
 
     const corraspondant = sender === pubkey ? getTagValue(message, "p") : sender;
@@ -188,7 +188,7 @@ function Message({
 
   // Load plaintext from cache
   useEffect(() => {
-    storage.getItem<string>(message.id).then((cached) => {
+    storage.getItem(message.id).then((cached) => {
       if (cached) setEncryptedContentCache(message, cached);
     });
   }, [message.id]);

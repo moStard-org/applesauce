@@ -95,3 +95,9 @@ export function lockEncryptedContent<T extends object>(event: T) {
     if (eventStore) eventStore.update(event);
   }
 }
+
+/** An interface that is used to cache encrypted content on events */
+export interface EncryptedContentCache {
+  getItem: (key: string) => Promise<string | null>;
+  setItem: (key: string, value: string) => Promise<void>;
+}

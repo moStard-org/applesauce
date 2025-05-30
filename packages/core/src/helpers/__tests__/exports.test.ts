@@ -97,6 +97,7 @@ describe("exports", () => {
         "getCommentRootPointer",
         "getContacts",
         "getContentWarning",
+        "getConversationIdentifier",
         "getCoordinateFromAddressPointer",
         "getDeleteCoordinates",
         "getDeleteIds",

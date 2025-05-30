@@ -30,13 +30,12 @@ export default class SecureStorage {
   }
 
   // Encrypt and store data
-  async setItem<T>(key: string, value: T, encryptionKey = this.key): Promise<boolean> {
+  async setItem(key: string, value: string, encryptionKey = this.key): Promise<boolean> {
     if (!encryptionKey) throw new Error("Storage locked");
 
     try {
       // Convert value to string if it's an object
-      const valueToStore = typeof value === "object" ? JSON.stringify(value) : String(value);
-      const valueBytes = utf8ToBytes(valueToStore);
+      const valueBytes = utf8ToBytes(value);
 
       // Generate a random IV for CBC mode
       const iv = crypto.getRandomValues(new Uint8Array(16));
@@ -60,7 +59,7 @@ export default class SecureStorage {
   }
 
   // Retrieve and decrypt data
-  async getItem<T>(key: string, encryptionKey = this.key): Promise<T | null> {
+  async getItem(key: string, encryptionKey = this.key): Promise<string | null> {
     if (!encryptionKey) throw new Error("Storage locked");
 
     // Get encrypted data
@@ -81,13 +80,7 @@ export default class SecureStorage {
     // Convert bytes to UTF-8 string
     const decryptedText = bytesToUtf8(decryptedBytes);
 
-    // Try to parse as JSON if possible
-    try {
-      return JSON.parse(decryptedText) as T;
-    } catch {
-      // If not JSON, return as is
-      return decryptedText as unknown as T;
-    }
+    return decryptedText;
   }
 
   // Remove an item
@@ -107,12 +100,12 @@ export default class SecureStorage {
 
     try {
       // Try to get a known test value with this PIN
-      const testValue = await this.getItem<string>(testKey, key);
+      const testValue = await this.getItem(testKey, key);
 
       // If we've never set a test value with this PIN before, set one
       if (testValue === null) {
         // First setup
-        await this.setItem<string>(testKey, "PIN verification data", key);
+        await this.setItem(testKey, "PIN verification data", key);
         this.key = SecureStorage.deriveKey(pin);
         return true;
       } else if (testValue === "PIN verification data") {
