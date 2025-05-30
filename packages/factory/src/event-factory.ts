@@ -61,6 +61,15 @@ export function blueprint(kind: number, ...operations: (EventOperation | undefin
   return async (context) => await build({ kind }, context, ...operations);
 }
 
+/** Creates an event from a context and a blueprint */
+export async function create<Args extends Array<any>, T extends EventTemplate | UnsignedEvent | NostrEvent>(
+  context: EventFactoryContext,
+  blueprintConstructor: (...args: Args) => EventBlueprint<T>,
+  ...args: Args
+): Promise<T> {
+  return await blueprintConstructor(...args)(context);
+}
+
 /** Modifies an event using a context and a set of operations */
 export async function modify(
   event: EventTemplate | UnsignedEvent | NostrEvent,
@@ -79,10 +88,10 @@ export class EventFactory {
   }
 
   /** Create an event from a blueprint */
-  async create<Args extends Array<any>>(
-    blueprintConstructor: (...args: Args) => EventBlueprint,
+  async create<Args extends Array<any>, T extends EventTemplate | UnsignedEvent | NostrEvent>(
+    blueprintConstructor: (...args: Args) => EventBlueprint<T>,
     ...args: Args
-  ): Promise<EventTemplate> {
+  ): Promise<T> {
     return await blueprintConstructor(...args)(this.context);
   }
 

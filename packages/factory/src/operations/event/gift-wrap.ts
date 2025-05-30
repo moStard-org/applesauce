@@ -1,4 +1,4 @@
-import { Rumor, setEncryptedContentCache } from "applesauce-core/helpers";
+import { Rumor, unixNow } from "applesauce-core/helpers";
 import {
   EventTemplate,
   finalizeEvent,
@@ -9,66 +9,81 @@ import {
   NostrEvent,
   UnsignedEvent,
 } from "nostr-tools";
+import { build } from "../../event-factory.js";
+import { eventPipe } from "../../helpers/pipeline.js";
 import { EventOperation } from "../../types.js";
 import { setEncryptedContent } from "./encryption.js";
-import { includeNameValueTag } from "./tags.js";
+import { stamp } from "./signer.js";
 
 // Read https://github.com/nostr-protocol/nips/blob/master/59.md#overview for details on rumors and seals
 // Gift wrap (signed random key) -> seal (signed sender key) -> rumor (unsigned)
 
-/** Encrypts a seal inside a gift wrap event */
-export function setGiftWrapSeal(
-  pubkey: string,
-  seal: NostrEvent | UnsignedEvent | EventTemplate,
-): EventOperation<EventTemplate | UnsignedEvent | NostrEvent, NostrEvent> {
-  return async (draft, ctx) => {
-    if (seal.kind !== kinds.Seal) throw new Error("seal must be a seal event kind");
-
-    // Sign the seal if it is unsigned
-    if (!Reflect.has(seal, "sig")) {
-      if (!ctx.signer) throw new Error("A signer is required to sign a seal");
-      seal = await ctx.signer.signEvent(seal);
-    }
-
-    // Return event encrypted with a random key
-    const key = generateSecretKey();
-    const plaintext = JSON.stringify(seal);
-    const giftwrap = finalizeEvent(
-      {
-        ...draft,
-        content: nip44.encrypt(plaintext, nip44.getConversationKey(key, pubkey)),
-      },
-      key,
-    );
-
-    // Save plaintext to cache
-    setEncryptedContentCache(giftwrap, plaintext);
-    return giftwrap;
-  };
+/** Create a timestamp with a random offset of an hour */
+function randomNow() {
+  return unixNow() - Math.floor(Math.random() * 60 * 60);
 }
 
-/** Sets the pubkey that the gift wrap is addressed to */
-export function setGiftWrapAddress(pubkey: string) {
-  return includeNameValueTag(["p", pubkey]);
-}
-
-/** Encrypts a rumor inside a seal */
-export function setSealRumor(pubkey: string, rumor: Rumor | UnsignedEvent | EventTemplate): EventOperation {
+/** Converts an event to a rumor. The first operation in the gift wrap pipeline */
+export function toRumor(): EventOperation<EventTemplate | UnsignedEvent | NostrEvent, Rumor> {
   return async (draft, ctx) => {
-    if (draft.kind !== kinds.Seal) throw new Error("Can only set rumor on a seal");
+    // @ts-expect-error
+    const rumor: Rumor = { ...draft };
 
     // Ensure rumor has pubkey
     if (!Reflect.has(rumor, "pubkey")) {
-      if (!ctx.signer) throw new Error("A signer is required to set a rumor on a seal");
-      rumor = { ...rumor, pubkey: await ctx.signer.getPublicKey() };
+      if (!ctx.signer) throw new Error("A signer is required to create a rumor");
+      rumor.pubkey = await ctx.signer.getPublicKey();
     }
 
     // Ensure rumor has id
-    if (!Reflect.has(rumor, "id")) rumor = { ...rumor, id: getEventHash(rumor as UnsignedEvent) };
+    if (!Reflect.has(rumor, "id")) rumor.id = getEventHash(rumor as UnsignedEvent);
 
     // Ensure rumor does not have signature
     Reflect.deleteProperty(rumor, "sig");
 
-    return await setEncryptedContent(pubkey, JSON.stringify(rumor))(draft, ctx);
+    return rumor;
   };
+}
+
+/** Seals a rumor in a NIP-59 seal. The second operation in the gift wrap pipeline */
+export function sealRumor(pubkey: string): EventOperation<Rumor, NostrEvent> {
+  return async (rumor, ctx) => {
+    if (!ctx.signer) throw new Error("A signer is required to create a seal");
+
+    const unsigned = await build(
+      { kind: kinds.Seal, created_at: randomNow() },
+      ctx,
+      setEncryptedContent(pubkey, JSON.stringify(rumor)),
+      stamp(),
+    );
+    return await ctx.signer.signEvent(unsigned);
+  };
+}
+
+/** Gift wraps a seal to a pubkey. The third operation in the gift wrap pipeline */
+export function wrapSeal(pubkey: string): EventOperation<NostrEvent, NostrEvent> {
+  return async (seal) => {
+    const key = generateSecretKey();
+    const plaintext = JSON.stringify(seal);
+
+    return finalizeEvent(
+      {
+        kind: kinds.GiftWrap,
+        created_at: randomNow(),
+        content: nip44.encrypt(plaintext, nip44.getConversationKey(key, pubkey)),
+        tags: [["p", pubkey]],
+      },
+      key,
+    );
+  };
+}
+
+/** An operation that gift wraps an event to a pubkey */
+export function giftWrap(pubkey: string): EventOperation<EventTemplate | UnsignedEvent | NostrEvent, NostrEvent> {
+  return eventPipe(
+    toRumor(),
+    /** @ts-expect-error */
+    sealRumor(pubkey),
+    wrapSeal(pubkey),
+  ) as EventOperation<EventTemplate | UnsignedEvent | NostrEvent, NostrEvent>;
 }

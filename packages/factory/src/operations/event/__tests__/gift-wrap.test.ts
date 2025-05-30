@@ -1,90 +1,95 @@
-import { kinds, NostrEvent } from "nostr-tools";
+import { unixNow } from "applesauce-core/helpers";
+import { kinds } from "nostr-tools";
 import { describe, expect, it } from "vitest";
 import { FakeUser } from "../../../__tests__/fake-user.js";
-import { build } from "../../../event-factory.js";
-import { setGiftWrapSeal, setSealRumor } from "../gift-wrap.js";
+import { sealRumor, toRumor, wrapSeal } from "../gift-wrap.js";
 
 const user = new FakeUser();
+const other = new FakeUser();
 
-describe("setGiftWrapSeal", () => {
-  it("should set the seal on the gift wrap", async () => {
-    const seal = user.event({ kind: kinds.Seal, content: "test" });
-
-    const draft = (await build(
-      { kind: kinds.GiftWrap },
-      { signer: user },
-      setGiftWrapSeal(user.pubkey, seal),
-    )) as NostrEvent;
-
-    expect(await user.nip44.decrypt(draft.pubkey, draft.content)).toEqual(JSON.stringify(seal));
-  });
-
-  it("should sign seal with signer if not signed", async () => {
-    const seal = user.event({ kind: kinds.Seal, content: "test" });
-    Reflect.deleteProperty(seal, "sig");
-
-    const draft = (await build(
-      { kind: kinds.GiftWrap },
-      { signer: user },
-      setGiftWrapSeal(user.pubkey, seal),
-    )) as NostrEvent;
-
-    const content = await user.nip44.decrypt(draft.pubkey, draft.content);
-    expect(JSON.parse(content)).toEqual(expect.objectContaining({ ...seal, sig: expect.any(String) }));
-  });
-
-  it("should stamp seal if its missing pubkey", async () => {
-    const seal = user.event({ kind: kinds.Seal, content: "test" });
-    Reflect.deleteProperty(seal, "id");
-    Reflect.deleteProperty(seal, "pubkey");
-    Reflect.deleteProperty(seal, "sig");
-
-    const draft = (await build(
-      { kind: kinds.GiftWrap },
-      { signer: user },
-      setGiftWrapSeal(user.pubkey, seal),
-    )) as NostrEvent;
-
-    const content = await user.nip44.decrypt(draft.pubkey, draft.content);
-    expect(JSON.parse(content)).toEqual(
-      expect.objectContaining({ ...seal, id: expect.any(String), pubkey: user.pubkey, sig: expect.any(String) }),
-    );
-  });
-});
-
-describe("setSealRumor", () => {
+describe("toRumor", () => {
   it("should strip signature from rumor", async () => {
-    const event = user.event({ kind: 1234, content: "test" });
+    const event = user.event({ kind: kinds.PrivateDirectMessage, content: "test" });
+    const rumor = await toRumor()(event, {});
 
-    const draft = await build({ kind: kinds.Seal }, { signer: user }, setSealRumor(user.pubkey, event));
-
-    const content = await user.nip44.decrypt(user.pubkey, draft.content);
-    expect(JSON.parse(content)).toEqual({
-      id: event.id,
-      kind: event.kind,
-      pubkey: user.pubkey,
-      content: event.content,
-      tags: event.tags,
-      created_at: event.created_at,
-    });
+    expect(rumor).toEqual(
+      expect.objectContaining({
+        id: event.id,
+        kind: event.kind,
+        pubkey: user.pubkey,
+        content: event.content,
+        tags: event.tags,
+        created_at: event.created_at,
+      }),
+    );
   });
 
   it("should stamp rumor if its missing pubkey", async () => {
-    const event = user.event({ kind: 1234, content: "test" });
-    Reflect.deleteProperty(event, "id");
-    Reflect.deleteProperty(event, "pubkey");
-    Reflect.deleteProperty(event, "sig");
+    const rumor = await toRumor()(user.event({ kind: kinds.PrivateDirectMessage }), { signer: user });
 
-    const draft = await build({ kind: kinds.Seal }, { signer: user }, setSealRumor(user.pubkey, event));
+    expect(rumor).toEqual(
+      expect.objectContaining({
+        id: expect.any(String),
+        kind: rumor.kind,
+        pubkey: user.pubkey,
+        content: rumor.content,
+        tags: rumor.tags,
+        created_at: rumor.created_at,
+      }),
+    );
+  });
 
-    const content = await user.nip44.decrypt(user.pubkey, draft.content);
+  it("should throw an error if no signer is provided and missing pubkey", async () => {
+    await expect(
+      toRumor()({ kind: kinds.PrivateDirectMessage, tags: [], created_at: unixNow(), content: "hello" }, {}),
+    ).rejects.toThrow("A signer is required to create a rumor");
+  });
+});
+
+describe("sealRumor", () => {
+  it("should wrap the rumor event in a seal", async () => {
+    const event = user.event({ kind: kinds.PrivateDirectMessage, content: "test" });
+    const seal = await sealRumor(other.pubkey)(event, { signer: user });
+
+    expect(seal.kind).toBe(kinds.Seal);
+    expect(seal.pubkey).toBe(user.pubkey);
+    expect(seal.sig).toBeDefined();
+    expect(seal.created_at).toBeLessThan(unixNow() + 1);
+    expect(await other.nip44.decrypt(seal.pubkey, seal.content)).toEqual(JSON.stringify(event));
+  });
+
+  it("should throw if no signer is provided", async () => {
+    const event = user.event({ kind: kinds.PrivateDirectMessage, content: "test" });
+    await expect(sealRumor(other.pubkey)(event, {})).rejects.toThrow("A signer is required to create a seal");
+  });
+});
+
+describe("wrapSeal", () => {
+  it("should wrap seal in a gift wrap event", async () => {
+    const seal = user.event({ kind: kinds.Seal, content: "test" });
+    const giftWrap = await wrapSeal(other.pubkey)(seal, {});
+
+    expect(giftWrap.kind).toBe(kinds.GiftWrap);
+    expect(giftWrap.created_at).toBeLessThan(unixNow() + 1);
+    expect(giftWrap.tags).toContainEqual(["p", other.pubkey]);
+
+    const content = await other.nip44.decrypt(giftWrap.pubkey, giftWrap.content);
     expect(JSON.parse(content)).toEqual({
-      id: expect.any(String),
-      kind: event.kind,
-      pubkey: user.pubkey,
-      content: event.content,
-      tags: event.tags,
-      created_at: event.created_at,
+      id: seal.id,
+      kind: seal.kind,
+      pubkey: seal.pubkey,
+      content: seal.content,
+      tags: seal.tags,
+      sig: seal.sig,
+      created_at: seal.created_at,
     });
+  });
+
+  it("should sign with a random key", async () => {
+    const seal = user.event({ kind: kinds.Seal, content: "test" });
+    const giftWrap = await wrapSeal(other.pubkey)(seal, {});
+
+    expect(giftWrap.pubkey).not.toBe(user.pubkey);
+    expect(giftWrap.pubkey).not.toBe(other.pubkey);
   });
 });

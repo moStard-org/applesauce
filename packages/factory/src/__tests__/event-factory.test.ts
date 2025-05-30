@@ -1,13 +1,12 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { EventFactory, modify } from "../event-factory.js";
-import { finalizeEvent, kinds, nip04 } from "nostr-tools";
-import { FakeUser } from "./fake-user.js";
-import { addEventTag, removeEventTag } from "../operations/tag/common.js";
-import { setListTitle } from "../operations/event/list.js";
-import { setContent } from "../operations/event/content.js";
-import { includeAltTag } from "../operations/event/tags.js";
 import { EncryptedContentSymbol, getHiddenTags, unlockHiddenTags } from "applesauce-core/helpers";
+import { finalizeEvent, kinds, nip04 } from "nostr-tools";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { EventFactory, modify } from "../event-factory.js";
 import { setEncryptedContent } from "../operations/event/encryption.js";
+import { setListTitle } from "../operations/event/list.js";
+import { includeAltTag } from "../operations/event/tags.js";
+import { addEventTag, removeEventTag } from "../operations/tag/common.js";
+import { FakeUser } from "./fake-user.js";
 
 let factory = new EventFactory();
 let user = new FakeUser();

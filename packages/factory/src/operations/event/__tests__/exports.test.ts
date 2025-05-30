@@ -5,6 +5,7 @@ describe("exports", () => {
   it("should export the expected functions", () => {
     expect(Object.keys(exports).sort()).toMatchInlineSnapshot(`
       [
+        "giftWrap",
         "includeAltTag",
         "includeChannelPointerTag",
         "includeClientTag",
@@ -29,12 +30,11 @@ describe("exports", () => {
         "modifyPublicTags",
         "modifyTags",
         "repairContentNostrLinks",
+        "sealRumor",
         "setContent",
         "setContentWarning",
         "setEncryptedContent",
         "setExpirationTimestamp",
-        "setGiftWrapAddress",
-        "setGiftWrapSeal",
         "setHiddenContent",
         "setListDescription",
         "setListImage",
@@ -43,7 +43,6 @@ describe("exports", () => {
         "setProfileContent",
         "setProtected",
         "setReactionContent",
-        "setSealRumor",
         "setShortTextContent",
         "setZapSplit",
         "setZapSplitTags",
@@ -53,8 +52,10 @@ describe("exports", () => {
         "stripStamp",
         "stripSymbols",
         "tagPubkeyMentionedInContent",
+        "toRumor",
         "updateCreatedAt",
         "updateProfileContent",
+        "wrapSeal",
       ]
     `);
   });
