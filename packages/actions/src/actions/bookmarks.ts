@@ -75,7 +75,7 @@ export function CreateBookmarkSet(
     const existing = getBookmarkEvent(events, self);
     if (existing) throw new Error("Bookmark list already exists");
 
-    const draft = await factory.process(
+    const draft = await factory.build(
       { kind: kinds.BookmarkList },
       setListTitle(title),
       setListDescription(description),

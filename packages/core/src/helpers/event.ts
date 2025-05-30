@@ -103,7 +103,7 @@ export function getIndexableTags(event: NostrEvent): Set<string> {
  * Returns the second index ( tag[1] ) of the first tag that matches the name
  * If the event has any hidden tags they will be searched first
  */
-export function getTagValue<T extends { kind: number; tags: string[][]; content: string; pubkey: string }>(
+export function getTagValue<T extends { kind: number; tags: string[][]; content: string }>(
   event: T,
   name: string,
 ): string | undefined {

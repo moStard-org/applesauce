@@ -27,6 +27,7 @@ describe("exports", () => {
         "includeSingletonTag",
         "modifyHiddenTags",
         "modifyPublicTags",
+        "modifyTags",
         "repairContentNostrLinks",
         "setContent",
         "setContentWarning",
@@ -46,11 +47,13 @@ describe("exports", () => {
         "setShortTextContent",
         "setZapSplit",
         "setZapSplitTags",
-        "signEvent",
-        "stampPubkey",
+        "sign",
+        "stamp",
         "stripSignature",
         "stripStamp",
+        "stripSymbols",
         "tagPubkeyMentionedInContent",
+        "updateCreatedAt",
         "updateProfileContent",
       ]
     `);

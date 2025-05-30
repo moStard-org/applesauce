@@ -23,13 +23,13 @@ describe("exports", () => {
         "ensureProfilePointerTag",
         "ensureQuoteEventPointerTag",
         "ensureSingletonTag",
+        "eventPipe",
         "fillAndTrimTag",
         "getContentPointers",
         "identity",
-        "pipe",
         "pipeFromAsyncArray",
         "skip",
-        "tagPipeline",
+        "tagPipe",
       ]
     `);
   });

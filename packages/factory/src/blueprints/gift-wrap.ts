@@ -1,10 +1,10 @@
-import { kinds } from "nostr-tools";
-import { EventFactory } from "../event-factory.js";
+import { kinds, NostrEvent } from "nostr-tools";
+import { build } from "../event-factory.js";
 import { setGiftWrapAddress, setGiftWrapSeal, setSealRumor } from "../operations/event/gift-wrap.js";
 import { EventBlueprint } from "../types.js";
 
 /** Creates a gift wrapped event based on a blueprint */
-export function GiftWrapBlueprint(pubkey: string, blueprint: EventBlueprint): EventBlueprint {
+export function GiftWrapBlueprint(pubkey: string, blueprint: EventBlueprint): EventBlueprint<NostrEvent> {
   return async (ctx) => {
     if (!ctx.signer) throw new Error("A signer is required to create a gift wrap event");
 
@@ -12,7 +12,7 @@ export function GiftWrapBlueprint(pubkey: string, blueprint: EventBlueprint): Ev
     const rumor = await blueprint(ctx);
 
     // 2. Create unsigned seal
-    const seal = await EventFactory.runProcess(
+    const seal = await build(
       { kind: kinds.Seal },
       ctx,
       // Set rumor as content and stamp with sender key
@@ -20,12 +20,12 @@ export function GiftWrapBlueprint(pubkey: string, blueprint: EventBlueprint): Ev
     );
 
     // 3. Create gift wrap with "p" of recipient
-    return await EventFactory.runProcess(
+    return (await build(
       { kind: kinds.GiftWrap },
       ctx,
       // Set seal as content and sign with sender key
       setGiftWrapSeal(pubkey, seal),
       setGiftWrapAddress(pubkey),
-    );
+    )) as unknown as Promise<NostrEvent>;
   };
 }

@@ -1,7 +1,7 @@
 import { kinds, NostrEvent } from "nostr-tools";
 import { describe, expect, it } from "vitest";
 import { FakeUser } from "../../../__tests__/fake-user.js";
-import { EventFactory } from "../../../event-factory.js";
+import { build } from "../../../event-factory.js";
 import { setGiftWrapSeal, setSealRumor } from "../gift-wrap.js";
 
 const user = new FakeUser();
@@ -10,7 +10,7 @@ describe("setGiftWrapSeal", () => {
   it("should set the seal on the gift wrap", async () => {
     const seal = user.event({ kind: kinds.Seal, content: "test" });
 
-    const draft = (await EventFactory.runProcess(
+    const draft = (await build(
       { kind: kinds.GiftWrap },
       { signer: user },
       setGiftWrapSeal(user.pubkey, seal),
@@ -23,7 +23,7 @@ describe("setGiftWrapSeal", () => {
     const seal = user.event({ kind: kinds.Seal, content: "test" });
     Reflect.deleteProperty(seal, "sig");
 
-    const draft = (await EventFactory.runProcess(
+    const draft = (await build(
       { kind: kinds.GiftWrap },
       { signer: user },
       setGiftWrapSeal(user.pubkey, seal),
@@ -39,7 +39,7 @@ describe("setGiftWrapSeal", () => {
     Reflect.deleteProperty(seal, "pubkey");
     Reflect.deleteProperty(seal, "sig");
 
-    const draft = (await EventFactory.runProcess(
+    const draft = (await build(
       { kind: kinds.GiftWrap },
       { signer: user },
       setGiftWrapSeal(user.pubkey, seal),
@@ -56,11 +56,7 @@ describe("setSealRumor", () => {
   it("should strip signature from rumor", async () => {
     const event = user.event({ kind: 1234, content: "test" });
 
-    const draft = await EventFactory.runProcess(
-      { kind: kinds.Seal },
-      { signer: user },
-      setSealRumor(user.pubkey, event),
-    );
+    const draft = await build({ kind: kinds.Seal }, { signer: user }, setSealRumor(user.pubkey, event));
 
     const content = await user.nip44.decrypt(user.pubkey, draft.content);
     expect(JSON.parse(content)).toEqual({
@@ -79,11 +75,7 @@ describe("setSealRumor", () => {
     Reflect.deleteProperty(event, "pubkey");
     Reflect.deleteProperty(event, "sig");
 
-    const draft = await EventFactory.runProcess(
-      { kind: kinds.Seal },
-      { signer: user },
-      setSealRumor(user.pubkey, event),
-    );
+    const draft = await build({ kind: kinds.Seal }, { signer: user }, setSealRumor(user.pubkey, event));
 
     const content = await user.nip44.decrypt(user.pubkey, draft.content);
     expect(JSON.parse(content)).toEqual({

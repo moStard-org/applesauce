@@ -7,8 +7,9 @@ import { fillAndTrimTag } from "../../helpers/tag.js";
 import { EventOperation } from "../../types.js";
 
 // A list of event kinds to never attach the "client" tag to
-const NEVER_ATTACH_CLIENT_TAG = [kinds.EncryptedDirectMessage, kinds.GiftWrap];
+const NEVER_ATTACH_CLIENT_TAG = [kinds.EncryptedDirectMessage, kinds.GiftWrap, kinds.Seal];
 
+/** Includes a NIP-89 client tag in an event*/
 export function includeClientTag(name: string, pointer?: Omit<AddressPointer, "kind" | "relays">): EventOperation {
   return (draft, ctx) => {
     if (NEVER_ATTACH_CLIENT_TAG.includes(draft.kind)) return draft;

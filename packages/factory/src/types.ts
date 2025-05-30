@@ -60,7 +60,7 @@ export type EventOperation<
   R extends EventTemplate | UnsignedEvent | NostrEvent = EventTemplate,
 > = Operation<I, R>;
 
-/** A method that creates an event template using a context */
+/** A method that creates a new event based on a set of operations */
 export type EventBlueprint<T extends EventTemplate | UnsignedEvent | NostrEvent = EventTemplate> = (
   context: EventFactoryContext,
-) => T | Promise<T>;
+) => Promise<T>;

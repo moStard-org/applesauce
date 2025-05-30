@@ -33,7 +33,7 @@ export function NewContacts(pubkeys?: string[]): Action {
     const contacts = events.getReplaceable(kinds.Contacts, self);
     if (contacts) throw new Error("Contact list already exists");
 
-    const draft = await factory.process({ kind: kinds.Contacts, tags: pubkeys?.map((p) => ["p", p]) });
+    const draft = await factory.build({ kind: kinds.Contacts, tags: pubkeys?.map((p) => ["p", p]) });
     yield await factory.sign(draft);
   };
 }

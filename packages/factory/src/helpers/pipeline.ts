@@ -1,80 +1,23 @@
 // Copied from rxjs pipe() method and modified to support context
 
-import { EventFactoryContext, Operation, TagOperation } from "../types.js";
+import { EncryptedContentSymbol } from "applesauce-core/helpers";
+import { EventFactoryContext, EventOperation, Operation, TagOperation } from "../types.js";
 
 export function identity<T>(x: T): T {
   return x;
 }
 
-export function pipe(): typeof identity;
-export function pipe<T, A>(fn1: Operation<T, A>): Operation<T, A>;
-export function pipe<T, A, B>(fn1: Operation<T, A>, fn2: Operation<A, B>): Operation<T, B>;
-export function pipe<T, A, B, C>(fn1: Operation<T, A>, fn2: Operation<A, B>, fn3: Operation<B, C>): Operation<T, C>;
-export function pipe<T, A, B, C, D>(
-  fn1: Operation<T, A>,
-  fn2: Operation<A, B>,
-  fn3: Operation<B, C>,
-  fn4: Operation<C, D>,
-): Operation<T, D>;
-export function pipe<T, A, B, C, D, E>(
-  fn1: Operation<T, A>,
-  fn2: Operation<A, B>,
-  fn3: Operation<B, C>,
-  fn4: Operation<C, D>,
-  fn5: Operation<D, E>,
-): Operation<T, E>;
-export function pipe<T, A, B, C, D, E, F>(
-  fn1: Operation<T, A>,
-  fn2: Operation<A, B>,
-  fn3: Operation<B, C>,
-  fn4: Operation<C, D>,
-  fn5: Operation<D, E>,
-  fn6: Operation<E, F>,
-): Operation<T, F>;
-export function pipe<T, A, B, C, D, E, F, G>(
-  fn1: Operation<T, A>,
-  fn2: Operation<A, B>,
-  fn3: Operation<B, C>,
-  fn4: Operation<C, D>,
-  fn5: Operation<D, E>,
-  fn6: Operation<E, F>,
-  fn7: Operation<F, G>,
-): Operation<T, G>;
-export function pipe<T, A, B, C, D, E, F, G, H>(
-  fn1: Operation<T, A>,
-  fn2: Operation<A, B>,
-  fn3: Operation<B, C>,
-  fn4: Operation<C, D>,
-  fn5: Operation<D, E>,
-  fn6: Operation<E, F>,
-  fn7: Operation<F, G>,
-  fn8: Operation<G, H>,
-): Operation<T, H>;
-export function pipe<T, A, B, C, D, E, F, G, H, I>(
-  fn1: Operation<T, A>,
-  fn2: Operation<A, B>,
-  fn3: Operation<B, C>,
-  fn4: Operation<C, D>,
-  fn5: Operation<D, E>,
-  fn6: Operation<E, F>,
-  fn7: Operation<F, G>,
-  fn8: Operation<G, H>,
-  fn9: Operation<H, I>,
-): Operation<T, I>;
-export function pipe<T, A, B, C, D, E, F, G, H, I>(
-  fn1: Operation<T, A>,
-  fn2: Operation<A, B>,
-  fn3: Operation<B, C>,
-  fn4: Operation<C, D>,
-  fn5: Operation<D, E>,
-  fn6: Operation<E, F>,
-  fn7: Operation<F, G>,
-  fn8: Operation<G, H>,
-  fn9: Operation<H, I>,
-  ...fns: Operation<any, any>[]
-): Operation<T, unknown>;
-export function pipe(...fns: Array<Operation<any, any>>): Operation<any, any> {
-  return pipeFromAsyncArray(fns);
+/** The core method that creates a pipeline to build an event */
+export function eventPipe(...operations: (EventOperation | undefined)[]): EventOperation {
+  return pipeFromAsyncArray(
+    operations.filter((o) => !!o),
+    [EncryptedContentSymbol],
+  );
+}
+
+/** The core method that creates a pipeline to create or modify an array of tags */
+export function tagPipe(...operations: (TagOperation | undefined)[]): TagOperation {
+  return pipeFromAsyncArray(operations.filter((o) => !!o));
 }
 
 /** A pipeline operation that does nothing */
@@ -82,18 +25,26 @@ export function skip<T>(): (value: T) => T {
   return (value) => value;
 }
 
-/** A pipeline explicitly for tag operations */
-export function tagPipeline(...operations: (TagOperation | undefined)[]): TagOperation {
-  return pipeFromAsyncArray(operations.filter((o) => !!o));
-}
-
-/** @internal */
-export function pipeFromAsyncArray<T, R>(fns: Array<Operation<T, R>>): Operation<T, R> {
+/**
+ * @param fns - An array of operations to pipe together
+ * @param preserve - An array of symbols to copy from each operation to the next
+ * @internal
+ */
+export function pipeFromAsyncArray<T, R>(fns: Array<Operation<T, R>>, preserve?: (symbol | string)[]): Operation<T, R> {
   if (fns.length === 0) return identity as Operation<any, any>;
 
-  if (fns.length === 1) return fns[0];
-
   return async function piped(input: T, context: EventFactoryContext): Promise<R> {
-    return fns.reduce(async (prev: any, fn: Operation<T, R>) => fn(await prev, context), input as any);
+    return fns.reduce(async (prev: any, fn: Operation<T, R>) => {
+      const result = await fn(await prev, context);
+
+      // Copy the symbols and fields if result is an object
+      if (preserve && typeof result === "object" && result !== null && typeof prev === "object" && prev !== null) {
+        for (const symbol of preserve) {
+          if (Reflect.has(prev, symbol)) Reflect.set(result, symbol, Reflect.get(prev, symbol));
+        }
+      }
+
+      return result;
+    }, input as any);
   };
 }

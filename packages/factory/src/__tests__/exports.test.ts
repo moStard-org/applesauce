@@ -9,6 +9,9 @@ describe("exports", () => {
         "EventFactory",
         "Helpers",
         "Operations",
+        "blueprint",
+        "build",
+        "modify",
       ]
     `);
   });

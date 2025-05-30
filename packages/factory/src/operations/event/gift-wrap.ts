@@ -17,7 +17,10 @@ import { includeNameValueTag } from "./tags.js";
 // Gift wrap (signed random key) -> seal (signed sender key) -> rumor (unsigned)
 
 /** Encrypts a seal inside a gift wrap event */
-export function setGiftWrapSeal(pubkey: string, seal: NostrEvent | UnsignedEvent | EventTemplate): EventOperation {
+export function setGiftWrapSeal(
+  pubkey: string,
+  seal: NostrEvent | UnsignedEvent | EventTemplate,
+): EventOperation<EventTemplate | UnsignedEvent | NostrEvent, NostrEvent> {
   return async (draft, ctx) => {
     if (seal.kind !== kinds.Seal) throw new Error("seal must be a seal event kind");
 

@@ -146,12 +146,12 @@ The `EventFactory` class has a few helper methods on it for building common even
 
 ## Manually creating an event
 
-The [`factory.process`](https://hzrd149.github.io/applesauce/typedoc/classes/applesauce-factory.EventFactory.html#process) method can be used to create an event from an `EventTemplate` and [EventOperations](https://hzrd149.github.io/applesauce/typedoc/modules/applesauce-factory.Operations.html)
+The [`factory.build`](https://hzrd149.github.io/applesauce/typedoc/classes/applesauce-factory.EventFactory.html#build) method can be used to create an event from an `EventTemplate` and [EventOperations](https://hzrd149.github.io/applesauce/typedoc/modules/applesauce-factory.Operations.html)
 
 ```ts
 import { includeSingletonTag, setContent, includeAltTag } from "applesauce-factory/operations";
 
-await factory.process(
+await factory.build(
   { kind: 1063 },
   setContent("the bitcoin whitepaper"),
   includeAltTag("File metadata"),

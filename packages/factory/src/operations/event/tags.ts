@@ -7,7 +7,7 @@ import {
   unlockHiddenTags,
 } from "applesauce-core/helpers";
 import { EventTemplate, NostrEvent, UnsignedEvent } from "nostr-tools";
-import { skip, tagPipeline } from "../../helpers/pipeline.js";
+import { eventPipe, skip, tagPipe } from "../../helpers/pipeline.js";
 import { EventOperation, TagOperation } from "../../types.js";
 import { addNameValueTag, setSingletonTag } from "../tag/common.js";
 
@@ -31,7 +31,7 @@ export function modifyPublicTags<E extends EventTemplate | UnsignedEvent | Nostr
   ...operations: (TagOperation | undefined)[]
 ): EventOperation<E, E> {
   return async (draft, ctx) => {
-    return { ...draft, tags: await tagPipeline(...operations)(Array.from(draft.tags), ctx) };
+    return { ...draft, tags: await tagPipe(...operations)(Array.from(draft.tags), ctx) };
   };
 }
 
@@ -77,7 +77,7 @@ export function modifyHiddenTags<E extends EventTemplate | UnsignedEvent | Nostr
     if (hidden === undefined) throw new Error("Failed to find hidden tags");
 
     // Create the new hidden tags
-    const tags = await tagPipeline(...operations)(hidden, ctx);
+    const tags = await tagPipe(...operations)(hidden, ctx);
 
     // Encrypt new hidden tags
     const methods = getHiddenTagsEncryptionMethods(draft.kind, ctx.signer);
@@ -88,4 +88,33 @@ export function modifyHiddenTags<E extends EventTemplate | UnsignedEvent | Nostr
     // add the plaintext content on the draft so it can be carried forward
     return { ...draft, content, [EncryptedContentSymbol]: plaintext };
   };
+}
+
+export type ModifyTagsOptions =
+  | TagOperation
+  | TagOperation[]
+  | { public?: TagOperation | TagOperation[]; hidden?: TagOperation | TagOperation[] };
+
+/** A flexible method for creating an event operation that modifies the tags */
+export function modifyTags(tagOperations?: ModifyTagsOptions): EventOperation {
+  let publicOperations: TagOperation[] = [];
+  let hiddenOperations: TagOperation[] = [];
+
+  // normalize tag operation arg
+  if (tagOperations === undefined) publicOperations = hiddenOperations = [];
+  else if (Array.isArray(tagOperations)) publicOperations = tagOperations;
+  else if (typeof tagOperations === "function") publicOperations = [tagOperations];
+  else {
+    if (typeof tagOperations.public === "function") publicOperations = [tagOperations.public];
+    else if (tagOperations.public) publicOperations = tagOperations.public;
+
+    if (typeof tagOperations.hidden === "function") hiddenOperations = [tagOperations.hidden];
+    else if (tagOperations.hidden) hiddenOperations = tagOperations.hidden;
+  }
+
+  // return a new event operation that modifies the tags
+  return eventPipe(
+    publicOperations.length > 0 ? modifyPublicTags(...publicOperations) : undefined,
+    hiddenOperations.length > 0 ? modifyHiddenTags(...hiddenOperations) : undefined,
+  );
 }

@@ -3,7 +3,7 @@ import { Emoji } from "applesauce-core/helpers/emoji";
 
 import { ensureProfilePointerTag } from "../../helpers/common-tags.js";
 import { getContentPointers } from "../../helpers/content.js";
-import { pipe, skip } from "../../helpers/pipeline.js";
+import { eventPipe, skip } from "../../helpers/pipeline.js";
 import { EventOperation } from "../../types.js";
 import { includeContentEmojiTags } from "./emojis.js";
 import { includeContentHashtags } from "./hashtags.js";
@@ -66,7 +66,7 @@ export type TextContentOptions = {
 
 /** Sets the text for a short text note and include hashtags and mentions */
 export function setShortTextContent(content: string, options?: TextContentOptions): EventOperation {
-  return pipe(
+  return eventPipe(
     // set text content
     setContent(content),
     // fix @ mentions

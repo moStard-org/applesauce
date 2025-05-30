@@ -1,14 +1,14 @@
-import { describe, expect, it } from "vitest";
-import { setEncryptedContent } from "../encryption.js";
-import { EventFactory } from "../../../event-factory.js";
-import { FakeUser } from "../../../__tests__/fake-user.js";
 import { EncryptedContentSymbol, setEncryptedContentEncryptionMethod } from "applesauce-core/helpers";
+import { describe, expect, it } from "vitest";
+import { FakeUser } from "../../../__tests__/fake-user.js";
+import { build } from "../../../event-factory.js";
+import { setEncryptedContent } from "../encryption.js";
 
 const user = new FakeUser();
 
 describe("setEncryptedContent", () => {
   it("should set the encrypted content", async () => {
-    const draft = await EventFactory.runProcess(
+    const draft = await build(
       { kind: 4 },
       { signer: user },
       setEncryptedContent(user.pubkey, "Hello, world!", "nip04"),
@@ -27,7 +27,7 @@ describe("setEncryptedContent", () => {
     setEncryptedContentEncryptionMethod(50004, "nip04");
     setEncryptedContentEncryptionMethod(50044, "nip44");
 
-    const nip04Draft = await EventFactory.runProcess(
+    const nip04Draft = await build(
       { kind: 50004 },
       { signer: user },
       setEncryptedContent(user.pubkey, "Hello, world!"),
@@ -41,7 +41,7 @@ describe("setEncryptedContent", () => {
     );
     expect(await user.nip04.decrypt(user.pubkey, nip04Draft.content)).toBe("Hello, world!");
 
-    const nip44Draft = await EventFactory.runProcess(
+    const nip44Draft = await build(
       { kind: 50044 },
       { signer: user },
       setEncryptedContent(user.pubkey, "Hello, world!"),
