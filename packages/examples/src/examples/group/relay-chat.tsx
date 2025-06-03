@@ -185,10 +185,7 @@ export default function RelayGroupExample() {
   return (
     <QueryStoreProvider queryStore={queryStore}>
       <div className="container mx-auto">
-        <div className="form-control w-full max-w-xl mb-4">
-          <label className="label">
-            <span className="label-text">Group Identifier</span>
-          </label>
+        <div className="flex w-full max-w-xl mb-4">
           <GroupPicker identifier={identifier} setIdentifier={setGroup} />
         </div>
 
