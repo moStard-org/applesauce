@@ -21,6 +21,8 @@ import { ProfilePointer } from "nostr-tools/nip19";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ignoreElements, lastValueFrom, map, mergeWith, Observable, shareReplay, startWith } from "rxjs";
 
+import GroupPicker from "../../components/group-picker";
+
 const eventStore = new EventStore();
 const queryStore = new QueryStore(eventStore);
 const signer = new ExtensionSigner();
@@ -170,7 +172,7 @@ export default function RelayGroupExample() {
   const [identifier, setIdentifier] = useState("");
   const [pointer, setPointer] = useState<GroupPointer>();
 
-  const load = useCallback(
+  const setGroup = useCallback(
     (identifier: string) => {
       try {
         setIdentifier(identifier);
@@ -187,29 +189,7 @@ export default function RelayGroupExample() {
           <label className="label">
             <span className="label-text">Group Identifier</span>
           </label>
-          <div className="join">
-            <input
-              className="input join-item input-bordered w-full"
-              type="text"
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              placeholder="Enter group identifier"
-            />
-            <select className="select join-item w-xs" onChange={(e) => load(e.target.value)} value={identifier}>
-              <option value="">Select group</option>
-              <option value="groups.0xchat.com'chachi">chachi</option>
-              <option value="groups.hzrd149.com'0a3991">blossom</option>
-              <option value="relay.groups.nip29.com'Miz7w4srsmygbqy2">zap.stream</option>
-              <option value="groups.0xchat.com'925b1aa20cd1b68dd9a0130e35808d66772fe082cf3f95294dd5755c7ea1ed59">
-                Robosats
-              </option>
-              <option value="groups.hzrd149.com'a45b2f">applesauce</option>
-              <option value="groups.hzrd149.com'79dc07">test group</option>
-            </select>
-            <button className="btn join-item btn-primary" onClick={() => load(identifier)}>
-              Load
-            </button>
-          </div>
+          <GroupPicker identifier={identifier} setIdentifier={setGroup} />
         </div>
 
         {pointer && <ChatLog pointer={pointer} />}
