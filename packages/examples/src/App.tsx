@@ -122,9 +122,27 @@ function ExampleView({ example }: { example: Example }) {
 
 function HomeView() {
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">Applesauce Examples</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="container mx-auto">
+      <div className="navbar bg-base-100 shadow-sm">
+        <div className="flex-1">
+          <a className="btn btn-ghost text-xl">Applesauce Examples</a>
+        </div>
+        <div className="flex-none">
+          <ul className="menu menu-horizontal px-1">
+            <li>
+              <a href="https://hzrd149.github.io/applesauce">Documentation</a>
+            </li>
+            <li>
+              <a href="https://hzrd149.github.io/applesauce/typedoc/">Reference</a>
+            </li>
+            <li>
+              <a href="https://github.com/hzrd149/applesauce">GitHub</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
         {examples.map((example) => (
           <a
             key={example.id}

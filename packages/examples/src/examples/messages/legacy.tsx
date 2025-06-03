@@ -20,8 +20,10 @@ import { BehaviorSubject, lastValueFrom, map } from "rxjs";
 import { ProxySigner } from "../../../../accounts/dist/proxy-signer";
 import { RelayPicker } from "../../components/relay-picker";
 import SecureStorage from "../../extra/encrypted-storage";
+import { npubEncode } from "nostr-tools/nip19";
 
 const signer$ = new BehaviorSubject<ExtensionSigner | null>(null);
+const pubkey$ = new BehaviorSubject<string | null>(null);
 const eventStore = new EventStore();
 const pool = new RelayPool();
 const factory = new EventFactory({ signer: new ProxySigner(signer$.pipe(defined())) });
@@ -148,13 +150,35 @@ function ContactList({
   }, [events, pubkey]);
 
   return (
-    <div className="flex flex-col gap-2">
-      {contacts.map((pubkey) => (
-        <button key={pubkey} onClick={() => onSelect(pubkey)} className="btn btn-ghost justify-start w-full">
-          {pubkey.slice(0, 8)}...
-        </button>
+    <ul className="list bg-base-100 rounded-box">
+      {contacts.map((contactPubkey) => (
+        <li key={contactPubkey} className="list-row">
+          <div>
+            <img className="size-10 rounded-box" src={`https://robohash.org/${contactPubkey}.png`} />
+          </div>
+          <div>
+            <div>{contactPubkey.slice(0, 8)}...</div>
+            <div className="text-xs font-semibold opacity-60 break-all">{npubEncode(contactPubkey)}</div>
+          </div>
+          <button className="btn btn-square btn-ghost" onClick={() => onSelect(contactPubkey)}>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              className="size-6"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 0 1-.825-.242m9.345-8.334a2.126 2.126 0 0 0-.476-.095 48.64 48.64 0 0 0-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0 0 11.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"
+              />
+            </svg>
+          </button>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
 
@@ -337,7 +361,7 @@ function HomeView({ pubkey, signer, storage }: { pubkey: string; signer: Extensi
 
   return (
     <div className="flex bg-base-200 overflow-hidden" style={{ height: "calc(100vh - 10rem)" }}>
-      <div className="w-xs bg-base-100 p-2 overflow-y-auto flex flex-col gap-2 shrink-0">
+      <div className="w-sm bg-base-100 p-2 overflow-y-auto flex flex-col gap-2 shrink-0">
         <div className="flex gap-2 w-full">
           <RelayPicker className="w-full" value={relay} onChange={setRelay} />
           <button className="btn" onClick={clearCache}>
@@ -364,19 +388,19 @@ function HomeView({ pubkey, signer, storage }: { pubkey: string; signer: Extensi
 
 function App() {
   const [storage, setStorage] = useState<SecureStorage | null>(null);
-  const [pubkey, setPubkey] = useState<string | null>(null);
   const signer = useObservable(signer$);
+  const pubkey = useObservable(pubkey$);
 
   const handleUnlock = async (storage: SecureStorage, pubkey?: string) => {
     if (pubkey) {
-      setPubkey(pubkey);
+      pubkey$.next(pubkey);
       signer$.next(new ExtensionSigner());
     }
     setStorage(storage);
   };
   const handleLogin = async (signer: ExtensionSigner, pubkey: string) => {
     signer$.next(signer);
-    setPubkey(pubkey);
+    pubkey$.next(pubkey);
     if (storage) await storage.setItem("pubkey", pubkey);
   };
 

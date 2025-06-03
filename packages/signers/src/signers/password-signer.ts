@@ -43,12 +43,14 @@ export class PasswordSigner implements Nip07Interface {
     return p;
   }
 
+  /** Sets the ncryptsec from the key and password */
   public async setPassword(password: string) {
     if (!this.key) throw new Error("Cant set password until unlocked");
 
     this.ncryptsec = encrypt(this.key, password);
   }
 
+  /** Tests if the provided password is correct by decrypting the ncryptsec */
   public async testPassword(password: string) {
     if (this.ncryptsec) {
       const key = decrypt(this.ncryptsec, password);
@@ -56,6 +58,7 @@ export class PasswordSigner implements Nip07Interface {
     } else throw new Error("Missing ncryptsec");
   }
 
+  /** Unlocks the signer by decrypting the ncryptsec using the provided password */
   public async unlock(password: string) {
     if (this.key) return;
 
@@ -63,6 +66,11 @@ export class PasswordSigner implements Nip07Interface {
       this.key = decrypt(this.ncryptsec, password);
       if (!this.key) throw new Error("Failed to decrypt key");
     } else throw new Error("Missing ncryptsec");
+  }
+
+  /** Locks the signer by removing the unencrypted key from memory */
+  public lock() {
+    this.key = null;
   }
 
   // public methods

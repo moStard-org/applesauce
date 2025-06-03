@@ -39,7 +39,7 @@ function EventRow({ event, relays }: { event: NostrEvent; relays: string[] }) {
   );
 }
 
-export default function InfiniteMultiRelayTimeline() {
+export default function PaginatedTimelineExample() {
   const [limit, setLimit] = useState(20);
   const [relays, _setRelays] = useState(mergeRelaySets(["wss://relay.damus.io", "wss://nos.lol", "wss://nostr.land"]));
 

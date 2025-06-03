@@ -4,39 +4,32 @@ The `applesauce-loaders` package contains loader classes built on top of [rx-nos
 
 ## Event Loader pattern
 
-All the event loader classes generally follow the same pattern, you create a `new` instance and pass a `rxNostr` instance into them along with options
+All the event loaders follow the same pattern, you create a loader and pass a request method into them along with options and get a request method back that can be used to load events.
 
 ```ts
-// create a loader for loading a timeline of events
-const timeline = new TimelineLoader(rxNostr, ...args);
+import { addressPointerLoader } from "applesauce-loaders/loaders";
+
+// Request method MUST return an observable of events that completes when EOSE is received
+function request(relays: string[], filters: Filter[]): Observable<NostrEvent> {
+  return new Observable((observer) => {});
+}
 
 // create a loader for fetching replaceable events (profiles, lists, etc)
-const replaceable = new ReplaceableLoader(rxNostr, ...args);
+const addressLoader = addressPointerLoader(request, {
+  // Options
+});
 ```
 
-Once the loader is created you **MUST** subscribe to it to start it. otherwise it wont fetch any events
+Once the loader is created it can be used to request events
 
 ```ts
 // returned value is a rxjs Subscription
-const sub = timeline.subscribe((packet) => {
-  console.log(packet.event, packet.from);
+const sub = addressLoader({ pubkey: "pubkey", kind: 0 }).subscribe((event) => {
+  console.log(event);
 });
 
-// at a later point, shut down the loader
+// cancel the request
 sub.unsubscribe();
-```
-
-Then once the loader is created and started you can start passing data to it. the type of data it takes depends on the specific loader but generally its done by calling the `next` method
-
-```ts
-// load next page
-timeline.next();
-
-// load next page up to a timestamp
-timeline.next(1738797143);
-
-// load a profile event from relays
-replaceable.next({ kind: 0, pubkey: "<pubkey>", relays: ["wss://relay.example.com"] });
 ```
 
 ## Loading from cache

@@ -19,6 +19,7 @@
     "applesauce-factory": "^1.2.0",
     "applesauce-loaders": "^1.0.0",
     "applesauce-react": "^1.0.0",
+    "applesauce-accounts": "^1.0.0",
     "applesauce-relay": "^1.0.0",
     "applesauce-signers": "^1.0.0",
     "chart.js": "^4.4.9",
