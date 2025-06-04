@@ -1,14 +1,15 @@
+import { Link } from "applesauce-content/nast";
 import { EventStore, mapEventsToStore } from "applesauce-core";
+import { isAudioURL, isImageURL, isVideoURL } from "applesauce-core/helpers";
 import { eventPointerLoader } from "applesauce-loaders/loaders";
-import { ComponentMap, useObservable, useRenderedContent } from "applesauce-react/hooks";
+import { ComponentMap, useObservableMemo, useRenderedContent } from "applesauce-react/hooks";
 import { onlyEvents, RelayPool } from "applesauce-relay";
 import { NostrEvent } from "nostr-tools";
 import { decode, EventPointer } from "nostr-tools/nip19";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { merge } from "rxjs";
-import { RelayPicker } from "../../components/relay-picker";
-import { isAudioURL, isImageURL, isVideoURL } from "applesauce-core/helpers";
-import { Link } from "applesauce-content/nast";
+
+import RelayPicker from "../../components/relay-picker";
 
 // Create stores and relay pool
 const eventStore = new EventStore();
@@ -97,10 +98,10 @@ function EventCard({ event }: { event: NostrEvent }) {
 export default function ContentRenderingExample() {
   const [relay, setRelay] = useState<string>("");
 
-  const loader = useMemo(() => merge(...examples.map(eventLoader)), []);
-  useObservable(loader);
+  // Load the examples on mount
+  useObservableMemo(() => merge(...examples.map(eventLoader)), []);
 
-  const fromRelay$ = useMemo(
+  useObservableMemo(
     () =>
       relay
         ? pool
@@ -113,10 +114,8 @@ export default function ContentRenderingExample() {
         : undefined,
     [relay],
   );
-  useObservable(fromRelay$);
 
-  const timeline$ = useMemo(() => eventStore.timeline({ kinds: [1] }), []);
-  const events = useObservable(timeline$);
+  const events = useObservableMemo(() => eventStore.timeline({ kinds: [1] }), []);
 
   return (
     <div className="container mx-auto p-4">

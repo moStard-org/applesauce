@@ -1,4 +1,4 @@
-import { ISyncEventStore, logger } from "applesauce-core";
+import { IEventStoreRead, logger } from "applesauce-core";
 import { map, share, firstValueFrom } from "rxjs";
 import { Filter } from "nostr-tools";
 import { nanoid } from "nanoid";
@@ -8,9 +8,9 @@ import { Negentropy, NegentropyStorageVector } from "./lib/negentropy.js";
 
 const log = logger.extend("negentropy");
 
-export function buildStorageFromFilter(store: ISyncEventStore, filter: Filter): NegentropyStorageVector {
+export function buildStorageFromFilter(store: IEventStoreRead, filter: Filter): NegentropyStorageVector {
   const storage = new NegentropyStorageVector();
-  for (const event of store.getAll(filter)) storage.insert(event.created_at, event.id);
+  for (const event of store.getByFilters(filter)) storage.insert(event.created_at, event.id);
   storage.seal();
   return storage;
 }

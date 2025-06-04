@@ -8,14 +8,14 @@ import {
   isAddressPointer,
   isEventPointer,
 } from "applesauce-core/helpers";
-import { useObservable } from "applesauce-react/hooks";
+import { useObservableMemo } from "applesauce-react/hooks";
 import { onlyEvents, RelayPool } from "applesauce-relay";
 import { Filter, kinds, nip19, NostrEvent } from "nostr-tools";
 import { AddressPointer, EventPointer, ProfilePointer } from "nostr-tools/nip19";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { map } from "rxjs";
 
-import { RelayPicker } from "../components/relay-picker";
+import RelayPicker from "../components/relay-picker";
 
 // Create stores and relay pool
 const eventStore = new EventStore();
@@ -121,7 +121,7 @@ export default function LinkHandlerExample() {
 
   // Second step: Fetch app handlers based on the entity type
   // This observable only runs after parsing is complete
-  const handlers$ = useMemo(() => {
+  const handlers = useObservableMemo(() => {
     if (!pointer) return undefined;
 
     // Get the handler kind for the link
@@ -147,7 +147,6 @@ export default function LinkHandlerExample() {
   }, [pointer, relay]);
 
   // Subscribe to the handlers observable
-  const handlers = useObservable(handlers$);
   const isLoading = !!pointer && !handlers;
 
   return (

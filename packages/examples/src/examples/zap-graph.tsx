@@ -1,7 +1,7 @@
 import { EventStore } from "applesauce-core";
 import { getZapPayment, getZapRecipient, isValidZap, normalizeToPubkey } from "applesauce-core/helpers";
 import { timelineLoader } from "applesauce-loaders/loaders";
-import { useObservable } from "applesauce-react/hooks";
+import { useObservableMemo } from "applesauce-react/hooks";
 import { RelayPool } from "applesauce-relay";
 import {
   BarElement,
@@ -14,12 +14,12 @@ import {
   Tooltip,
 } from "chart.js";
 import { Filter, kinds, NostrEvent } from "nostr-tools";
+import { npubEncode } from "nostr-tools/nip19";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Bar } from "react-chartjs-2";
 import { EMPTY } from "rxjs";
 
-import { npubEncode } from "nostr-tools/nip19";
-import { RelayPicker } from "../components/relay-picker";
+import RelayPicker from "../components/relay-picker";
 
 // Register ChartJS components
 ChartJS.register(CategoryScale, LinearScale, LogarithmicScale, BarElement, Title, Tooltip, Legend);
@@ -106,8 +106,7 @@ export default function ZapGraph() {
     return timelineLoader(pool.request.bind(pool), [relay], filters, { eventStore });
   }, [relay, filters]);
 
-  const events$ = useMemo(() => (filters ? eventStore.timeline(filters) : EMPTY), [filters]);
-  const events = useObservable(events$);
+  const events = useObservableMemo(() => (filters ? eventStore.timeline(filters) : EMPTY), [filters]);
 
   const loadMore = useCallback(() => {
     if (!loader) return;

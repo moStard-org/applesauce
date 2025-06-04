@@ -1,3 +1,4 @@
+import { ProxySigner } from "applesauce-accounts";
 import { defined, EventStore } from "applesauce-core";
 import {
   getEncryptedContent,
@@ -9,18 +10,17 @@ import {
 import { EventFactory } from "applesauce-factory";
 import { includeSingletonTag, setEncryptedContent } from "applesauce-factory/operations/event";
 import { timelineLoader } from "applesauce-loaders/loaders";
-import { useObservable } from "applesauce-react/hooks";
+import { useObservableEagerMemo, useObservableMemo, useObservableState } from "applesauce-react/hooks";
 import { RelayPool } from "applesauce-relay";
 import { ExtensionSigner } from "applesauce-signers";
 import localforage from "localforage";
 import { Filter, NostrEvent } from "nostr-tools";
+import { npubEncode } from "nostr-tools/nip19";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BehaviorSubject, lastValueFrom, map } from "rxjs";
 
-import { ProxySigner } from "../../../../accounts/dist/proxy-signer";
-import { RelayPicker } from "../../components/relay-picker";
+import RelayPicker from "../../components/relay-picker";
 import SecureStorage from "../../extra/encrypted-storage";
-import { npubEncode } from "nostr-tools/nip19";
 
 const signer$ = new BehaviorSubject<ExtensionSigner | null>(null);
 const pubkey$ = new BehaviorSubject<string | null>(null);
@@ -194,9 +194,8 @@ function Message({
   signer: ExtensionSigner;
 }) {
   const sender = message.pubkey;
-  const content = useObservable(
-    useMemo(() => eventStore.updated(message.id).pipe(map(getEncryptedContent)), [message.id]),
-  );
+  const content = useObservableMemo(() => eventStore.updated(message.id).pipe(map(getEncryptedContent)), [message.id]);
+
   const decrypt = async () => {
     // Check if the plaintext was cached
     const cached = await storage.getItem(message.id);
@@ -308,7 +307,7 @@ function DirectMessageView({
     loader$().subscribe();
   }, [loader$]);
 
-  const messages = useObservable(useMemo(() => eventStore.timeline(filters), [filters])) ?? [];
+  const messages = useObservableEagerMemo(() => eventStore.timeline(filters), [filters]);
 
   return (
     <div className="flex flex-col h-full p-4 overflow-hidden w-full">
@@ -351,11 +350,11 @@ function HomeView({ pubkey, signer, storage }: { pubkey: string; signer: Extensi
   }, [timeline]);
 
   // Get all events from the event store
-  const events = useObservable(useMemo(() => eventStore.timeline(filters), [filters])) ?? [];
+  const events = useObservableEagerMemo(() => eventStore.timeline(filters), [filters]);
 
   const clearCache = useCallback(() => {
     localforage.clear();
-    const events = eventStore.getAll({ kinds: [4] });
+    const events = eventStore.getByFilters({ kinds: [4] });
     for (const event of events) lockEncryptedContent(event);
   }, [eventStore]);
 
@@ -388,8 +387,8 @@ function HomeView({ pubkey, signer, storage }: { pubkey: string; signer: Extensi
 
 function App() {
   const [storage, setStorage] = useState<SecureStorage | null>(null);
-  const signer = useObservable(signer$);
-  const pubkey = useObservable(pubkey$);
+  const signer = useObservableState(signer$);
+  const pubkey = useObservableState(pubkey$);
 
   const handleUnlock = async (storage: SecureStorage, pubkey?: string) => {
     if (pubkey) {

@@ -10,7 +10,6 @@ describe("exports", () => {
         "firstValueFrom",
         "getObservableValue",
         "lastValueFrom",
-        "listenLatestUpdates",
         "mapEventsToStore",
         "mapEventsToTimeline",
         "simpleTimeout",

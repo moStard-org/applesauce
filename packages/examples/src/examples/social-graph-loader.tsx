@@ -1,14 +1,14 @@
 import { EventStore, IEventStore, mapEventsToStore } from "applesauce-core";
 import { getProfilePointersFromList, mergeRelaySets } from "applesauce-core/helpers";
-import { addressPointerLoader, AddressPointerLoader } from "applesauce-loaders/loaders";
 import { LoadableAddressPointer } from "applesauce-loaders/helpers/address-pointer";
+import { addressPointerLoader, AddressPointerLoader } from "applesauce-loaders/loaders";
 import { wrapGeneratorFunction } from "applesauce-loaders/operators";
-import { useObservable } from "applesauce-react/hooks";
+import { useObservableMemo } from "applesauce-react/hooks";
 import { RelayPool } from "applesauce-relay";
 import { ExtensionSigner } from "applesauce-signers";
 import { kinds, NostrEvent } from "nostr-tools";
 import { ProfilePointer } from "nostr-tools/nip19";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { EMPTY, firstValueFrom, identity, isObservable, Observable } from "rxjs";
 
 // const log = logger.extend("SocialGraph");
@@ -145,8 +145,7 @@ export default function SocialGraphLoader() {
     return url.searchParams.get("root");
   });
 
-  const request$ = useMemo(() => (root ? graphLoader({ pubkey: root, distance: 1 }) : EMPTY), [root]);
-  useObservable(request$);
+  useObservableMemo(() => (root ? graphLoader({ pubkey: root, distance: 1 }) : EMPTY), [root]);
 
   return (
     <div className="container mx-auto">

@@ -1,15 +1,15 @@
+import { Link } from "applesauce-content/nast";
 import { EventStore, mapEventsToStore } from "applesauce-core";
-import { ComponentMap, useObservable, useRenderedContent } from "applesauce-react/hooks";
+import { isAudioURL, isImageURL, isVideoURL } from "applesauce-core/helpers";
+import { ComponentMap, useObservableEagerState, useObservableMemo, useRenderedContent } from "applesauce-react/hooks";
 import { onlyEvents, RelayPool } from "applesauce-relay";
 import { ExtensionSigner } from "applesauce-signers";
 import { NostrEvent } from "nostr-tools";
-import { useCallback, useMemo, useState } from "react";
+import { neventEncode, npubEncode } from "nostr-tools/nip19";
+import { useCallback, useState } from "react";
 import { scan } from "rxjs";
 
-import { Link } from "applesauce-content/nast";
-import { isAudioURL, isImageURL, isVideoURL } from "applesauce-core/helpers";
-import { RelayPicker } from "../../components/relay-picker";
-import { neventEncode, npubEncode } from "nostr-tools/nip19";
+import RelayPicker from "../../components/relay-picker";
 
 // Create an event store for all events
 const eventStore = new EventStore();
@@ -92,8 +92,8 @@ export default function AlgorithmicRelayFeed() {
   const [pubkey, setPubkey] = useState<string | null>(null);
 
   // Subscribe to authentication state
-  const challenge = useObservable(pool.relay(relay).challenge$);
-  const authenticated = useObservable(pool.relay(relay).authenticated$);
+  const challenge = useObservableEagerState(pool.relay(relay).challenge$);
+  const authenticated = useObservableEagerState(pool.relay(relay).authenticated$);
 
   const needsAuth = !!challenge;
 
@@ -122,7 +122,7 @@ export default function AlgorithmicRelayFeed() {
   }, [relay, needsAuth, authenticated]);
 
   // Create a timeline observable using scan operator to preserve order
-  const timeline$ = useMemo(
+  const events = useObservableMemo(
     () =>
       pool
         .relay(relay)
@@ -140,8 +140,6 @@ export default function AlgorithmicRelayFeed() {
     [relay, refresh],
   );
 
-  // Subscribe to the timeline and get the events
-  const events = useObservable(timeline$);
   const npub = pubkey && npubEncode(pubkey);
 
   return (

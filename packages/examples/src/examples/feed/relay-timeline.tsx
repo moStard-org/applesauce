@@ -1,17 +1,23 @@
-import { EventStore, mapEventsToStore, mapEventsToTimeline, QueryStore } from "applesauce-core";
-import { getDisplayName, getProfilePicture, getSeenRelays } from "applesauce-core/helpers";
+import { EventStore, mapEventsToStore, mapEventsToTimeline, Model } from "applesauce-core";
+import {
+  getDisplayName,
+  getProfilePicture,
+  getSeenRelays,
+  mergeRelaySets,
+  ProfileContent,
+} from "applesauce-core/helpers";
 import { addressPointerLoader } from "applesauce-loaders/loaders";
-import { useObservable } from "applesauce-react/hooks";
+import { useObservableMemo } from "applesauce-react/hooks";
 import { onlyEvents, RelayPool } from "applesauce-relay";
-import { NostrEvent } from "nostr-tools";
-import { useEffect, useMemo, useState } from "react";
-import { map } from "rxjs";
+import { kinds, NostrEvent } from "nostr-tools";
+import { ProfilePointer } from "nostr-tools/nip19";
+import { useMemo, useState } from "react";
+import { defer, EMPTY, ignoreElements, map, merge } from "rxjs";
 
-import { RelayPicker } from "../../components/relay-picker";
+import RelayPicker from "../../components/relay-picker";
 
 // Create an event store for all events
 const eventStore = new EventStore();
-const queryStore = new QueryStore(eventStore);
 
 // Create a relay pool to make relay connections
 const pool = new RelayPool();
@@ -26,19 +32,30 @@ const addressLoader = addressPointerLoader(pool.request.bind(pool), {
   lookupRelays: ["wss://purplepag.es"],
 });
 
+/** A model that loads the profile if its not found in the event store */
+function ProfileQuery(user: ProfilePointer): Model<ProfileContent | undefined> {
+  return (events) =>
+    merge(
+      // Load the profile if its not found in the event store
+      defer(() => {
+        if (events.hasReplaceable(kinds.Metadata, user.pubkey)) return EMPTY;
+        else return addressLoader({ kind: kinds.Metadata, ...user }).pipe(ignoreElements());
+      }),
+      // Subscribe to the profile content
+      events.profile(user.pubkey),
+    );
+}
+
+/** Create a hook for loading a users profile */
+function useProfile(user: ProfilePointer): ProfileContent | undefined {
+  return useObservableMemo(() => eventStore.model(ProfileQuery, user), [user.pubkey, user.relays?.join("|")]);
+}
+
 function Note({ note }: { note: NostrEvent }) {
   // Subscribe to the request and wait for the profile event
-  const profile = useObservable(queryStore.profile(note.pubkey));
-
-  // Load the profile if its not already loaded
-  useEffect(() => {
-    if (profile) return;
-
-    // Get the relays the event was from
-    const relays = getSeenRelays(note);
-    // Make a request to the address loader for the users profile
-    addressLoader({ kind: 0, pubkey: note.pubkey, relays: relays && Array.from(relays) }).subscribe();
-  }, [note.pubkey, profile]);
+  const profile = useProfile(
+    useMemo(() => ({ pubkey: note.pubkey, relays: mergeRelaySets(getSeenRelays(note)) }), [note]),
+  );
 
   return (
     <div className="card bg-base-100 shadow-md">
@@ -61,7 +78,7 @@ export default function RelayTimeline() {
   const [relay, setRelay] = useState("wss://relay.devvul.com");
 
   // Create a timeline observable
-  const timeline$ = useMemo(
+  const events = useObservableMemo(
     () =>
       pool
         .relay(relay)
@@ -78,9 +95,6 @@ export default function RelayTimeline() {
         ),
     [relay],
   );
-
-  // Subscribe to the timeline and get the events
-  const events = useObservable(timeline$);
 
   return (
     <div className="container mx-auto px-4">

@@ -2,4 +2,4 @@
 "applesauce-core": patch
 ---
 
-Fix `CommentsQuery` not returning comments for newer versions of replaceable events
+Fix `CommentsModel` not returning comments for newer versions of replaceable events

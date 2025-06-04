@@ -15,8 +15,6 @@ describe("exports", () => {
         "FactoryProvider",
         "Helpers",
         "Hooks",
-        "QueryStoreContext",
-        "QueryStoreProvider",
       ]
     `);
   });

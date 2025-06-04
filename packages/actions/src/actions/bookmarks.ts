@@ -1,4 +1,4 @@
-import { ISyncEventStore } from "applesauce-core/event-store";
+import { IEventStoreRead } from "applesauce-core";
 import {
   modifyHiddenTags,
   modifyPublicTags,
@@ -11,7 +11,7 @@ import { kinds, NostrEvent } from "nostr-tools";
 
 import { Action } from "../action-hub.js";
 
-function getBookmarkEvent(events: ISyncEventStore, self: string, identifier?: string) {
+function getBookmarkEvent(events: IEventStoreRead, self: string, identifier?: string) {
   return events.getReplaceable(identifier ? kinds.Bookmarksets : kinds.BookmarkList, self, identifier);
 }
 

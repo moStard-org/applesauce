@@ -1,4 +1,4 @@
-import { EventStore, mapEventsToStore, mapEventsToTimeline, QueryStore } from "applesauce-core";
+import { EventStore, mapEventsToStore, mapEventsToTimeline, Model } from "applesauce-core";
 import {
   addRelayHintsToPointer,
   getDisplayName,
@@ -7,21 +7,22 @@ import {
   getSeenRelays,
   isFromCache,
   mergeRelaySets,
+  ProfileContent,
 } from "applesauce-core/helpers";
-import { ProfileQuery } from "applesauce-core/queries";
+import { EventModel } from "applesauce-core/models";
 import { addressPointerLoader, eventPointerLoader } from "applesauce-loaders/loaders";
-import { useObservable } from "applesauce-react/hooks";
+import { useObservableMemo } from "applesauce-react/hooks";
 import { onlyEvents, RelayPool } from "applesauce-relay";
-import { getEventsForFilters, openDB, addEvents } from "nostr-idb";
+import { addEvents, getEventsForFilters, openDB } from "nostr-idb";
 import { Filter, kinds, NostrEvent } from "nostr-tools";
+import { ProfilePointer } from "nostr-tools/nip19";
 import { useEffect, useMemo, useState } from "react";
-import { bufferTime, filter, map } from "rxjs";
+import { bufferTime, defer, EMPTY, filter, ignoreElements, map, merge } from "rxjs";
 
-import { RelayPicker } from "../../components/relay-picker";
+import RelayPicker from "../../components/relay-picker";
 
 // Setup event store
 const eventStore = new EventStore();
-const queryStore = new QueryStore(eventStore);
 
 // Create a relay pool for connections
 const pool = new RelayPool();
@@ -36,7 +37,7 @@ function cacheRequest(filters: Filter[]) {
 }
 
 // Save all new events to the cache
-eventStore.inserts
+eventStore.insert$
   .pipe(
     // Only select events that are not from the cache
     filter((e) => !isFromCache(e)),
@@ -60,21 +61,28 @@ const addressLoader = addressPointerLoader(pool.request.bind(pool), {
 });
 const eventLoader = eventPointerLoader(pool.request.bind(pool), { eventStore, cacheRequest });
 
-/** A hook for loading profiles */
-function useProfile(pubkey: string, relays?: string[]) {
-  const observable$ = useMemo(() => {
-    // Request the profile if it's not in the store
-    if (!eventStore.hasReplaceable(0, pubkey)) addressLoader({ kind: 0, pubkey, relays }).subscribe();
+/** A model that loads the profile if its not found in the event store */
+function ProfileQuery(user: ProfilePointer): Model<ProfileContent | undefined> {
+  return (events) =>
+    merge(
+      // Load the profile if its not found in the event store
+      defer(() => {
+        if (events.hasReplaceable(kinds.Metadata, user.pubkey)) return EMPTY;
+        else return addressLoader({ kind: kinds.Metadata, ...user }).pipe(ignoreElements());
+      }),
+      // Subscribe to the profile content
+      events.profile(user.pubkey),
+    );
+}
 
-    return queryStore.createQuery(ProfileQuery, pubkey);
-  }, [pubkey, relays?.join(",")]);
-
-  return useObservable(observable$);
+/** Create a hook for loading a users profile */
+function useProfile(user: ProfilePointer): ProfileContent | undefined {
+  return useObservableMemo(() => eventStore.model(ProfileQuery, user), [user.pubkey, user.relays?.join("|")]);
 }
 
 /** A component for rendering user avatars */
 function Avatar({ pubkey, relays }: { pubkey: string; relays?: string[] }) {
-  const profile = useProfile(pubkey, relays);
+  const profile = useProfile({ pubkey, relays });
 
   return (
     <div className="avatar">
@@ -87,7 +95,7 @@ function Avatar({ pubkey, relays }: { pubkey: string; relays?: string[] }) {
 
 /** A component for rendering usernames */
 function Username({ pubkey, relays }: { pubkey: string; relays?: string[] }) {
-  const profile = useProfile(pubkey, relays);
+  const profile = useProfile({ pubkey, relays });
 
   return <>{getDisplayName(profile, "unknown")}</>;
 }
@@ -109,7 +117,7 @@ function ReactionEvent({ event }: { event: NostrEvent }) {
     return () => sub.unsubscribe();
   }, [pointer, event]);
 
-  const reactedTo = useObservable(pointer && queryStore.event(pointer.id));
+  const reactedTo = useObservableMemo(() => pointer && eventStore.model(EventModel, pointer.id), [pointer?.id]);
 
   return (
     <div className="flex flex-col gap-2">
@@ -164,7 +172,7 @@ function ReactionEvent({ event }: { event: NostrEvent }) {
 export default function ReactionsTimeline() {
   const [relay, setRelay] = useState<string>("wss://relay.primal.net/");
 
-  const timeline$ = useMemo(
+  const reactions = useObservableMemo(
     () =>
       pool
         .relay(relay)
@@ -177,7 +185,6 @@ export default function ReactionsTimeline() {
         ),
     [relay],
   );
-  const reactions = useObservable(timeline$);
 
   return (
     <div className="container mx-auto">

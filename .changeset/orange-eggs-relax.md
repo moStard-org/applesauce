@@ -2,4 +2,4 @@
 "applesauce-core": minor
 ---
 
-Add `GiftWrapQuery` with pubkey and optional locked filter
+Add `GiftWrapModel` with pubkey and optional locked filter

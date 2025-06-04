@@ -105,7 +105,7 @@ export function CompleteSpend(spent: NostrEvent[], change: Token): Action {
 /** Combines all unlocked token events into a single event per mint */
 export function ConsolidateTokens(opts?: { ignoreLocked?: boolean }): Action {
   return async function* ({ events, factory, self }) {
-    const tokens = Array.from(events.getAll({ kinds: [WALLET_TOKEN_KIND], authors: [self] })).filter((token) => {
+    const tokens = Array.from(events.getByFilters({ kinds: [WALLET_TOKEN_KIND], authors: [self] })).filter((token) => {
       if (isTokenContentLocked(token)) {
         if (opts?.ignoreLocked) return false;
         else throw new Error("Token is locked");

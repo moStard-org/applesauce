@@ -36,15 +36,15 @@
       "require": "./dist/helpers/*.js",
       "types": "./dist/helpers/*.d.ts"
     },
-    "./queries": {
-      "import": "./dist/queries/index.js",
-      "require": "./dist/queries/index.js",
-      "types": "./dist/queries/index.d.ts"
+    "./models": {
+      "import": "./dist/models/index.js",
+      "require": "./dist/models/index.js",
+      "types": "./dist/models/index.d.ts"
     },
-    "./queries/*": {
-      "import": "./dist/queries/*.js",
-      "require": "./dist/queries/*.js",
-      "types": "./dist/queries/*.d.ts"
+    "./models/*": {
+      "import": "./dist/models/*.js",
+      "require": "./dist/models/*.js",
+      "types": "./dist/models/*.d.ts"
     },
     "./observable": {
       "import": "./dist/observable/index.js",
@@ -55,11 +55,6 @@
       "import": "./dist/promise/index.js",
       "require": "./dist/promise/index.js",
       "types": "./dist/promise/index.d.ts"
-    },
-    "./query-store": {
-      "import": "./dist/query-store/index.js",
-      "require": "./dist/query-store/index.js",
-      "types": "./dist/query-store/index.d.ts"
     },
     "./event-store": {
       "import": "./dist/event-store/index.js",

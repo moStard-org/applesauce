@@ -1,11 +1,8 @@
 import { NostrEvent } from "nostr-tools";
 import { AddressPointer, EventPointer, ProfilePointer } from "nostr-tools/nip19";
-import {
-  getAddressPointerFromATag,
-  getEventPointerFromETag,
-  getOrComputeCachedValue,
-  getProfilePointerFromPTag,
-} from "applesauce-core/helpers";
+
+import { getOrComputeCachedValue } from "./cache.js";
+import { getAddressPointerFromATag, getEventPointerFromETag, getProfilePointerFromPTag } from "./pointers.js";
 
 export const UserStatusPointerSymbol = Symbol.for("user-status-pointer");
 

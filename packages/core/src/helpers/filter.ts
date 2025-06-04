@@ -44,9 +44,7 @@ export function matchFilters(filters: Filter[], event: NostrEvent): boolean {
   return false;
 }
 
-/**
- * Copied from nostr-tools and modified to support undefined
- */
+/** Copied from nostr-tools and modified to support undefined  */
 export function mergeFilters(...filters: Filter[]): Filter {
   let result: Filter = {};
   for (let i = 0; i < filters.length; i++) {

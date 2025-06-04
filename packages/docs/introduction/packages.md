@@ -2,7 +2,7 @@
 
 ## Core
 
-The `applesauce-core` package contains the `EventStore`, `QueryStore` and the majority of the helpers, and queries. [see more](https://hzrd149.github.io/applesauce/typedoc/modules/applesauce-core.html)
+The `applesauce-core` package contains the `EventStore` and the majority of the helpers, and models. [see more](https://hzrd149.github.io/applesauce/typedoc/modules/applesauce-core.html)
 
 :::code-group
 

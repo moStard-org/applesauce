@@ -1,11 +1,11 @@
-import { ISyncEventStore } from "applesauce-core/event-store";
+import { IEventStoreRead } from "applesauce-core/event-store";
 import { modifyPublicTags } from "applesauce-factory/operations/event";
 import { addRelayTag, removeRelayTag } from "applesauce-factory/operations/tag/relay";
 import { kinds } from "nostr-tools";
 
 import { Action } from "../action-hub.js";
 
-function getDMRelaysEvent(events: ISyncEventStore, self: string) {
+function getDMRelaysEvent(events: IEventStoreRead, self: string) {
   const event = events.getReplaceable(kinds.DirectMessageRelaysList, self);
   if (!event) throw new Error("Can't find DM relays event");
   return event;

@@ -1,4 +1,4 @@
-import { EventStore, mapEventsToStore, mapEventsToTimeline, QueryStore } from "applesauce-core";
+import { EventStore, mapEventsToStore, mapEventsToTimeline, Model } from "applesauce-core";
 import {
   decodeGroupPointer,
   getDisplayName,
@@ -12,19 +12,17 @@ import {
 import { EventFactory } from "applesauce-factory";
 import { GroupMessageBlueprint } from "applesauce-factory/blueprints";
 import { addressPointerLoader } from "applesauce-loaders/loaders";
-import { QueryStoreProvider } from "applesauce-react";
-import { useObservable } from "applesauce-react/hooks";
+import { useObservableMemo } from "applesauce-react/hooks";
 import { onlyEvents, RelayPool } from "applesauce-relay";
 import { ExtensionSigner } from "applesauce-signers";
-import { NostrEvent } from "nostr-tools";
+import { kinds, NostrEvent } from "nostr-tools";
 import { ProfilePointer } from "nostr-tools/nip19";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { ignoreElements, lastValueFrom, map, mergeWith, Observable, shareReplay, startWith } from "rxjs";
+import { useCallback, useEffect, useState } from "react";
+import { defer, EMPTY, ignoreElements, lastValueFrom, map, merge, startWith } from "rxjs";
 
 import GroupPicker from "../../components/group-picker";
 
 const eventStore = new EventStore();
-const queryStore = new QueryStore(eventStore);
 const signer = new ExtensionSigner();
 const factory = new EventFactory({
   signer,
@@ -37,33 +35,27 @@ const addressLoader = addressPointerLoader(pool.request.bind(pool), {
   lookupRelays: ["wss://purplepag.es/"],
 });
 
-const queries = new Map<string, Observable<ProfileContent | undefined>>();
-function profileQuery(user: ProfilePointer): Observable<ProfileContent | undefined> {
-  const key = `${user.pubkey}-${user.relays?.join(",")}`;
-  if (queries.has(key)) return queries.get(key)!;
-
-  let observable: Observable<ProfileContent | undefined>;
-  const model = queryStore.profile(user.pubkey);
-  if (eventStore.hasReplaceable(0, user.pubkey)) {
-    observable = model;
-  } else {
-    observable = addressLoader({ pubkey: user.pubkey, kind: 0, relays: user.relays }).pipe(
-      ignoreElements(),
-      mergeWith(model),
+/** A model that loads the profile if its not found in the event store */
+function ProfileQuery(user: ProfilePointer): Model<ProfileContent | undefined> {
+  return (events) =>
+    merge(
+      // Load the profile if its not found in the event store
+      defer(() => {
+        if (events.hasReplaceable(kinds.Metadata, user.pubkey)) return EMPTY;
+        else return addressLoader({ kind: kinds.Metadata, ...user }).pipe(ignoreElements());
+      }),
+      // Subscribe to the profile content
+      events.profile(user.pubkey),
     );
-  }
+}
 
-  // Cache results
-  observable = observable.pipe(shareReplay(1));
-
-  queries.set(key, observable);
-  return observable;
+/** Create a hook for loading a users profile */
+function useProfile(user: ProfilePointer): ProfileContent | undefined {
+  return useObservableMemo(() => eventStore.model(ProfileQuery, user), [user.pubkey, user.relays?.join("|")]);
 }
 
 function ChatMessageGroup({ messages }: { messages: NostrEvent[] }) {
-  const profile = useObservable(
-    profileQuery({ pubkey: messages[0].pubkey, relays: mergeRelaySets(getSeenRelays(messages[0])) }),
-  );
+  const profile = useProfile({ pubkey: messages[0].pubkey, relays: mergeRelaySets(getSeenRelays(messages[0])) });
 
   const time = messages[0].created_at;
 
@@ -91,7 +83,7 @@ function ChatMessageGroup({ messages }: { messages: NostrEvent[] }) {
 }
 
 function ChatLog({ pointer }: { pointer: GroupPointer }) {
-  const timeline = useMemo(
+  const messages = useObservableMemo(
     () =>
       pool
         .relay(pointer.relay)
@@ -106,7 +98,6 @@ function ChatLog({ pointer }: { pointer: GroupPointer }) {
     [pointer.relay, pointer?.id],
   );
 
-  const messages = useObservable(timeline);
   const groups = groupMessageEvents(messages ? Array.from(messages).reverse() : []).reverse();
 
   return (
@@ -183,15 +174,13 @@ export default function RelayGroupExample() {
   );
 
   return (
-    <QueryStoreProvider queryStore={queryStore}>
-      <div className="container mx-auto">
-        <div className="flex w-full max-w-xl mb-4">
-          <GroupPicker identifier={identifier} setIdentifier={setGroup} />
-        </div>
-
-        {pointer && <ChatLog pointer={pointer} />}
-        {pointer && <SendMessageForm pointer={pointer} />}
+    <div className="container mx-auto">
+      <div className="flex w-full max-w-xl mb-4">
+        <GroupPicker identifier={identifier} setIdentifier={setGroup} />
       </div>
-    </QueryStoreProvider>
+
+      {pointer && <ChatLog pointer={pointer} />}
+      {pointer && <SendMessageForm pointer={pointer} />}
+    </div>
   );
 }

@@ -1,6 +1,6 @@
 import { AccountManager } from "applesauce-accounts";
 import { registerCommonAccountTypes, SimpleAccount } from "applesauce-accounts/accounts";
-import { useObservable } from "applesauce-react/hooks";
+import { useObservableState } from "applesauce-react/hooks";
 import { useCallback, useState } from "react";
 import { merge, Subject } from "rxjs";
 
@@ -36,7 +36,7 @@ manager.active$.subscribe((account) => {
 });
 
 function AccountCard({ account }: { account: SimpleAccount<AccountMetadata> }) {
-  const activeAccount = useObservable(manager.active$);
+  const activeAccount = useObservableState(manager.active$);
   const [name, setName] = useState(account.metadata?.name || "");
 
   const saveName = useCallback(() => {
@@ -89,7 +89,7 @@ function AccountCard({ account }: { account: SimpleAccount<AccountMetadata> }) {
 }
 
 export default function AccountManagerExample() {
-  const accounts = useObservable(manager.accounts$);
+  const accounts = useObservableState(manager.accounts$);
 
   const createNewAccount = useCallback(() => {
     const account = SimpleAccount.generateNew<AccountMetadata>();

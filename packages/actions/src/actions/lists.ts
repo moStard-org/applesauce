@@ -1,4 +1,4 @@
-import { ISyncEventStore } from "applesauce-core/event-store";
+import { IEventStoreRead } from "applesauce-core/event-store";
 import { isAddressPointer } from "applesauce-core/helpers";
 import { setListDescription, setListImage, setListTitle } from "applesauce-factory/operations/event";
 import { NostrEvent } from "nostr-tools";
@@ -6,7 +6,7 @@ import { AddressPointer } from "nostr-tools/nip19";
 
 import { Action } from "../action-hub.js";
 
-function getList(events: ISyncEventStore, address: NostrEvent | AddressPointer) {
+function getList(events: IEventStoreRead, address: NostrEvent | AddressPointer) {
   const list = isAddressPointer(address)
     ? events.getReplaceable(address.kind, address.pubkey, address.identifier)
     : address;

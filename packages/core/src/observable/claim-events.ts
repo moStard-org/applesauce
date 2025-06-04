@@ -1,11 +1,11 @@
-import { finalize, MonoTypeOperatorFunction, tap } from "rxjs";
 import { NostrEvent } from "nostr-tools";
+import { finalize, MonoTypeOperatorFunction, tap } from "rxjs";
 
-import { Database } from "../event-store/database.js";
+import { IEventClaims } from "../event-store/interface.js";
 
 /** keep a claim on any event that goes through this observable, claims are removed when the observable completes */
 export function claimEvents<T extends NostrEvent[] | NostrEvent | undefined>(
-  database: Database,
+  claims: IEventClaims,
 ): MonoTypeOperatorFunction<T> {
   return (source) => {
     const seen = new Set<NostrEvent>();
@@ -17,16 +17,16 @@ export function claimEvents<T extends NostrEvent[] | NostrEvent | undefined>(
         if (Array.isArray(message)) {
           for (const event of message) {
             seen.add(event);
-            database.claimEvent(event, source);
+            claims.claim(event, source);
           }
         } else {
           seen.add(message);
-          database.claimEvent(message, source);
+          claims.claim(message, source);
         }
       }),
       // remove claims on cleanup
       finalize(() => {
-        for (const e of seen) database.removeClaim(e, source);
+        for (const e of seen) claims.removeClaim(e, source);
       }),
     );
   };

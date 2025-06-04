@@ -1,4 +1,4 @@
-import { ISyncEventStore } from "applesauce-core/event-store";
+import { IEventStoreRead } from "applesauce-core/event-store";
 import { FAVORITE_RELAYS_KIND } from "applesauce-core/helpers/lists";
 import { TagOperation } from "applesauce-factory";
 import { modifyHiddenTags, modifyPublicTags } from "applesauce-factory/operations/event";
@@ -7,7 +7,7 @@ import { AddressPointer } from "nostr-tools/nip19";
 
 import { Action } from "../action-hub.js";
 
-function getFavoriteRelaysEvent(events: ISyncEventStore, self: string) {
+function getFavoriteRelaysEvent(events: IEventStoreRead, self: string) {
   const event = events.getReplaceable(FAVORITE_RELAYS_KIND, self);
   if (!event) throw new Error("Can't find favorite relays event");
   return event;

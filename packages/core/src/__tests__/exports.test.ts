@@ -5,18 +5,16 @@ describe("exports", () => {
   it("should export the expected functions", () => {
     expect(Object.keys(exports).sort()).toMatchInlineSnapshot(`
       [
-        "Database",
+        "EventSet",
         "EventStore",
         "EventStoreSymbol",
         "Helpers",
-        "Queries",
-        "QueryStore",
+        "Models",
         "TimeoutError",
         "defined",
         "firstValueFrom",
         "getObservableValue",
         "lastValueFrom",
-        "listenLatestUpdates",
         "logger",
         "mapEventsToStore",
         "mapEventsToTimeline",

@@ -8,16 +8,17 @@ import {
   setEncryptedContentCache,
   unlockGiftWrap,
 } from "applesauce-core/helpers";
-import { GiftWrapQuery } from "applesauce-core/queries";
+import { GiftWrapModel } from "applesauce-core/models";
 import { timelineLoader } from "applesauce-loaders/loaders";
-import { useObservable } from "applesauce-react/hooks";
+import { useObservableEagerMemo, useObservableMemo, useObservableState } from "applesauce-react/hooks";
 import { RelayPool } from "applesauce-relay";
 import { ExtensionSigner } from "applesauce-signers";
 import localforage from "localforage";
 import { kinds, NostrEvent } from "nostr-tools";
 import { useEffect, useMemo, useState } from "react";
 import { BehaviorSubject, filter, map } from "rxjs";
-import { RelayPicker } from "../components/relay-picker";
+
+import RelayPicker from "../components/relay-picker";
 import SecureStorage from "../extra/encrypted-storage";
 
 const storage = new SecureStorage(localforage);
@@ -47,7 +48,7 @@ eventStore.filters([{ kinds: [kinds.GiftWrap] }]).subscribe(async (gift) => {
 });
 
 // Save encrypted content when gift wraps are unlocked
-eventStore.updates.pipe(filter((e) => e.kind === kinds.GiftWrap)).subscribe((gift) => {
+eventStore.update$.pipe(filter((e) => e.kind === kinds.GiftWrap)).subscribe((gift) => {
   // Save encrypted content
   const content = getEncryptedContent(gift);
   if (content) storage.setItem(gift.id, content);
@@ -159,7 +160,7 @@ function GiftWrapEvent({ event, signer }: { event: NostrEvent; signer: Extension
   const rumor = getGiftWrapEvent(event);
 
   // Subscribe to event updates
-  useObservable(useMemo(() => eventStore.updated(event.id), [event.id]));
+  useObservableMemo(() => eventStore.updated(event.id), [event.id]);
 
   const handleUnlock = async () => {
     try {
@@ -198,20 +199,17 @@ function HomeView({ pubkey, signer }: { pubkey: string; signer: ExtensionSigner 
   const [relay, setRelay] = useState<string>("wss://relay.damus.io/");
   const [filter, setFilter] = useState<FilterType>("all");
 
-  // Create query based on filter type
-  const query$ = useMemo(() => {
+  // Subscribe to model based on filter type
+  const events = useObservableEagerMemo(() => {
     switch (filter) {
       case "locked":
-        return GiftWrapQuery(pubkey, true);
+        return eventStore.model(GiftWrapModel, pubkey, true).pipe(map((t) => [...t]));
       case "unlocked":
-        return GiftWrapQuery(pubkey, false);
+        return eventStore.model(GiftWrapModel, pubkey, false).pipe(map((t) => [...t]));
       default:
-        return GiftWrapQuery(pubkey);
+        return eventStore.model(GiftWrapModel, pubkey).pipe(map((t) => [...t]));
     }
   }, [pubkey, filter]);
-
-  // Subscribe to query
-  const events = useObservable(useMemo(() => query$(eventStore).pipe(map((t) => [...t])), [query$])) ?? [];
 
   // Setup loader
   const loader$ = useMemo(
@@ -251,7 +249,7 @@ function HomeView({ pubkey, signer }: { pubkey: string; signer: ExtensionSigner 
 export default function App() {
   const [locked, setLocked] = useState(!storage.unlocked);
   const [pubkey, setPubkey] = useState<string | null>(null);
-  const signer = useObservable(signer$);
+  const signer = useObservableState(signer$);
 
   const handleUnlock = async (pubkey?: string) => {
     if (pubkey) {

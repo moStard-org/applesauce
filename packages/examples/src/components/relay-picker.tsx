@@ -58,7 +58,7 @@ function RelayPickerModal({
   );
 }
 
-export function RelayPicker({
+export default function RelayPicker({
   value,
   onChange,
   common = COMMON_RELAYS,

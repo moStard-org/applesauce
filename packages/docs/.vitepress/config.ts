@@ -26,7 +26,7 @@ export default defineConfig({
         text: "Overview",
         items: [
           { text: "Events", link: "/overview/events" },
-          { text: "Queries", link: "/overview/queries" },
+          { text: "Models", link: "/overview/models" },
           { text: "Helpers", link: "/overview/helpers" },
           { text: "Factory", link: "/overview/factory" },
           { text: "Relays", link: "/overview/relays" },

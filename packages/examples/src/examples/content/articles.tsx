@@ -1,15 +1,15 @@
 import { remarkNostrMentions } from "applesauce-content/markdown";
 import { EventStore, mapEventsToStore, mapEventsToTimeline } from "applesauce-core";
 import { getArticleImage, getArticlePublishd, getArticleSummary, getArticleTitle } from "applesauce-core/helpers";
-import { useObservable } from "applesauce-react/hooks";
+import { useObservableMemo } from "applesauce-react/hooks";
 import { onlyEvents, RelayPool } from "applesauce-relay";
 import { NostrEvent } from "nostr-tools";
 import { npubEncode } from "nostr-tools/nip19";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { map } from "rxjs/operators";
 
-import { RelayPicker } from "../../components/relay-picker";
+import RelayPicker from "../../components/relay-picker";
 
 const eventStore = new EventStore();
 const pool = new RelayPool();
@@ -91,7 +91,7 @@ function ArticleView({ article, onBack }: { article: NostrEvent; onBack: () => v
               h1: ({ node, ...props }) => <h1 className="text-3xl font-bold my-4" {...props} />,
               h2: ({ node, ...props }) => <h2 className="text-2xl font-bold my-3" {...props} />,
               p: ({ node, ...props }) => <p className="my-2" {...props} />,
-              a: ({ node, ...props }) => <a className="link link-primary" {...props} />,
+              a: ({ node, ...props }) => <a className="link link-primary" target="_blank" {...props} />,
               ul: ({ node, ...props }) => <ul className="list-disc ml-4 my-2" {...props} />,
               ol: ({ node, ...props }) => <ol className="list-decimal ml-4 my-2" {...props} />,
               blockquote: ({ node, ...props }) => (
@@ -115,7 +115,7 @@ export default function ArticleViewer() {
   const [selected, setSelected] = useState<NostrEvent | null>(null);
 
   // Create a timeline observable for articles
-  const articles$ = useMemo(
+  const articles = useObservableMemo(
     () =>
       pool
         .relay(relay)
@@ -135,9 +135,6 @@ export default function ArticleViewer() {
         ),
     [relay],
   );
-
-  // Subscribe to the timeline and get the articles
-  const articles = useObservable(articles$);
 
   if (selected) {
     return <ArticleView article={selected} onBack={() => setSelected(null)} />;

@@ -1,9 +1,9 @@
 import { NostrEvent } from "nostr-tools";
 import { filter, map, merge, MonoTypeOperatorFunction, tap } from "rxjs";
-import { IStreamEventStore } from "../event-store/interface.js";
+import { IEventStoreStreams } from "../event-store/interface.js";
 
 /** Watches for any updates to the latest event and remits the event when updated */
-export function watchEventUpdates(eventStore: IStreamEventStore): MonoTypeOperatorFunction<NostrEvent | undefined> {
+export function watchEventUpdates(eventStore: IEventStoreStreams): MonoTypeOperatorFunction<NostrEvent | undefined> {
   return (source) => {
     let latest: NostrEvent | undefined;
 
@@ -11,13 +11,13 @@ export function watchEventUpdates(eventStore: IStreamEventStore): MonoTypeOperat
       // Get the latest event
       source.pipe(tap((value) => (latest = value))),
       // listen for updates
-      eventStore.updates.pipe(filter((e) => e.id === latest?.id)),
+      eventStore.update$.pipe(filter((e) => e.id === latest?.id)),
     );
   };
 }
 
 /** Watches for any updates to the latest array of events and remits the array of events when updated */
-export function watchEventsUpdates(eventStore: IStreamEventStore): MonoTypeOperatorFunction<NostrEvent[]> {
+export function watchEventsUpdates(eventStore: IEventStoreStreams): MonoTypeOperatorFunction<NostrEvent[]> {
   return (source) => {
     let latest: NostrEvent[] = [];
 
@@ -25,7 +25,7 @@ export function watchEventsUpdates(eventStore: IStreamEventStore): MonoTypeOpera
       // Get the latest event
       source.pipe(tap((value) => (latest = value))),
       // listen for updates
-      eventStore.updates.pipe(
+      eventStore.update$.pipe(
         filter((e) => latest.includes(e)),
         // re-emit the array of events
         map(() => latest),
@@ -33,6 +33,3 @@ export function watchEventsUpdates(eventStore: IStreamEventStore): MonoTypeOpera
     );
   };
 }
-
-/** @deprecated use `watchEventUpdates` instead */
-export const listenLatestUpdates = watchEventUpdates;

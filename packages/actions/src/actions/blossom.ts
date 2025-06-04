@@ -1,4 +1,4 @@
-import { ISyncEventStore } from "applesauce-core/event-store";
+import { IEventStoreRead } from "applesauce-core";
 import { BLOSSOM_SERVER_LIST_KIND } from "applesauce-core/helpers/blossom";
 import { TagOperation } from "applesauce-factory";
 import { modifyPublicTags } from "applesauce-factory/operations/event";
@@ -6,7 +6,7 @@ import { addBlossomServerTag, removeBlossomServerTag } from "applesauce-factory/
 
 import { Action } from "../action-hub.js";
 
-function getBlossomServersEvent(events: ISyncEventStore, self: string) {
+function getBlossomServersEvent(events: IEventStoreRead, self: string) {
   const event = events.getReplaceable(BLOSSOM_SERVER_LIST_KIND, self);
   if (!event) throw new Error("Can't find Blossom servers event");
   return event;

@@ -1,4 +1,4 @@
-import { ISyncEventStore } from "applesauce-core/event-store";
+import { IEventStoreRead } from "applesauce-core/event-store";
 import {
   modifyHiddenTags,
   modifyPublicTags,
@@ -11,7 +11,7 @@ import { kinds, NostrEvent } from "nostr-tools";
 
 import { Action } from "../action-hub.js";
 
-function getRelaySetEvent(events: ISyncEventStore, self: string, identifier: NostrEvent | string) {
+function getRelaySetEvent(events: IEventStoreRead, self: string, identifier: NostrEvent | string) {
   const set = typeof identifier === "string" ? events.getReplaceable(kinds.Relaysets, self, identifier) : identifier;
   if (!set) throw new Error("Can't find relay set");
   if (set.kind !== kinds.Relaysets) throw new Error("Event is not a relay set");

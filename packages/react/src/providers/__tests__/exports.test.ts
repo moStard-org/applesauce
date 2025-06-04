@@ -13,8 +13,6 @@ describe("exports", () => {
         "EventStoreProvider",
         "FactoryContext",
         "FactoryProvider",
-        "QueryStoreContext",
-        "QueryStoreProvider",
       ]
     `);
   });

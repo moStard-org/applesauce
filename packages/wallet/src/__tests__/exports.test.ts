@@ -9,7 +9,7 @@ describe("exports", () => {
         "Blueprints",
         "EventOperations",
         "Helpers",
-        "Queries",
+        "Models",
         "TagOperations",
       ]
     `);

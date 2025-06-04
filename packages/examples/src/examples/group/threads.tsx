@@ -1,4 +1,4 @@
-import { EventStore, mapEventsToStore, mapEventsToTimeline, QueryStore } from "applesauce-core";
+import { EventStore, mapEventsToStore, mapEventsToTimeline, Model } from "applesauce-core";
 import {
   COMMENT_KIND,
   decodeGroupPointer,
@@ -9,24 +9,22 @@ import {
   mergeRelaySets,
   ProfileContent,
 } from "applesauce-core/helpers";
-import { CommentsQuery } from "applesauce-core/queries";
+import { CommentsModel } from "applesauce-core/models";
 import { EventFactory } from "applesauce-factory";
+import { CommentBlueprint } from "applesauce-factory/blueprints";
 import { includeGroupHTag, includeSingletonTag, setShortTextContent } from "applesauce-factory/operations/event";
 import { addressPointerLoader } from "applesauce-loaders/loaders";
-import { QueryStoreProvider } from "applesauce-react";
-import { useObservable } from "applesauce-react/hooks";
+import { useObservableMemo } from "applesauce-react/hooks";
 import { onlyEvents, RelayPool } from "applesauce-relay";
 import { ExtensionSigner } from "applesauce-signers";
-import { NostrEvent } from "nostr-tools";
+import { kinds, NostrEvent } from "nostr-tools";
 import { ProfilePointer } from "nostr-tools/nip19";
-import { useCallback, useMemo, useRef, useState } from "react";
-import { ignoreElements, lastValueFrom, map, mergeWith, Observable, shareReplay, startWith } from "rxjs";
+import { useCallback, useRef, useState } from "react";
+import { defer, EMPTY, ignoreElements, lastValueFrom, map, merge, startWith } from "rxjs";
 
 import GroupPicker from "../../components/group-picker";
-import { CommentBlueprint } from "applesauce-factory/blueprints";
 
 const eventStore = new EventStore();
-const queryStore = new QueryStore(eventStore);
 const pool = new RelayPool();
 
 const signer = new ExtensionSigner();
@@ -37,32 +35,27 @@ const addressLoader = addressPointerLoader(pool.request.bind(pool), {
   lookupRelays: ["wss://purplepag.es/"],
 });
 
-// Profile query cache setup
-const queries = new Map<string, Observable<ProfileContent | undefined>>();
-function profileQuery(user: ProfilePointer): Observable<ProfileContent | undefined> {
-  const key = `${user.pubkey}-${user.relays?.join(",")}`;
-  if (queries.has(key)) return queries.get(key)!;
-
-  let observable: Observable<ProfileContent | undefined>;
-  const model = queryStore.profile(user.pubkey);
-  if (eventStore.hasReplaceable(0, user.pubkey)) {
-    observable = model;
-  } else {
-    observable = addressLoader({ pubkey: user.pubkey, kind: 0, relays: user.relays }).pipe(
-      ignoreElements(),
-      mergeWith(model),
+/** A model that loads the profile if its not found in the event store */
+function ProfileQuery(user: ProfilePointer): Model<ProfileContent | undefined> {
+  return (events) =>
+    merge(
+      // Load the profile if its not found in the event store
+      defer(() => {
+        if (events.hasReplaceable(kinds.Metadata, user.pubkey)) return EMPTY;
+        else return addressLoader({ kind: kinds.Metadata, ...user }).pipe(ignoreElements());
+      }),
+      // Subscribe to the profile content
+      events.profile(user.pubkey),
     );
-  }
+}
 
-  // Cache results
-  observable = observable.pipe(shareReplay(1));
-
-  queries.set(key, observable);
-  return observable;
+/** Create a hook for loading a users profile */
+function useProfile(user: ProfilePointer): ProfileContent | undefined {
+  return useObservableMemo(() => eventStore.model(ProfileQuery, user), [user.pubkey, user.relays?.join("|")]);
 }
 
 function ThreadCard({ event, onSelect }: { event: NostrEvent; onSelect?: (event: NostrEvent) => void }) {
-  const profile = useObservable(profileQuery({ pubkey: event.pubkey, relays: mergeRelaySets(getSeenRelays(event)) }));
+  const profile = useProfile({ pubkey: event.pubkey, relays: mergeRelaySets(getSeenRelays(event)) });
 
   return (
     <div className="card bg-base-200 shadow-md">
@@ -96,7 +89,7 @@ function ThreadCard({ event, onSelect }: { event: NostrEvent; onSelect?: (event:
 
 function ThreadReply({ event }: { event: NostrEvent }) {
   const raw = useRef<HTMLDialogElement>(null);
-  const profile = useObservable(profileQuery({ pubkey: event.pubkey, relays: mergeRelaySets(getSeenRelays(event)) }));
+  const profile = useProfile({ pubkey: event.pubkey, relays: mergeRelaySets(getSeenRelays(event)) });
 
   return (
     <div className="chat chat-start">
@@ -176,7 +169,7 @@ function ReplyForm({ event, pointer }: { event: NostrEvent; pointer: GroupPointe
 
 /** A component for viewing a thread */
 function ThreadView({ event, pointer }: { event: NostrEvent; pointer: GroupPointer }) {
-  const timeline = useMemo(
+  useObservableMemo(
     () =>
       pool
         .relay(pointer.relay)
@@ -184,9 +177,8 @@ function ThreadView({ event, pointer }: { event: NostrEvent; pointer: GroupPoint
         .pipe(onlyEvents(), mapEventsToStore(eventStore), mapEventsToTimeline()),
     [pointer.relay, pointer.id, event.id],
   );
-  useObservable(timeline);
 
-  const replies = useObservable(useMemo(() => queryStore.createQuery(CommentsQuery, event), [event]));
+  const replies = useObservableMemo(() => eventStore.model(CommentsModel, event), [event.id]);
 
   return (
     <div>
@@ -273,7 +265,7 @@ function NewThreadForm({
 
 /** A component for listing threads */
 function ThreadsList({ pointer, onSelect }: { pointer: GroupPointer; onSelect: (event: NostrEvent) => void }) {
-  const timeline = useMemo(
+  const threads = useObservableMemo(
     () =>
       pool
         .relay(pointer.relay)
@@ -283,12 +275,10 @@ function ThreadsList({ pointer, onSelect }: { pointer: GroupPointer; onSelect: (
           mapEventsToStore(eventStore),
           mapEventsToTimeline(),
           map((t) => [...t]),
-          startWith([]),
+          startWith([] as NostrEvent[]),
         ),
     [pointer.relay, pointer.id],
   );
-
-  const threads = useObservable(timeline);
 
   return (
     <div className="space-y-4">
@@ -316,36 +306,34 @@ export default function ThreadsExample() {
   );
 
   return (
-    <QueryStoreProvider queryStore={queryStore}>
-      <div className="container mx-auto">
-        <div className="mb-4 flex w-full  gap-2">
-          <GroupPicker identifier={identifier} setIdentifier={setGroup} />
+    <div className="container mx-auto">
+      <div className="mb-4 flex w-full  gap-2">
+        <GroupPicker identifier={identifier} setIdentifier={setGroup} />
 
-          {pointer && !createThread && !selectedThread && (
-            <button className="btn btn-primary ms-auto" onClick={() => setCreateThread(true)}>
-              New Thread
-            </button>
-          )}
-        </div>
-
-        {pointer && createThread && !selectedThread && (
-          <NewThreadForm
-            pointer={pointer}
-            onCancel={() => setCreateThread(false)}
-            onSuccess={() => setCreateThread(false)}
-          />
-        )}
-
-        {pointer && !selectedThread && <ThreadsList pointer={pointer} onSelect={setSelectedThread} />}
-        {pointer && selectedThread && (
-          <>
-            <button className="btn btn-ghost mb-4" onClick={() => setSelectedThread(undefined)}>
-              ← Back to Threads
-            </button>
-            <ThreadView event={selectedThread} pointer={pointer} />
-          </>
+        {pointer && !createThread && !selectedThread && (
+          <button className="btn btn-primary ms-auto" onClick={() => setCreateThread(true)}>
+            New Thread
+          </button>
         )}
       </div>
-    </QueryStoreProvider>
+
+      {pointer && createThread && !selectedThread && (
+        <NewThreadForm
+          pointer={pointer}
+          onCancel={() => setCreateThread(false)}
+          onSuccess={() => setCreateThread(false)}
+        />
+      )}
+
+      {pointer && !selectedThread && <ThreadsList pointer={pointer} onSelect={setSelectedThread} />}
+      {pointer && selectedThread && (
+        <>
+          <button className="btn btn-ghost mb-4" onClick={() => setSelectedThread(undefined)}>
+            ← Back to Threads
+          </button>
+          <ThreadView event={selectedThread} pointer={pointer} />
+        </>
+      )}
+    </div>
   );
 }
