@@ -13,12 +13,15 @@ describe("exports", () => {
         "FollowSetBlueprint",
         "GiftWrapBlueprint",
         "GroupMessageBlueprint",
-        "LegacyDirectMessageBlueprint",
+        "LegacyMessageBlueprint",
+        "LegacyMessageReplyBlueprint",
         "LiveChatMessageBlueprint",
         "NoteBlueprint",
         "NoteReplyBlueprint",
         "PicturePostBlueprint",
         "ReactionBlueprint",
+        "WrappedMessageBlueprint",
+        "WrappedMessageReplyBlueprint",
       ]
     `);
   });

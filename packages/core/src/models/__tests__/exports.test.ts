@@ -18,10 +18,13 @@ describe("exports", () => {
         "EventsModel",
         "FavoriteRelaySetsModel",
         "FavoriteRelaysModel",
-        "GiftWrapModel",
         "GiftWrapRumorModel",
+        "GiftWrapsModel",
         "HiddenContactsModel",
         "HiddenMuteModel",
+        "LegacyMessageReplies",
+        "LegacyMessageThreads",
+        "LegacyMessagesConversation",
         "MailboxesModel",
         "MuteModel",
         "ProfileModel",
@@ -41,6 +44,10 @@ describe("exports", () => {
         "UserHiddenBookmarkModel",
         "UserPinnedModel",
         "UserPublicBookmarkModel",
+        "WrappedMessageReplies",
+        "WrappedMessageThreads",
+        "WrappedMessagesConversation",
+        "WrappedMessagesModel",
       ]
     `);
   });

@@ -1,6 +1,6 @@
 import { EventStore } from "applesauce-core";
 import { isGiftWrapLocked, persistEncryptedContent, unlockGiftWrap } from "applesauce-core/helpers";
-import { GiftWrapModel, GiftWrapRumorModel } from "applesauce-core/models";
+import { GiftWrapsModel, GiftWrapRumorModel } from "applesauce-core/models";
 import { timelineLoader } from "applesauce-loaders/loaders";
 import { useObservableEagerMemo, useObservableMemo, useObservableState } from "applesauce-react/hooks";
 import { RelayPool } from "applesauce-relay";
@@ -161,11 +161,11 @@ function HomeView({ pubkey, signer }: { pubkey: string; signer: ExtensionSigner 
   const events = useObservableEagerMemo(() => {
     switch (filter) {
       case "locked":
-        return eventStore.model(GiftWrapModel, pubkey, true).pipe(map((t) => [...t]));
+        return eventStore.model(GiftWrapsModel, pubkey, true).pipe(map((t) => [...t]));
       case "unlocked":
-        return eventStore.model(GiftWrapModel, pubkey, false).pipe(map((t) => [...t]));
+        return eventStore.model(GiftWrapsModel, pubkey, false).pipe(map((t) => [...t]));
       default:
-        return eventStore.model(GiftWrapModel, pubkey).pipe(map((t) => [...t]));
+        return eventStore.model(GiftWrapsModel, pubkey).pipe(map((t) => [...t]));
     }
   }, [pubkey, filter]);
 

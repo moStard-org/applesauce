@@ -103,7 +103,7 @@ function ExampleView({ example }: { example: Example }) {
         {/* Main content */}
         {mode === "preview" ? (
           Component ? (
-            <div className="flex-1 py-4 flex flex-col">
+            <div className="flex-1 flex flex-col">
               <Component />
             </div>
           ) : (

@@ -106,5 +106,5 @@ export interface IEventStore
   model<T extends unknown, Args extends Array<any>>(
     constructor: ModelConstructor<T, Args>,
     ...args: Args
-  ): Observable<T | undefined>;
+  ): Observable<T>;
 }

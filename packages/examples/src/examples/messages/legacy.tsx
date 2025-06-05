@@ -2,12 +2,13 @@ import { ProxySigner } from "applesauce-accounts";
 import { defined, EventStore } from "applesauce-core";
 import {
   getTagValue,
-  isLegacyDirectMessageLocked,
+  isLegacyMessageLocked,
   lockEncryptedContent,
   persistEncryptedContent,
   setEncryptedContentCache,
-  unlockLegacyDirectMessage,
+  unlockLegacyMessage,
 } from "applesauce-core/helpers";
+import { EncryptedContentModel } from "applesauce-core/models";
 import { EventFactory } from "applesauce-factory";
 import { includeSingletonTag, setEncryptedContent } from "applesauce-factory/operations/event";
 import { timelineLoader } from "applesauce-loaders/loaders";
@@ -20,8 +21,11 @@ import { npubEncode } from "nostr-tools/nip19";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BehaviorSubject, lastValueFrom } from "rxjs";
 
-import { EncryptedContentModel } from "applesauce-core/models";
+// Import helper components
+import LoginView from "../../components/login-view";
 import RelayPicker from "../../components/relay-picker";
+import UnlockView from "../../components/unlock-view";
+
 import SecureStorage from "../../extra/encrypted-storage";
 
 const storage$ = new BehaviorSubject<SecureStorage | null>(null);
@@ -33,101 +37,6 @@ const factory = new EventFactory({ signer: new ProxySigner(signer$.pipe(defined(
 
 // Persist encrypted content
 persistEncryptedContent(eventStore, storage$.pipe(defined()));
-
-function UnlockView({ onUnlock }: { onUnlock: (storage: SecureStorage, pubkey?: string) => void }) {
-  const [pin, setPin] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleUnlock = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    try {
-      const storage = new SecureStorage(localforage);
-      const isValid = await storage.unlock(pin);
-
-      if (!isValid) return setError("Invalid PIN");
-
-      const pubkey = (await storage.getItem("pubkey")) ?? undefined;
-      onUnlock(storage, pubkey);
-    } catch (err) {
-      setError("Failed to unlock storage");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleClear = () => localforage.clear();
-
-  return (
-    <div className="flex items-center justify-center min-h-screen bg-base-200">
-      <form onSubmit={handleUnlock} className="card w-96 bg-base-100 shadow-xl">
-        <div className="card-body">
-          <h2 className="card-title">Unlock Storage</h2>
-          <div className="form-control">
-            <input
-              type="password"
-              placeholder="Enter PIN"
-              className="input input-bordered"
-              value={pin}
-              onChange={(e) => setPin(e.target.value)}
-              disabled={loading}
-            />
-          </div>
-          {error && <div className="text-error text-sm">{error}</div>}
-          <div className="card-actions justify-between">
-            <button type="button" className="btn btn-primary" onClick={handleClear} tabIndex={1}>
-              Clear
-            </button>
-            <button type="submit" className="btn btn-primary" disabled={loading || !pin}>
-              {loading ? <span className="loading loading-spinner" /> : "Unlock"}
-            </button>
-          </div>
-        </div>
-      </form>
-    </div>
-  );
-}
-
-function LoginView({ onLogin }: { onLogin: (signer: ExtensionSigner, pubkey: string) => void }) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleLogin = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const signer = new ExtensionSigner();
-      const pubkey = await signer.getPublicKey();
-
-      onLogin(signer, pubkey);
-    } catch (err) {
-      setError("Failed to login with extension");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="flex items-center justify-center min-h-screen bg-base-200">
-      <div className="card w-96 bg-base-100 shadow-xl">
-        <div className="card-body">
-          <h2 className="card-title">Login Required</h2>
-          <p>Please login with your Nostr extension</p>
-          {error && <div className="text-error text-sm">{error}</div>}
-          <div className="card-actions justify-end">
-            <button onClick={handleLogin} className="btn btn-primary" disabled={loading}>
-              {loading ? <span className="loading loading-spinner" /> : "Login"}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function ContactList({
   events,
@@ -193,7 +102,7 @@ function Message({ pubkey, message, signer }: { pubkey: string; message: NostrEv
   const content = useObservableMemo(() => eventStore.model(EncryptedContentModel, message.id), [message.id]);
 
   const decrypt = async () => {
-    await unlockLegacyDirectMessage(message, pubkey, signer);
+    await unlockLegacyMessage(message, pubkey, signer);
   };
 
   return (
@@ -290,7 +199,7 @@ function DirectMessageView({
   const decryptAll = async () => {
     try {
       for (const message of messages)
-        if (isLegacyDirectMessageLocked(message)) await unlockLegacyDirectMessage(message, pubkey, signer);
+        if (isLegacyMessageLocked(message)) await unlockLegacyMessage(message, pubkey, signer);
     } catch (error) {
       // Stop of first error
     }

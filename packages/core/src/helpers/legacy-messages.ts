@@ -9,8 +9,23 @@ import {
 import { getTagValue } from "./index.js";
 
 /** Checks if a legacy direct message content is encrypted */
-export function isLegacyDirectMessageLocked(event: NostrEvent): boolean {
+export function isLegacyMessageLocked(event: NostrEvent): boolean {
   return isEncryptedContentLocked(event);
+}
+
+/**
+ * Returns the corraspondant of a legacy direct message
+ * @throws if no corraspondant is found
+ */
+export function getLegacyMessageCorraspondant(message: NostrEvent, self: string): string {
+  const corraspondant = message.pubkey === self ? getTagValue(message, "p") : message.pubkey;
+  if (!corraspondant) throw new Error("No corraspondant found");
+  return corraspondant;
+}
+
+/** Returns the parent message id of a legacy message */
+export function getLegacyMessageParent(message: NostrEvent): string | undefined {
+  return getTagValue(message, "e");
 }
 
 /**
@@ -20,7 +35,7 @@ export function isLegacyDirectMessageLocked(event: NostrEvent): boolean {
  * @param signer - The signer to use to decrypt the message
  * @returns The decrypted content of the message
  */
-export async function unlockLegacyDirectMessage(
+export async function unlockLegacyMessage(
   message: NostrEvent,
   self: string,
   signer: EncryptedContentSigner,
@@ -28,14 +43,13 @@ export async function unlockLegacyDirectMessage(
   const cached = getEncryptedContent(message);
   if (cached) return cached;
 
-  const corraspondant = message.pubkey === self ? getTagValue(message, "p") : message.pubkey;
-  if (!corraspondant) throw new Error("No corraspondant found");
+  const corraspondant = getLegacyMessageCorraspondant(message, self);
 
   // Unlock the encrypted content
   return await unlockEncryptedContent(message, corraspondant, signer);
 }
 
 /** Clears the cached plaintext of a direct message */
-export async function lockLegacyDirectMessage(message: NostrEvent) {
+export async function lockLegacyMessage(message: NostrEvent) {
   lockEncryptedContent(message);
 }

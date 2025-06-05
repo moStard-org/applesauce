@@ -6,7 +6,7 @@ import { getGiftWrapEvent, isGiftWrapLocked, Rumor } from "../helpers/gift-wraps
 import { watchEventsUpdates, watchEventUpdates } from "../observable/watch-event-updates.js";
 
 /** A model that returns all gift wrap events for a pubkey, optionally filtered by locked status */
-export function GiftWrapModel(pubkey: string, locked?: boolean): Model<NostrEvent[]> {
+export function GiftWrapsModel(pubkey: string, locked?: boolean): Model<NostrEvent[]> {
   return (store) =>
     store.timeline({ kinds: [kinds.GiftWrap], "#p": [pubkey] }).pipe(
       // Update the timeline when events are updated
