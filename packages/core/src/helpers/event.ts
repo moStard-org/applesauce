@@ -1,10 +1,10 @@
 import { NostrEvent, VerifiedEvent, verifiedSymbol } from "nostr-tools";
-import { INDEXABLE_TAGS } from "../event-store/common.js";
-import { getHiddenTags } from "./hidden-tags.js";
-import { getOrComputeCachedValue } from "./cache.js";
 import { isAddressableKind, isReplaceableKind } from "nostr-tools/kinds";
+import { INDEXABLE_TAGS } from "../event-store/common.js";
 import { EventStoreSymbol } from "../event-store/event-store.js";
 import { IEventStore } from "../event-store/interface.js";
+import { getOrComputeCachedValue } from "./cache.js";
+import { getHiddenTags } from "./hidden-tags.js";
 
 export const EventUIDSymbol = Symbol.for("event-uid");
 export const EventIndexableTagsSymbol = Symbol.for("indexable-tags");
@@ -133,6 +133,12 @@ export function isFromCache(event: NostrEvent) {
 /** Returns the EventStore of an event if its been added to one */
 export function getParentEventStore<T extends object>(event: T): IEventStore | undefined {
   return Reflect.get(event, EventStoreSymbol) as IEventStore | undefined;
+}
+
+/** Notifies the events parent store that an event has been updated */
+export function notifyEventUpdate(event: NostrEvent) {
+  const eventStore = getParentEventStore(event);
+  if (eventStore) eventStore.update(event);
 }
 
 /**

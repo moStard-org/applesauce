@@ -1,14 +1,6 @@
 import { EventStore } from "applesauce-core";
-import {
-  getEncryptedContent,
-  getGiftWrapEvent,
-  getGiftWrapSeal,
-  getParentEventStore,
-  isGiftWrapLocked,
-  setEncryptedContentCache,
-  unlockGiftWrap,
-} from "applesauce-core/helpers";
-import { GiftWrapModel } from "applesauce-core/models";
+import { isGiftWrapLocked, persistEncryptedContent, unlockGiftWrap } from "applesauce-core/helpers";
+import { GiftWrapModel, GiftWrapRumorModel } from "applesauce-core/models";
 import { timelineLoader } from "applesauce-loaders/loaders";
 import { useObservableEagerMemo, useObservableMemo, useObservableState } from "applesauce-react/hooks";
 import { RelayPool } from "applesauce-relay";
@@ -16,7 +8,7 @@ import { ExtensionSigner } from "applesauce-signers";
 import localforage from "localforage";
 import { kinds, NostrEvent } from "nostr-tools";
 import { useEffect, useMemo, useState } from "react";
-import { BehaviorSubject, filter, map } from "rxjs";
+import { BehaviorSubject, map } from "rxjs";
 
 import RelayPicker from "../components/relay-picker";
 import SecureStorage from "../extra/encrypted-storage";
@@ -26,40 +18,7 @@ const signer$ = new BehaviorSubject<ExtensionSigner | null>(null);
 const eventStore = new EventStore();
 const pool = new RelayPool();
 
-// Restore encrypted content when loaded
-eventStore.filters([{ kinds: [kinds.GiftWrap] }]).subscribe(async (gift) => {
-  // Restore gift wrap encrypted content
-  const content = await storage.getItem(gift.id);
-  if (content) {
-    setEncryptedContentCache(gift, content);
-
-    // Try to parse the seal from the restored content
-    const seal = getGiftWrapSeal(gift);
-    if (seal) {
-      // Restore seal encrypted content
-      const content = await storage.getItem(seal.id);
-      if (content) setEncryptedContentCache(seal, content);
-    }
-
-    // Notify the store the gift warp has updated
-    const store = getParentEventStore(gift);
-    if (store) store.update(gift);
-  }
-});
-
-// Save encrypted content when gift wraps are unlocked
-eventStore.update$.pipe(filter((e) => e.kind === kinds.GiftWrap)).subscribe((gift) => {
-  // Save encrypted content
-  const content = getEncryptedContent(gift);
-  if (content) storage.setItem(gift.id, content);
-
-  // Save seal encrypted content
-  const seal = getGiftWrapSeal(gift);
-  if (seal) {
-    const content = getEncryptedContent(seal);
-    if (content) storage.setItem(seal.id, content);
-  }
-});
+persistEncryptedContent(eventStore, storage);
 
 function UnlockView({ onUnlock }: { onUnlock: (pubkey?: string) => void }) {
   const [pin, setPin] = useState("");
@@ -157,10 +116,9 @@ function LoginView({ onLogin }: { onLogin: (signer: ExtensionSigner, pubkey: str
 function GiftWrapEvent({ event, signer }: { event: NostrEvent; signer: ExtensionSigner }) {
   const [unlocking, setUnlocking] = useState(false);
   const locked = isGiftWrapLocked(event);
-  const rumor = getGiftWrapEvent(event);
 
-  // Subscribe to event updates
-  useObservableMemo(() => eventStore.updated(event.id), [event.id]);
+  // Subscribe to when the rumor is unlocked
+  const rumor = useObservableMemo(() => eventStore.model(GiftWrapRumorModel, event.id), [event.id]);
 
   const handleUnlock = async () => {
     try {

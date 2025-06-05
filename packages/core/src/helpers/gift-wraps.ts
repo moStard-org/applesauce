@@ -5,9 +5,9 @@ import {
   getEncryptedContent,
   isEncryptedContentLocked,
   lockEncryptedContent,
-  unlockEncryptedContent,
+  unlockEncryptedContent
 } from "./encrypted-content.js";
-import { getParentEventStore, isEvent } from "./event.js";
+import { isEvent, notifyEventUpdate } from "./event.js";
 
 export type Rumor = UnsignedEvent & {
   id: string;
@@ -74,10 +74,7 @@ export async function unlockGiftWrap(gift: NostrEvent, signer: EncryptedContentS
   if (!rumor) throw new Error("Failed to read rumor in gift wrap");
 
   // if the event has been added to an event store, notify it
-  if (isEvent(gift)) {
-    const eventStore = getParentEventStore(gift);
-    if (eventStore) eventStore.update(gift);
-  }
+  if (isEvent(gift)) notifyEventUpdate(gift);
 
   return rumor;
 }
@@ -89,50 +86,3 @@ export function lockGiftWrap(gift: NostrEvent) {
 
   lockEncryptedContent(gift);
 }
-
-/** Starts a subscription that persists and restores all encrypted content */
-// export function persistGiftWrapsEncryptedContent(eventStore: IEventStore, storage: EncryptedContentCache): () => void {
-//   // Keep track of events that have been restored so we don't save them again
-//   const restored = new Set<string>();
-
-//   const updateGifts = eventStore.updates.pipe(filter((e) => e.kind === kinds.GiftWrap));
-//   const updateSeals = updateGifts.pipe(
-//     map((e) => getGiftWrapSeal(e)),
-//     filter((e) => !!e),
-//   );
-
-//   const saves = merge(updateGifts, updateSeals)
-//     .pipe(
-//       filter((e) => !isEncryptedContentLocked(e)),
-//       filter((e) => !restored.has(e.id)),
-//     )
-//     .subscribe((event) => {
-//       const content = getEncryptedContent(event);
-//       if (content)
-//         storage.setItem(event.id, content).catch((e) => {
-//           // Ignore write errors
-//         });
-//     });
-
-//   // Restore gift wraps when they are inserted
-//   const restoreGifts = eventStore.inserts
-//     .pipe(filter((e) => e.kind === kinds.GiftWrap && isEncryptedContentLocked(e)))
-//     .subscribe(async (event) => {
-//       const content = await storage.getItem(event.id);
-//       if (content) setEncryptedContentCache(event, content);
-//     });
-
-//   // Attempt to restore seals when the gift wrap is updated
-//   const restoreSeals = updateGifts.pipe(filter((e) => !isEncryptedContentLocked(e))).subscribe(async (event) => {
-//     const seal = getGiftWrapSeal(event);
-//     if (seal && isEncryptedContentLocked(seal)) {
-//       const content = await storage.getItem(seal.id);
-//       if (content) setEncryptedContentCache(seal, content);
-//     }
-//   });
-
-//   // Return stop method
-//   return () => {
-//     saves.unsubscribe();
-//   };
-// }

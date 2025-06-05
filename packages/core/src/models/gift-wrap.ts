@@ -1,9 +1,9 @@
 import { kinds, NostrEvent } from "nostr-tools";
-import { identity, map } from "rxjs";
+import { identity, map, of } from "rxjs";
 
 import { Model } from "../event-store/interface.js";
-import { isGiftWrapLocked } from "../helpers/gift-wraps.js";
-import { watchEventsUpdates } from "../observable/watch-event-updates.js";
+import { getGiftWrapEvent, isGiftWrapLocked, Rumor } from "../helpers/gift-wraps.js";
+import { watchEventsUpdates, watchEventUpdates } from "../observable/watch-event-updates.js";
 
 /** A model that returns all gift wrap events for a pubkey, optionally filtered by locked status */
 export function GiftWrapModel(pubkey: string, locked?: boolean): Model<NostrEvent[]> {
@@ -13,5 +13,16 @@ export function GiftWrapModel(pubkey: string, locked?: boolean): Model<NostrEven
       watchEventsUpdates(store),
       // If lock is specified filter on locked status
       locked !== undefined ? map((events) => events.filter((e) => isGiftWrapLocked(e) === locked)) : identity,
+    );
+}
+
+/** A model that returns the rumor event of a gift wrap event when its unlocked */
+export function GiftWrapRumorModel(gift: NostrEvent | string): Model<Rumor | undefined> {
+  return (events) =>
+    (typeof gift === "string" ? events.event(gift) : of(gift)).pipe(
+      // Listen for updates to the event
+      watchEventUpdates(events),
+      // Get the rumor event
+      map((event) => event && getGiftWrapEvent(event)),
     );
 }

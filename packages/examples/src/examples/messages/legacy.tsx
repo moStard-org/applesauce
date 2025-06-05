@@ -1,11 +1,12 @@
 import { ProxySigner } from "applesauce-accounts";
 import { defined, EventStore } from "applesauce-core";
 import {
-  getEncryptedContent,
   getTagValue,
+  isLegacyDirectMessageLocked,
   lockEncryptedContent,
+  persistEncryptedContent,
   setEncryptedContentCache,
-  unlockEncryptedContent,
+  unlockLegacyDirectMessage,
 } from "applesauce-core/helpers";
 import { EventFactory } from "applesauce-factory";
 import { includeSingletonTag, setEncryptedContent } from "applesauce-factory/operations/event";
@@ -17,16 +18,21 @@ import localforage from "localforage";
 import { Filter, NostrEvent } from "nostr-tools";
 import { npubEncode } from "nostr-tools/nip19";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { BehaviorSubject, lastValueFrom, map } from "rxjs";
+import { BehaviorSubject, lastValueFrom } from "rxjs";
 
+import { EncryptedContentModel } from "applesauce-core/models";
 import RelayPicker from "../../components/relay-picker";
 import SecureStorage from "../../extra/encrypted-storage";
 
+const storage$ = new BehaviorSubject<SecureStorage | null>(null);
 const signer$ = new BehaviorSubject<ExtensionSigner | null>(null);
 const pubkey$ = new BehaviorSubject<string | null>(null);
 const eventStore = new EventStore();
 const pool = new RelayPool();
 const factory = new EventFactory({ signer: new ProxySigner(signer$.pipe(defined())) });
+
+// Persist encrypted content
+persistEncryptedContent(eventStore, storage$.pipe(defined()));
 
 function UnlockView({ onUnlock }: { onUnlock: (storage: SecureStorage, pubkey?: string) => void }) {
   const [pin, setPin] = useState("");
@@ -72,7 +78,7 @@ function UnlockView({ onUnlock }: { onUnlock: (storage: SecureStorage, pubkey?: 
           </div>
           {error && <div className="text-error text-sm">{error}</div>}
           <div className="card-actions justify-between">
-            <button type="button" className="btn btn-primary" onClick={handleClear}>
+            <button type="button" className="btn btn-primary" onClick={handleClear} tabIndex={1}>
               Clear
             </button>
             <button type="submit" className="btn btn-primary" disabled={loading || !pin}>
@@ -165,13 +171,13 @@ function ContactList({
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
-              stroke-width="1.5"
+              strokeWidth="1.5"
               stroke="currentColor"
               className="size-6"
             >
               <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeLinecap="round"
+                strokeLinejoin="round"
                 d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 0 1-.825-.242m9.345-8.334a2.126 2.126 0 0 0-.476-.095 48.64 48.64 0 0 0-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0 0 11.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"
               />
             </svg>
@@ -182,39 +188,13 @@ function ContactList({
   );
 }
 
-function Message({
-  pubkey,
-  message,
-  storage,
-  signer,
-}: {
-  pubkey: string;
-  message: NostrEvent;
-  storage: SecureStorage;
-  signer: ExtensionSigner;
-}) {
+function Message({ pubkey, message, signer }: { pubkey: string; message: NostrEvent; signer: ExtensionSigner }) {
   const sender = message.pubkey;
-  const content = useObservableMemo(() => eventStore.updated(message.id).pipe(map(getEncryptedContent)), [message.id]);
+  const content = useObservableMemo(() => eventStore.model(EncryptedContentModel, message.id), [message.id]);
 
   const decrypt = async () => {
-    // Check if the plaintext was cached
-    const cached = await storage.getItem(message.id);
-    if (cached) return setEncryptedContentCache(message, cached);
-
-    const corraspondant = sender === pubkey ? getTagValue(message, "p") : sender;
-    if (!corraspondant) throw new Error("No corraspondant found");
-
-    // Decrypt the message using the signer
-    const content = await unlockEncryptedContent(message, corraspondant, signer);
-    await storage.setItem(message.id, content);
+    await unlockLegacyDirectMessage(message, pubkey, signer);
   };
-
-  // Load plaintext from cache
-  useEffect(() => {
-    storage.getItem(message.id).then((cached) => {
-      if (cached) setEncryptedContentCache(message, cached);
-    });
-  }, [message.id]);
 
   return (
     <div>
@@ -258,7 +238,7 @@ function DirectMessageForm({ corraspondant, relay }: { corraspondant: string; re
   };
 
   return (
-    <form onSubmit={handleSend} className="flex gap-2 mt-4">
+    <form onSubmit={handleSend} className="flex gap-2 w-full">
       <input
         type="text"
         value={message}
@@ -278,13 +258,11 @@ function DirectMessageView({
   pubkey,
   corraspondant,
   relay,
-  storage,
   signer,
 }: {
   pubkey: string;
   corraspondant: string;
   relay: string;
-  storage: SecureStorage;
   signer: ExtensionSigner;
 }) {
   const filters = useMemo<Filter[]>(
@@ -309,11 +287,20 @@ function DirectMessageView({
 
   const messages = useObservableEagerMemo(() => eventStore.timeline(filters), [filters]);
 
+  const decryptAll = async () => {
+    try {
+      for (const message of messages)
+        if (isLegacyDirectMessageLocked(message)) await unlockLegacyDirectMessage(message, pubkey, signer);
+    } catch (error) {
+      // Stop of first error
+    }
+  };
+
   return (
     <div className="flex flex-col h-full p-4 overflow-hidden w-full">
       <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col-reverse gap-2">
         {messages.map((message) => (
-          <Message key={message.id} pubkey={pubkey} message={message} storage={storage} signer={signer} />
+          <Message key={message.id} pubkey={pubkey} message={message} signer={signer} />
         ))}
 
         <button onClick={loadMore} className="btn btn-primary mx-auto">
@@ -321,12 +308,18 @@ function DirectMessageView({
         </button>
       </div>
 
-      <DirectMessageForm corraspondant={corraspondant} relay={relay} />
+      <div className="flex items-center gap-2 w-full mt-4">
+        <DirectMessageForm corraspondant={corraspondant} relay={relay} />
+
+        <button className="btn" onClick={decryptAll}>
+          Decrypt all
+        </button>
+      </div>
     </div>
   );
 }
 
-function HomeView({ pubkey, signer, storage }: { pubkey: string; signer: ExtensionSigner; storage: SecureStorage }) {
+function HomeView({ pubkey, signer }: { pubkey: string; signer: ExtensionSigner }) {
   const [relay, setRelay] = useState<string>("wss://relay.damus.io/");
   const [selected, setSelected] = useState<string | null>(null);
 
@@ -374,7 +367,7 @@ function HomeView({ pubkey, signer, storage }: { pubkey: string; signer: Extensi
       </div>
       <div className="flex-1 overflow-hidden">
         {selected ? (
-          <DirectMessageView pubkey={pubkey} corraspondant={selected} relay={relay} storage={storage} signer={signer} />
+          <DirectMessageView pubkey={pubkey} corraspondant={selected} relay={relay} signer={signer} />
         ) : (
           <div className="flex items-center justify-center h-full text-base-content/50">
             Select a contact to start messaging
@@ -386,16 +379,17 @@ function HomeView({ pubkey, signer, storage }: { pubkey: string; signer: Extensi
 }
 
 function App() {
-  const [storage, setStorage] = useState<SecureStorage | null>(null);
+  const storage = useObservableState(storage$);
   const signer = useObservableState(signer$);
   const pubkey = useObservableState(pubkey$);
 
   const handleUnlock = async (storage: SecureStorage, pubkey?: string) => {
+    storage$.next(storage);
+
     if (pubkey) {
       pubkey$.next(pubkey);
       signer$.next(new ExtensionSigner());
     }
-    setStorage(storage);
   };
   const handleLogin = async (signer: ExtensionSigner, pubkey: string) => {
     signer$.next(signer);
@@ -410,7 +404,7 @@ function App() {
   if (!signer || !pubkey) return <LoginView onLogin={handleLogin} />;
 
   // Show main app view when both storage and login are ready
-  return <HomeView pubkey={pubkey} signer={signer} storage={storage} />;
+  return <HomeView pubkey={pubkey} signer={signer} />;
 }
 
 export default App;

@@ -1,6 +1,7 @@
 import { kinds } from "nostr-tools";
-import { getParentEventStore, isEvent } from "./event.js";
+import { isEvent, notifyEventUpdate } from "./event.js";
 
+/** A symbol use to store the encrypted content of an event in memory */
 export const EncryptedContentSymbol = Symbol.for("encrypted-content");
 
 export interface EncryptedContentSigner {
@@ -79,10 +80,7 @@ export function setEncryptedContentCache<T extends object>(event: T, plaintext: 
   Reflect.set(event, EncryptedContentSymbol, plaintext);
 
   // if the event has been added to an event store, notify it
-  if (isEvent(event)) {
-    const eventStore = getParentEventStore(event);
-    if (eventStore) eventStore.update(event);
-  }
+  if (isEvent(event)) notifyEventUpdate(event);
 }
 
 /** Removes the encrypted content cache on an event */
@@ -90,14 +88,5 @@ export function lockEncryptedContent<T extends object>(event: T) {
   Reflect.deleteProperty(event, EncryptedContentSymbol);
 
   // if the event has been added to an event store, notify it
-  if (isEvent(event)) {
-    const eventStore = getParentEventStore(event);
-    if (eventStore) eventStore.update(event);
-  }
-}
-
-/** An interface that is used to cache encrypted content on events */
-export interface EncryptedContentCache {
-  getItem: (key: string) => Promise<string | null>;
-  setItem: (key: string, value: string) => Promise<void>;
+  if (isEvent(event)) notifyEventUpdate(event);
 }

@@ -1,4 +1,5 @@
 export * from "./app-handlers.js";
+export * from "./article.js";
 export * from "./blossom.js";
 export * from "./bolt11.js";
 export * from "./bookmarks.js";
@@ -10,6 +11,7 @@ export * from "./content.js";
 export * from "./delete.js";
 export * from "./dns-identity.js";
 export * from "./emoji.js";
+export * from "./encrypted-content-cache.js";
 export * from "./encrypted-content.js";
 export * from "./encryption.js";
 export * from "./event.js";
@@ -45,4 +47,3 @@ export * from "./url.js";
 export * from "./user-status.js";
 export * from "./wrapped-direct-messages.js";
 export * from "./zap.js";
-export * from "./article.js";
