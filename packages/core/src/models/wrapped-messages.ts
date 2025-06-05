@@ -21,7 +21,12 @@ export function WrappedMessagesModel(self: string): Model<Rumor[]> {
       // Watch for updates to the gift wraps
       watchEventsUpdates(store),
       // Get rumors and filter out locked
-      map((rumors) => rumors.map((gift) => getGiftWrapEvent(gift)).filter((e) => !!e)),
+      map((rumors) =>
+        rumors
+          .map((gift) => getGiftWrapEvent(gift))
+          .filter((e) => !!e)
+          .sort((a, b) => b.created_at - a.created_at),
+      ),
     );
 }
 

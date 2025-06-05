@@ -148,7 +148,7 @@ export default function SocialGraphLoader() {
   useObservableMemo(() => (root ? graphLoader({ pubkey: root, distance: 1 }) : EMPTY), [root]);
 
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto my-8">
       <input className="input input-bordered" value={root || ""} onChange={(e) => setRoot(e.target.value)} />
 
       <button className="btn btn-primary" onClick={async () => setRoot(await new ExtensionSigner().getPublicKey())}>

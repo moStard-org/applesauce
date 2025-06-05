@@ -150,7 +150,7 @@ export default function LinkHandlerExample() {
   const isLoading = !!pointer && !handlers;
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto my-8 p-4">
       <h1 className="text-2xl font-bold mb-4">NIP-89 Application Handlers</h1>
       <p className="mb-4">
         Enter a NIP-19 entity (naddr1, npub1, nprofile1, note1, or nevent1) to find compatible applications

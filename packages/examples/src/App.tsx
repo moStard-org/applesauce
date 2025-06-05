@@ -20,7 +20,7 @@ function CodeBlock({ code, language }: { code: string; language: string }) {
   }, []);
 
   return (
-    <pre className="p-4">
+    <pre className="p-4 my-0">
       <code ref={ref} className={`language-${language}`}>
         {code}
       </code>
@@ -32,7 +32,6 @@ function ExampleView({ example }: { example: Example }) {
   const [path, setPath] = useState("");
   const [source, setSource] = useState("");
   const [Component, setComponent] = useState<(() => JSX.Element) | null>();
-
   const [mode, setMode] = useState<"code" | "preview">("preview");
 
   // set mode to preview when example changes
@@ -55,63 +54,63 @@ function ExampleView({ example }: { example: Example }) {
     <div className="drawer lg:drawer-open">
       <input id="drawer" type="checkbox" className="drawer-toggle" />
 
-      {/* Navbar */}
-      <div className="drawer-content flex flex-col">
-        <div className="navbar bg-base-300 fixed top-0 z-50">
-          <span className="text-xl font-bold">{example.name}</span>
-
-          <div className="flex-none flex gap-2 ms-4">
-            <label className="label">
-              <input
-                type="checkbox"
-                checked={mode === "code"}
-                onChange={() => setMode(mode === "code" ? "preview" : "code")}
-                className="toggle toggle-sm"
-              />
-              Code
-            </label>
-
-            <ul className="menu menu-horizontal px-1">
-              <li>
-                <a
-                  target="_blank"
-                  className="btn btn-ghost btn-sm btn-square"
-                  href={`https://github.com/hzrd149/applesauce/tree/master/packages/examples/src/${path}`}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="size-4"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
-                    />
-                  </svg>
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="h-14"></div>
-
-        {/* Main content */}
+      {/* Main content */}
+      <div className="drawer-content flex flex-col relative">
         {mode === "preview" ? (
           Component ? (
-            <div className="flex-1 flex flex-col">
-              <Component />
-            </div>
+            <Component />
           ) : (
             <span className="loading loading-dots loading-xl"></span>
           )
         ) : (
           <CodeBlock code={source} language="tsx" />
         )}
+
+        {/* Floating button group */}
+        <div className="join fixed top-4 right-4 shadow-md">
+          <div className="join-item font-bold m-2">{example.name}</div>
+          <button
+            className={`join-item btn ${mode === "code" ? "btn-primary" : "btn-ghost"}`}
+            onClick={() => setMode(mode === "code" ? "preview" : "code")}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="size-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5"
+              />
+            </svg>
+            {" Source"}
+          </button>
+
+          <a
+            target="_blank"
+            className="join-item btn btn-ghost"
+            href={`https://github.com/hzrd149/applesauce/tree/master/packages/examples/src/${path}`}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="size-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+              />
+            </svg>
+          </a>
+        </div>
       </div>
 
       {/* Sidebar */}
@@ -122,7 +121,7 @@ function ExampleView({ example }: { example: Example }) {
 
 function HomeView() {
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto my-8">
       <div className="navbar bg-base-100 shadow-sm">
         <div className="flex-1">
           <a className="btn btn-ghost text-xl">Applesauce Examples</a>

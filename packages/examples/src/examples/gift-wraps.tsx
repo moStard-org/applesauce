@@ -181,7 +181,7 @@ function HomeView({ pubkey, signer }: { pubkey: string; signer: ExtensionSigner 
   }, [loader$]);
 
   return (
-    <div className=" container mx-auto flex flex-col h-screen p-4">
+    <div className=" container mx-auto my-8 flex flex-col h-screen p-4">
       <div className="flex gap-4 mb-4">
         <RelayPicker value={relay} onChange={setRelay} />
         <select

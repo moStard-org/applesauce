@@ -261,7 +261,7 @@ function HomeView({ pubkey, signer }: { pubkey: string; signer: ExtensionSigner 
   }, [eventStore]);
 
   return (
-    <div className="flex bg-base-200 overflow-hidden" style={{ height: "calc(100vh - 10rem)" }}>
+    <div className="flex bg-base-200 overflow-hidden h-screen">
       <div className="w-sm bg-base-100 p-2 overflow-y-auto flex flex-col gap-2 shrink-0">
         <div className="flex gap-2 w-full">
           <RelayPicker className="w-full" value={relay} onChange={setRelay} />

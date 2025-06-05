@@ -189,7 +189,7 @@ export default function ZapsTimeline() {
   );
 
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto my-8">
       <div className="flex gap-2 mb-4">
         <RelayPicker value={relay} onChange={setRelay} />
       </div>

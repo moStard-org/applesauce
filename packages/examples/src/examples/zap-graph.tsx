@@ -145,7 +145,7 @@ export default function ZapGraph() {
   );
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto my-8 p-4">
       <div className="flex gap-4 mb-6">
         <RelayPicker value={relay} onChange={setRelay} />
         <form

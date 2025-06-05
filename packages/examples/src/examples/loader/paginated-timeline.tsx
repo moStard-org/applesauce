@@ -60,7 +60,7 @@ export default function PaginatedTimelineExample() {
   }, [loader]);
 
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto my-8">
       <div className="flex gap-2">
         <input type="number" value={limit} onChange={(e) => setLimit(Number(e.target.value))} />
 

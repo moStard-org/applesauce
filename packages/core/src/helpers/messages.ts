@@ -1,5 +1,3 @@
-import { NostrEvent } from "nostr-tools";
-
 /**
  * Groups messages into bubble sets based on the pubkey and time
  *
@@ -7,8 +5,11 @@ import { NostrEvent } from "nostr-tools";
  * @param buffer - Minimum number of seconds between message groups
  * @returns The grouped messages
  */
-export function groupMessageEvents(messages: NostrEvent[], buffer = 5 * 60): NostrEvent[][] {
-  const groups: NostrEvent[][] = [];
+export function groupMessageEvents<T extends { created_at: number; pubkey: string }>(
+  messages: T[],
+  buffer = 5 * 60,
+): T[][] {
+  const groups: T[][] = [];
 
   for (const message of messages) {
     const group = groups[groups.length - 1];

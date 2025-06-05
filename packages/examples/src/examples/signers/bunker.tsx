@@ -295,7 +295,7 @@ export default function BunkerLogin() {
 
   if (!signer) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-md">
+      <div className="container mx-auto my-8 px-4 py-8 max-w-md">
         <h1 className="text-2xl font-bold mb-6 text-center">Bunker Login</h1>
 
         <BunkerUrlLogin onSignerCreated={handleSignerCreated} />
@@ -305,7 +305,7 @@ export default function BunkerLogin() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-md">
+    <div className="container mx-auto my-8 px-4 py-8 max-w-md">
       <AccountCard signer={signer} onDisconnect={handleDisconnect} />
     </div>
   );

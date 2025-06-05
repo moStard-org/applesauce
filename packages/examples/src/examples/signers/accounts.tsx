@@ -98,7 +98,7 @@ export default function AccountManagerExample() {
   }, [accounts.length]);
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto my-8 p-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Account Manager</h1>
         <button className="btn btn-primary" onClick={createNewAccount}>
