@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { EventStore } from "applesauce-core";
 import { EventFactory } from "applesauce-factory";
 import { kinds } from "nostr-tools";
@@ -29,6 +29,8 @@ beforeEach(() => {
     created_at: Math.floor(Date.now() / 1000),
   });
   events.add(muteList);
+
+  vi.useFakeTimers();
 });
 
 describe("MuteThread", () => {
@@ -57,6 +59,9 @@ describe("UnmuteThread", () => {
     const addSpy = subscribeSpyTo(hub.exec(MuteThread, testEventId), { expectErrors: false });
     await addSpy.onComplete();
 
+    // Wait a second to ensure events have newer created_at
+    await vi.advanceTimersByTime(1000);
+
     // Then unmute it
     const spy = subscribeSpyTo(hub.exec(UnmuteThread, testEventId), { expectErrors: false });
     await spy.onComplete();
@@ -70,6 +75,9 @@ describe("UnmuteThread", () => {
     // First add the thread to hidden mute list
     const addSpy = subscribeSpyTo(hub.exec(MuteThread, testEventId, true), { expectErrors: false });
     await addSpy.onComplete();
+
+    // Wait a second to ensure events have newer created_at
+    await vi.advanceTimersByTime(1000);
 
     // Then unmute it
     const spy = subscribeSpyTo(hub.exec(UnmuteThread, testEventId, true), { expectErrors: false });

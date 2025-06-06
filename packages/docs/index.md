@@ -4,23 +4,26 @@ layout: home
 
 hero:
   name: "AppleSauce"
-  text: "Utilities for nostr"
+  text: "Modular SDK for Nostr"
   tagline: Build reactive nostr UI with less code
   actions:
-    - theme: alt
-      text: Why?
-      link: /introduction/why-applesauce
     - theme: brand
       text: Getting Started
       link: /introduction/getting-started
+    - theme: alt
+      text: Reference
+      link: /typedoc/index.html
+    - theme: alt
+      text: Examples
+      link: /examples
 
 features:
   - title: Utilities
-    details: At its core AppleSauce is packages of helper methods to help you parse and understand nostr events
+    details: At its core AppleSauce is packages of helper methods to help parse and understand nostr events.
   - title: Reactive
-    details: AppleSauce is built on using rxjs observables, which makes subscribing to events and filters simple
+    details: AppleSauce is built using RxJS observables, which makes subscribing to events and filters simple.
   - title: Modular
-    details: Every piece of the packages can be used independently, helpers, event store, and signers
+    details: Every piece of the packages can be used independently, helpers, event store, and signers.
   - title: No networking
     details: Batteries are not included, so use any other nostr library to talk to relays. nostr-tools, ndk, nostrify, rx-nostr, etc...
 ---

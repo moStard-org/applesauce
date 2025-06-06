@@ -121,10 +121,12 @@ function ExampleView({ example }: { example: Example }) {
 
 function HomeView() {
   return (
-    <div className="container mx-auto my-8">
+    <div className="container mx-auto">
       <div className="navbar bg-base-100 shadow-sm">
         <div className="flex-1">
-          <a className="btn btn-ghost text-xl">Applesauce Examples</a>
+          <a className="text-xl" href="/">
+            Applesauce Examples
+          </a>
         </div>
         <div className="flex-none">
           <ul className="menu menu-horizontal px-1">
@@ -146,7 +148,7 @@ function HomeView() {
           <a
             key={example.id}
             href={`#${example.id}`}
-            className="card bg-base-200 shadow-xl hover:shadow-2xl transition-shadow"
+            className="card bg-base-200 shadow-md hover:shadow-2xl transition-shadow"
           >
             <div className="card-body">
               <h2 className="card-title">{example.name}</h2>

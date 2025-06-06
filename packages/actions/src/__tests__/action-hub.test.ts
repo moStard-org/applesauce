@@ -1,5 +1,5 @@
 import { from, Subject } from "rxjs";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { subscribeSpyTo } from "@hirez_io/observer-spy";
 import { EventFactory } from "applesauce-factory";
 import { EventStore } from "applesauce-core";
@@ -10,8 +10,13 @@ import { CreateProfile } from "../actions/profile.js";
 import { NostrEvent } from "nostr-tools";
 
 const user = new FakeUser();
-const events = new EventStore();
-const factory = new EventFactory({ signer: user });
+let events = new EventStore();
+let factory = new EventFactory({ signer: user });
+
+beforeEach(() => {
+  events = new EventStore();
+  factory = new EventFactory({ signer: user });
+});
 
 describe("runAction", () => {
   it("should handle action that return observables", async () => {

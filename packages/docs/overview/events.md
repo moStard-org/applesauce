@@ -159,7 +159,7 @@ eventStore.add(updated);
 
 ### Streams
 
-A stream subscription takes a filter and returns all events that match and notifies you when there are new events
+A stream subscription takes a filter(s) and returns all events that match and notifies you when there are new events
 
 ```ts
 const sub = eventStore.stream({ kinds: [1] }).subscribe((event) => {
@@ -188,10 +188,45 @@ fetchEvents({ kinds: [1, 0] }, (event) => {
 });
 ```
 
-## Getting events
+## Static Methods
 
-If you just want to get an event from the store without subscribing you can use the [`hasEvent`](https://hzrd149.github.io/applesauce/typedoc/classes/applesauce-core.EventStore.html#hasEvent), or [`hasReplaceable`](https://hzrd149.github.io/applesauce/typedoc/classes/applesauce-core.EventStore.html#hasReplaceable) methods to check if the event exists and then use the [`getAll`](https://hzrd149.github.io/applesauce/typedoc/classes/applesauce-core.EventStore.html#getAll), [`getEvent`](https://hzrd149.github.io/applesauce/typedoc/classes/applesauce-core.EventStore.html#getEvent), and [`getReplaceable`](https://hzrd149.github.io/applesauce/typedoc/classes/applesauce-core.EventStore.html#getReplaceable) methods to get the event
+The event store provides several methods to directly access events without creating subscriptions. These methods are useful when you need to check for or retrieve events synchronously.
 
-## Pruning
+### Event Management
 
-The [`eventStore.prune`](https://hzrd149.github.io/applesauce/typedoc/classes/applesauce-core.EventStore.html#prune) method will do its best to cleanup the event store and remove the oldest events that are not being used by a subscription
+- `add(event)`: Add a new event to the store
+- `remove(event)`: Remove an event from the store
+- `update(event)`: Notify the store that an event has been updated
+
+### Checking Event Existence
+
+- `hasEvent(id)`: Check if an event with a specific ID exists in the store
+- `hasReplaceable(kind, pubkey, identifier?)`: Check if a replaceable event exists for the given kind and pubkey combination
+
+### Retrieving Events
+
+- `getEvent(id)`: Get a single event by its ID
+- `getReplaceable(kind, pubkey, identifier?)`: Get the latest version of a replaceable event
+- `getReplaceableHistory(kind, pubkey, identifier?)`: Get the history of all versions of a replaceable event
+- `getByFilters(filters)`: Get a set of all events that match the given filter(s)
+- `getTimeline(filters)`: Get a sorted array of events that match the given filter(s)
+
+Example usage:
+
+```ts
+// Check if an event exists
+const exists = eventStore.hasEvent("000021ba6f5f...");
+
+// Get an event by ID
+const event = eventStore.getEvent("000021ba6f5f...");
+
+// Get events matching filters
+const events = eventStore.getByFilters({ kinds: [1], authors: ["000021ba6f5f..."] });
+
+// Get a timeline of events
+const timeline = eventStore.getTimeline({ kinds: [1] });
+
+// Check and get replaceable events
+const hasProfile = eventStore.hasReplaceable(0, "000021ba6f5f...");
+const profile = eventStore.getReplaceable(0, "000021ba6f5f...");
+```

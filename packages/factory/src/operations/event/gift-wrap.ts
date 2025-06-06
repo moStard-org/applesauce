@@ -1,4 +1,11 @@
-import { Rumor, unixNow } from "applesauce-core/helpers";
+import {
+  EncryptedContentSymbol,
+  getGiftWrapRumor,
+  GiftWrapRumorSymbol,
+  GiftWrapSealSymbol,
+  Rumor,
+  unixNow,
+} from "applesauce-core/helpers";
 import {
   EventTemplate,
   finalizeEvent,
@@ -12,6 +19,7 @@ import {
 import { build } from "../../event-factory.js";
 import { eventPipe } from "../../helpers/pipeline.js";
 import { EventOperation } from "../../types.js";
+import { MetaTagOptions, setMetaTags } from "./common.js";
 import { setEncryptedContent } from "./encryption.js";
 import { stamp } from "./signer.js";
 
@@ -50,40 +58,69 @@ export function sealRumor(pubkey: string): EventOperation<Rumor, NostrEvent> {
   return async (rumor, ctx) => {
     if (!ctx.signer) throw new Error("A signer is required to create a seal");
 
+    const plaintext = JSON.stringify(rumor);
     const unsigned = await build(
       { kind: kinds.Seal, created_at: randomNow() },
       ctx,
-      setEncryptedContent(pubkey, JSON.stringify(rumor)),
+      // Set the encrypted content
+      setEncryptedContent(pubkey, plaintext),
+      // Stamp the seal with the signers's pubkey
       stamp(),
     );
-    return await ctx.signer.signEvent(unsigned);
+
+    const signed = await ctx.signer.signEvent(unsigned);
+
+    // Include the rumor in the seal
+    Reflect.set(signed, EncryptedContentSymbol, plaintext);
+    Reflect.set(signed, GiftWrapRumorSymbol, rumor);
+
+    return signed;
   };
 }
 
+export type GiftWrapOptions = MetaTagOptions;
+
 /** Gift wraps a seal to a pubkey. The third operation in the gift wrap pipeline */
-export function wrapSeal(pubkey: string): EventOperation<NostrEvent, NostrEvent> {
+export function wrapSeal(pubkey: string, opts?: GiftWrapOptions): EventOperation<NostrEvent, NostrEvent> {
   return async (seal) => {
     const key = generateSecretKey();
     const plaintext = JSON.stringify(seal);
 
-    return finalizeEvent(
+    const draft = await build(
       {
         kind: kinds.GiftWrap,
         created_at: randomNow(),
         content: nip44.encrypt(plaintext, nip44.getConversationKey(key, pubkey)),
         tags: [["p", pubkey]],
       },
-      key,
+      // Pass an empty context here so here is no change to use the users pubkey
+      {},
+      // Set meta tags on the gift wrap
+      setMetaTags(opts),
     );
+
+    const gift = finalizeEvent(draft, key);
+
+    // Include unencrypted content cache
+    Reflect.set(gift, GiftWrapSealSymbol, seal);
+    Reflect.set(gift, EncryptedContentSymbol, plaintext);
+
+    // Parse the seal event and rumor
+    getGiftWrapRumor(gift);
+
+    return gift;
   };
 }
 
 /** An operation that gift wraps an event to a pubkey */
-export function giftWrap(pubkey: string): EventOperation<EventTemplate | UnsignedEvent | NostrEvent, NostrEvent> {
+export function giftWrap(
+  pubkey: string,
+  opts?: GiftWrapOptions,
+): EventOperation<EventTemplate | UnsignedEvent | NostrEvent, NostrEvent> {
   return eventPipe(
     toRumor(),
     /** @ts-expect-error */
     sealRumor(pubkey),
-    wrapSeal(pubkey),
+    wrapSeal(pubkey, opts),
   ) as EventOperation<EventTemplate | UnsignedEvent | NostrEvent, NostrEvent>;
 }

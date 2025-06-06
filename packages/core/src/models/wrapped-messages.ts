@@ -2,7 +2,7 @@ import { kinds } from "nostr-tools";
 import { map } from "rxjs";
 
 import { Model } from "../event-store/interface.js";
-import { getGiftWrapEvent, Rumor } from "../helpers/gift-wraps.js";
+import { getGiftWrapRumor, Rumor } from "../helpers/gift-wraps.js";
 import {
   createConversationIdentifier,
   getConversationIdentifierFromMessage,
@@ -23,7 +23,7 @@ export function WrappedMessagesModel(self: string): Model<Rumor[]> {
       // Get rumors and filter out locked
       map((rumors) =>
         rumors
-          .map((gift) => getGiftWrapEvent(gift))
+          .map((gift) => getGiftWrapRumor(gift))
           .filter((e) => !!e)
           .sort((a, b) => b.created_at - a.created_at),
       ),

@@ -2,7 +2,7 @@ import { kinds, NostrEvent } from "nostr-tools";
 import { identity, map, of } from "rxjs";
 
 import { Model } from "../event-store/interface.js";
-import { getGiftWrapEvent, isGiftWrapLocked, Rumor } from "../helpers/gift-wraps.js";
+import { getGiftWrapRumor, isGiftWrapLocked, Rumor } from "../helpers/gift-wraps.js";
 import { watchEventsUpdates, watchEventUpdates } from "../observable/watch-event-updates.js";
 
 /** A model that returns all gift wrap events for a pubkey, optionally filtered by locked status */
@@ -23,6 +23,6 @@ export function GiftWrapRumorModel(gift: NostrEvent | string): Model<Rumor | und
       // Listen for updates to the event
       watchEventUpdates(events),
       // Get the rumor event
-      map((event) => event && getGiftWrapEvent(event)),
+      map((event) => event && getGiftWrapRumor(event)),
     );
 }

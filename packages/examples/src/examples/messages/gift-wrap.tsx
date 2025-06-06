@@ -1,32 +1,46 @@
 import { ProxySigner } from "applesauce-accounts";
 import { ActionHub } from "applesauce-actions";
 import { SendWrappedMessage } from "applesauce-actions/actions";
-import { defined, EventStore } from "applesauce-core";
+import { defined, EventStore, mapEventsToStore } from "applesauce-core";
 import {
   getConversationIdentifierFromMessage,
   getConversationParticipants,
+  getGiftWrapRumor,
+  getGiftWrapSeal,
   groupMessageEvents,
+  isFromCache,
   persistEncryptedContent,
   Rumor,
+  unixNow,
   unlockGiftWrap,
 } from "applesauce-core/helpers";
 import { GiftWrapsModel, WrappedMessagesConversation, WrappedMessagesModel } from "applesauce-core/models";
 import { EventFactory } from "applesauce-factory";
+import { CacheRequest } from "applesauce-loaders";
 import { timelineLoader } from "applesauce-loaders/loaders";
 import { useObservableMemo, useObservableState } from "applesauce-react/hooks";
-import { RelayPool } from "applesauce-relay";
+import { onlyEvents, RelayPool } from "applesauce-relay";
 import { ExtensionSigner } from "applesauce-signers";
-import { kinds } from "nostr-tools";
+import { kinds, NostrEvent } from "nostr-tools";
 import { npubEncode } from "nostr-tools/nip19";
-import { useEffect, useMemo, useState } from "react";
-import { BehaviorSubject, lastValueFrom, map } from "rxjs";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { BehaviorSubject, bufferTime, filter, lastValueFrom, map } from "rxjs";
 
 // Import helper components
 import LoginView from "../../components/login-view";
 import RelayPicker from "../../components/relay-picker";
 import UnlockView from "../../components/unlock-view";
 
+import { addEvents, getEventsForFilters, openDB } from "nostr-idb";
 import SecureStorage from "../../extra/encrypted-storage";
+
+const EXPIRATIONS: Record<string, number> = {
+  "30m": 60 * 30,
+  "1d": 60 * 60 * 24,
+  "1w": 60 * 60 * 24 * 7,
+  "2w": 60 * 60 * 24 * 14,
+  "1y": 60 * 60 * 24 * 365,
+};
 
 const storage$ = new BehaviorSubject<SecureStorage | null>(null);
 const signer$ = new BehaviorSubject<ExtensionSigner | null>(null);
@@ -39,9 +53,32 @@ const actions = new ActionHub(eventStore, factory);
 // Persist encrypted content
 persistEncryptedContent(eventStore, storage$.pipe(defined()));
 
+// Setup a local event cache
+const cache = await openDB();
+const cacheRequest: CacheRequest = (filters) => getEventsForFilters(cache, filters);
+
+// Save all new events to the cache
+eventStore.insert$
+  .pipe(
+    // Only select events that are not from the cache
+    filter((e) => !isFromCache(e)),
+    // Buffer events for 5 seconds
+    bufferTime(5_000),
+    // Only select buffers with events
+    filter((b) => b.length > 0),
+  )
+  .subscribe((events) => {
+    // Save all new events to the cache
+    addEvents(cache, events);
+  });
+
+// Debug modal
+const debug$ = new BehaviorSubject<NostrEvent | null>(null);
+
 function MessageForm({ conversation, relay }: { conversation: string; relay: string }) {
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [expiration, setExpiration] = useState<string>();
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,7 +89,9 @@ function MessageForm({ conversation, relay }: { conversation: string; relay: str
 
       // Create and send gift wrapped message to all participants
       await actions
-        .exec(SendWrappedMessage, conversation, message.trim())
+        .exec(SendWrappedMessage, conversation, message.trim(), {
+          expiration: expiration ? unixNow() + EXPIRATIONS[expiration] : undefined,
+        })
         .forEach((gift) => lastValueFrom(pool.publish([relay], gift)));
 
       setMessage("");
@@ -61,6 +100,12 @@ function MessageForm({ conversation, relay }: { conversation: string; relay: str
     } finally {
       setSending(false);
     }
+  };
+
+  const toggleExpiration = () => {
+    const arr = Object.keys(EXPIRATIONS);
+    const next = expiration ? arr[arr.indexOf(expiration) + 1] : arr[0];
+    setExpiration(next);
   };
 
   return (
@@ -73,6 +118,9 @@ function MessageForm({ conversation, relay }: { conversation: string; relay: str
         placeholder="Type your message..."
         className="input input-bordered flex-grow"
       />
+      <button type="button" className="btn btn-ghost" title="Set expiration" onClick={toggleExpiration}>
+        {expiration ? expiration : "--"}
+      </button>
       <button type="submit" className="btn btn-primary" disabled={sending}>
         Send
       </button>
@@ -92,10 +140,23 @@ function MessageGroup({ messages, pubkey }: { messages: Rumor[]; pubkey: string 
         </div>
       </div>
       <div className="chat-header">{npubEncode(messages[0].pubkey).slice(0, 8)}...</div>
-      <div className="flex flex-col gap-2">
+      <div className={`flex flex-col-reverse gap-2 overflow-hidden ${isOwn ? "items-end" : "items-start"}`}>
         {messages.map((message) => (
           <div key={message.id} className="chat-bubble whitespace-pre-line">
-            {message.content}
+            {message.content}{" "}
+            <a
+              href="#"
+              className="text-xs text-base-content/50"
+              onClick={(e) => {
+                e.preventDefault();
+                const gift = eventStore
+                  .getTimeline({ kinds: [kinds.GiftWrap] })
+                  .find((gift) => getGiftWrapRumor(gift)?.id === message.id);
+                if (gift) debug$.next(gift);
+              }}
+            >
+              raw
+            </a>
           </div>
         ))}
       </div>
@@ -121,7 +182,7 @@ function ConversationView({ pubkey, conversation, relay }: { pubkey: string; con
 
   return (
     <div className="flex flex-col h-full p-4 overflow-hidden w-full">
-      <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden gap-4">
+      <div className="flex flex-col-reverse flex-1 overflow-y-auto overflow-x-hidden gap-4">
         {messageGroups.map((group) => (
           <MessageGroup key={group[0].id} messages={group} pubkey={pubkey} />
         ))}
@@ -202,14 +263,43 @@ function ConversationList({
   );
 }
 
+function GiftWrapDebugModal({ gift }: { gift: NostrEvent }) {
+  const rumor = useMemo(() => getGiftWrapRumor(gift), [gift]);
+  const seal = useMemo(() => getGiftWrapSeal(gift), [gift]);
+
+  return (
+    <>
+      <h3 className="text-lg font-bold">Rumor</h3>
+      <pre>
+        <code>{JSON.stringify(rumor, null, 2)}</code>
+      </pre>
+      <h3 className="text-lg font-bold">Seal</h3>
+      <pre>
+        <code>{JSON.stringify(seal, null, 2)}</code>
+      </pre>
+      <h3 className="text-lg font-bold">Gift wrap</h3>
+      <pre>
+        <code>{JSON.stringify(gift, null, 2)}</code>
+      </pre>
+    </>
+  );
+}
+
 function HomeView({ pubkey }: { pubkey: string }) {
   const [relay, setRelay] = useState<string>("wss://relay.damus.io/");
   const [selectedConversation, setSelectedConversation] = useState<string>();
   const signer = useObservableState(signer$);
+  const debug = useObservableState(debug$);
 
   // Create a loader that loads all gift wraps for a pubkey
   const timeline = useMemo(
-    () => timelineLoader(pool.request.bind(pool), [relay], { kinds: [kinds.GiftWrap], "#p": [pubkey] }, { eventStore }),
+    () =>
+      timelineLoader(
+        pool.request.bind(pool),
+        [relay],
+        { kinds: [kinds.GiftWrap], "#p": [pubkey] },
+        { eventStore, cache: cacheRequest },
+      ),
     [relay, pubkey],
   );
 
@@ -217,6 +307,16 @@ function HomeView({ pubkey }: { pubkey: string }) {
   useEffect(() => {
     timeline().subscribe();
   }, [timeline]);
+
+  // Create subscription for new events
+  useObservableMemo(
+    () =>
+      pool
+        .relay(relay)
+        .subscription({ kinds: [kinds.GiftWrap], "#p": [pubkey] })
+        .pipe(onlyEvents(), mapEventsToStore(eventStore)),
+    [relay, pubkey],
+  );
 
   // Select all unlocked gift wraps
   const messages = useObservableMemo(() => eventStore.model(WrappedMessagesModel, pubkey), [pubkey]);
@@ -238,6 +338,14 @@ function HomeView({ pubkey }: { pubkey: string }) {
     }
     setDecrypting(false);
   };
+
+  // Control the debug modal
+  const modal = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    if (!modal.current) return;
+    if (debug && !modal.current.open) modal.current.showModal();
+    else if (!debug && modal.current.open) modal.current.close();
+  }, [debug]);
 
   return (
     <div className="flex bg-base-200 overflow-hidden h-screen">
@@ -271,6 +379,14 @@ function HomeView({ pubkey }: { pubkey: string }) {
           </div>
         )}
       </div>
+
+      {/* Gift wrap debug modal */}
+      <dialog id="debug-modal" className="modal" ref={modal}>
+        <div className="modal-box w-full max-w-6xl">{debug && <GiftWrapDebugModal gift={debug} />}</div>
+        <form method="dialog" className="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
     </div>
   );
 }

@@ -81,7 +81,6 @@
   "dependencies": {
     "applesauce-content": "^1.2.0",
     "applesauce-core": "^1.2.0",
-    "immer": "^10.1.1",
     "nanoid": "^5.0.9",
     "nostr-tools": "^2.13"
   },

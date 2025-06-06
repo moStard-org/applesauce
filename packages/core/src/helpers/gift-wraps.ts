@@ -5,7 +5,7 @@ import {
   getEncryptedContent,
   isEncryptedContentLocked,
   lockEncryptedContent,
-  unlockEncryptedContent
+  unlockEncryptedContent,
 } from "./encrypted-content.js";
 import { isEvent, notifyEventUpdate } from "./event.js";
 
@@ -14,7 +14,7 @@ export type Rumor = UnsignedEvent & {
 };
 
 export const GiftWrapSealSymbol = Symbol.for("gift-wrap-seal");
-export const GiftWrapEventSymbol = Symbol.for("gift-wrap-event");
+export const GiftWrapRumorSymbol = Symbol.for("gift-wrap-rumor");
 
 /** Returns the unsigned seal event in a gift-wrap event */
 export function getGiftWrapSeal(gift: NostrEvent): NostrEvent | undefined {
@@ -30,23 +30,36 @@ export function getGiftWrapSeal(gift: NostrEvent): NostrEvent | undefined {
   });
 }
 
+/** Checks if a seal event is locked */
+export function isSealLocked(seal: NostrEvent): boolean {
+  return isEncryptedContentLocked(seal);
+}
+
+/** Gets the rumor from a seal event */
+export function getSealRumor(seal: NostrEvent): Rumor | undefined {
+  if (isEncryptedContentLocked(seal)) return undefined;
+
+  const plaintext = getEncryptedContent(seal);
+  if (!plaintext) return undefined;
+
+  return getOrComputeCachedValue(seal, GiftWrapRumorSymbol, () => {
+    const rumor = JSON.parse(plaintext) as Rumor;
+    if (rumor.pubkey !== seal.pubkey) throw new Error("Seal author does not match rumor author");
+    return rumor;
+  });
+}
+
 /**
  * Returns the unsigned event in the gift-wrap seal
  * @throws {Error} If the author of the rumor event does not match the author of the seal
  */
-export function getGiftWrapEvent(gift: NostrEvent): Rumor | undefined {
+export function getGiftWrapRumor(gift: NostrEvent): Rumor | undefined {
   if (isEncryptedContentLocked(gift)) return undefined;
 
   const seal = getGiftWrapSeal(gift);
-  if (!seal) return undefined;
-  const plaintext = getEncryptedContent(seal);
-  if (!plaintext) return undefined;
+  if (!seal || isSealLocked(seal)) return undefined;
 
-  return getOrComputeCachedValue(gift, GiftWrapEventSymbol, () => {
-    const event = JSON.parse(plaintext) as Rumor;
-    if (event.pubkey !== seal.pubkey) throw new Error("Seal author does not match content");
-    return event;
-  });
+  return getOrComputeCachedValue(gift, GiftWrapRumorSymbol, () => getSealRumor(seal)!);
 }
 
 /** Returns if a gift-wrap event or gift-wrap seal is locked */
@@ -70,7 +83,7 @@ export async function unlockGiftWrap(gift: NostrEvent, signer: EncryptedContentS
   if (isEncryptedContentLocked(seal)) await unlockEncryptedContent(seal, seal.pubkey, signer);
 
   // Finally get the rumor event
-  const rumor = getGiftWrapEvent(gift);
+  const rumor = getGiftWrapRumor(gift);
   if (!rumor) throw new Error("Failed to read rumor in gift wrap");
 
   // if the event has been added to an event store, notify it
@@ -82,7 +95,7 @@ export async function unlockGiftWrap(gift: NostrEvent, signer: EncryptedContentS
 /** Locks a gift-wrap event by removing its cached seal and encrypted content */
 export function lockGiftWrap(gift: NostrEvent) {
   Reflect.deleteProperty(gift, GiftWrapSealSymbol);
-  Reflect.deleteProperty(gift, GiftWrapEventSymbol);
+  Reflect.deleteProperty(gift, GiftWrapRumorSymbol);
 
   lockEncryptedContent(gift);
 }

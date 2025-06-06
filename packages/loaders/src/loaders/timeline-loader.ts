@@ -72,7 +72,7 @@ export function relaysTimelineLoader(
 
 export type TimelineLoaderOptions = Partial<{
   /** A method used to load the timeline from the cache */
-  cache: FilterRequest;
+  cache: CacheRequest;
   /** An event store to pass all the events to */
   eventStore: IEventStore;
 }> &

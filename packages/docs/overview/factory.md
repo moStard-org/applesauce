@@ -1,10 +1,28 @@
 # Event Factory
 
-The `EventFactory` is a class that can be used to create new events based on blueprints and a [Signer](../signers/signers.md).
+The `applesauce-factory` package exports the `EventFactory` class that can be used to create new events based on [blueprints](https://hzrd149.github.io/applesauce/typedoc/modules/applesauce-factory.Blueprints.html) and a [Signer](../signers/signers.md).
+
+## Installation
+
+:::code-group
+
+```sh [npm]
+npm install applesauce-factory
+```
+
+```sh [yarn]
+yarn install applesauce-factory
+```
+
+```sh [pnpm]
+pnpm install applesauce-factory
+```
+
+:::
 
 ## Creating a factory
 
-When creating a new event factory you can pass a [context](https://hzrd149.github.io/applesauce/typedoc/types/applesauce-factory.EventFactoryContext.html) object in that is used by all blueprints
+When creating a new event factory you can pass a [context](https://hzrd149.github.io/applesauce/typedoc/types/applesauce-factory.EventFactoryContext.html) object in that is used by all blueprints.
 
 ```ts
 const signer = new SimpleSigner();
@@ -25,7 +43,7 @@ const factory = new EventFactory({
 
 ## Relay hints
 
-Relay hints can ge added to all event tags that support them by passing in `getEventRelayHint` and `getPubkeyRelayHint` methods into the [context](https://hzrd149.github.io/applesauce/typedoc/types/applesauce-factory.EventFactoryContext.html)
+Relay hints can be added to all event tags that support them by passing `getEventRelayHint` and `getPubkeyRelayHint` methods into the [context](https://hzrd149.github.io/applesauce/typedoc/types/applesauce-factory.EventFactoryContext.html).
 
 ```ts
 const factory = new EventFactory({
@@ -45,19 +63,25 @@ const factory = new EventFactory({
 });
 ```
 
-## Using a blueprint
+## Using blueprints
 
-The [`factory.create`](https://hzrd149.github.io/applesauce/typedoc/classes/applesauce-factory.EventFactory.html#create) method can be used to create an event from a blueprint
+The [`EventFactory.create`](https://hzrd149.github.io/applesauce/typedoc/classes/applesauce-factory.EventFactory.html#create) method takes a blueprint and its arguments and returns a new event.
 
 ```ts
-await factory.create(NoteBlueprint, "hello world");
+import { NoteBlueprint, ReactionBlueprint } from "applesauce-factory/blueprints";
+
+// Create a new kind 1 event
+const note = await factory.create(NoteBlueprint, "hello world");
+
+// Create a new kind 7 reaction event to the note
+const reaction = await factory.create(ReactionBlueprint, note, "+");
 ```
 
 ## Modifying an event
 
-The [EventFactory.modify](https://hzrd149.github.io/applesauce/typedoc/classes/applesauce-factory.EventFactory.html#modify) and [EventFactory.modifyTags](https://hzrd149.github.io/applesauce/typedoc/classes/applesauce-factory.EventFactory.html#modifyTags) methods can be used to modify replaceable events
+The [EventFactory.modify](https://hzrd149.github.io/applesauce/typedoc/classes/applesauce-factory.EventFactory.html#modify) and [EventFactory.modifyTags](https://hzrd149.github.io/applesauce/typedoc/classes/applesauce-factory.EventFactory.html#modifyTags) methods can be used to modify existing events.
 
-The first method `modify` takes a list of [EventOperations](https://hzrd149.github.io/applesauce/typedoc/modules/applesauce-factory.Operations.html) and is useful for modifying common properties of a list event like name, description, or image
+The first method `modify` takes a list of [EventOperations](https://hzrd149.github.io/applesauce/typedoc/modules/applesauce-factory.Operations.html) and is useful for modifying common properties of a list event like name, description, or image.
 
 ```js
 const list = {

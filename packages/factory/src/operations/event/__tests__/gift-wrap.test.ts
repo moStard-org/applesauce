@@ -1,8 +1,10 @@
-import { unixNow } from "applesauce-core/helpers";
+import { getGiftWrapRumor, getGiftWrapSeal, unixNow } from "applesauce-core/helpers";
 import { kinds } from "nostr-tools";
 import { describe, expect, it } from "vitest";
+
 import { FakeUser } from "../../../__tests__/fake-user.js";
-import { sealRumor, toRumor, wrapSeal } from "../gift-wrap.js";
+import { giftWrap, sealRumor, toRumor, wrapSeal } from "../gift-wrap.js";
+import { modify } from "../../../event-factory.js";
 
 const user = new FakeUser();
 const other = new FakeUser();
@@ -91,5 +93,19 @@ describe("wrapSeal", () => {
 
     expect(giftWrap.pubkey).not.toBe(user.pubkey);
     expect(giftWrap.pubkey).not.toBe(other.pubkey);
+  });
+});
+
+describe("giftWrap", () => {
+  it("should preserve the unencrypted rumor", async () => {
+    const rumor = await modify(
+      user.event({ kind: kinds.PrivateDirectMessage, content: "test" }),
+      { signer: user },
+      toRumor(),
+    );
+    const gift = await giftWrap(other.pubkey)(rumor, { signer: user });
+
+    expect(getGiftWrapSeal(gift)).toBeDefined();
+    expect(getGiftWrapRumor(gift)).toEqual(rumor);
   });
 });

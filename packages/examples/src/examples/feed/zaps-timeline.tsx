@@ -24,7 +24,6 @@ import RelayPicker from "../../components/relay-picker";
 
 // Setup event store
 const eventStore = new EventStore();
-
 const pool = new RelayPool();
 
 // Setup a local event cache

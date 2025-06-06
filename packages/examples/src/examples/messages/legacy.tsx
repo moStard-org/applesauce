@@ -1,32 +1,44 @@
 import { ProxySigner } from "applesauce-accounts";
-import { defined, EventStore } from "applesauce-core";
+import { defined, EventStore, mapEventsToStore } from "applesauce-core";
 import {
   getTagValue,
+  isFromCache,
   isLegacyMessageLocked,
   lockEncryptedContent,
   persistEncryptedContent,
-  setEncryptedContentCache,
+  unixNow,
   unlockLegacyMessage,
 } from "applesauce-core/helpers";
 import { EncryptedContentModel } from "applesauce-core/models";
 import { EventFactory } from "applesauce-factory";
-import { includeSingletonTag, setEncryptedContent } from "applesauce-factory/operations/event";
+import { CacheRequest } from "applesauce-loaders";
 import { timelineLoader } from "applesauce-loaders/loaders";
 import { useObservableEagerMemo, useObservableMemo, useObservableState } from "applesauce-react/hooks";
-import { RelayPool } from "applesauce-relay";
+import { onlyEvents, RelayPool } from "applesauce-relay";
 import { ExtensionSigner } from "applesauce-signers";
 import localforage from "localforage";
-import { Filter, NostrEvent } from "nostr-tools";
+import { addEvents, getEventsForFilters, openDB } from "nostr-idb";
+import { Filter, kinds, NostrEvent } from "nostr-tools";
 import { npubEncode } from "nostr-tools/nip19";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { BehaviorSubject, lastValueFrom } from "rxjs";
+import { BehaviorSubject, bufferTime, filter, lastValueFrom } from "rxjs";
 
 // Import helper components
 import LoginView from "../../components/login-view";
 import RelayPicker from "../../components/relay-picker";
 import UnlockView from "../../components/unlock-view";
 
+import { ActionHub } from "applesauce-actions";
+import { SendLegacyMessage } from "applesauce-actions/actions";
 import SecureStorage from "../../extra/encrypted-storage";
+
+const EXPIRATIONS: Record<string, number> = {
+  "30m": 60 * 30,
+  "1d": 60 * 60 * 24,
+  "1w": 60 * 60 * 24 * 7,
+  "2w": 60 * 60 * 24 * 14,
+  "1y": 60 * 60 * 24 * 365,
+};
 
 const storage$ = new BehaviorSubject<SecureStorage | null>(null);
 const signer$ = new BehaviorSubject<ExtensionSigner | null>(null);
@@ -34,9 +46,29 @@ const pubkey$ = new BehaviorSubject<string | null>(null);
 const eventStore = new EventStore();
 const pool = new RelayPool();
 const factory = new EventFactory({ signer: new ProxySigner(signer$.pipe(defined())) });
+const actions = new ActionHub(eventStore, factory);
 
 // Persist encrypted content
 persistEncryptedContent(eventStore, storage$.pipe(defined()));
+
+// Setup a local event cache
+const cache = await openDB();
+const cacheRequest: CacheRequest = (filters) => getEventsForFilters(cache, filters);
+
+// Save all new events to the cache
+eventStore.insert$
+  .pipe(
+    // Only select events that are not from the cache
+    filter((e) => !isFromCache(e)),
+    // Buffer events for 5 seconds
+    bufferTime(5_000),
+    // Only select buffers with events
+    filter((b) => b.length > 0),
+  )
+  .subscribe((events) => {
+    // Save all new events to the cache
+    addEvents(cache, events);
+  });
 
 function ContactList({
   events,
@@ -120,6 +152,7 @@ function Message({ pubkey, message, signer }: { pubkey: string; message: NostrEv
 
 function DirectMessageForm({ corraspondant, relay }: { corraspondant: string; relay: string }) {
   const [message, setMessage] = useState("");
+  const [expiration, setExpiration] = useState<string | null>(null);
 
   const [sending, setSending] = useState(false);
   const handleSend = async (e: React.FormEvent) => {
@@ -128,22 +161,24 @@ function DirectMessageForm({ corraspondant, relay }: { corraspondant: string; re
 
     try {
       setSending(true);
-      const draft = await factory.build(
-        { kind: 4 },
-        includeSingletonTag(["p", corraspondant]),
-        setEncryptedContent(corraspondant, message, "nip04"),
-      );
-      const signed = await factory.sign(draft);
-      await lastValueFrom(pool.publish([relay], signed));
 
-      // Set the encrypted content cache and add to store
-      setEncryptedContentCache(signed, message);
-      eventStore.add(signed);
+      await actions
+        .exec(SendLegacyMessage, corraspondant, message, {
+          expiration: expiration ? unixNow() + EXPIRATIONS[expiration] : undefined,
+        })
+        .forEach((signed) => lastValueFrom(pool.publish([relay], signed)));
+
       setMessage("");
     } catch (err) {
       console.error("Failed to send message:", err);
     }
     setSending(false);
+  };
+
+  const toggleExpiration = () => {
+    const arr = Object.keys(EXPIRATIONS);
+    const next = expiration ? arr[arr.indexOf(expiration) + 1] : arr[0];
+    setExpiration(next);
   };
 
   return (
@@ -156,6 +191,9 @@ function DirectMessageForm({ corraspondant, relay }: { corraspondant: string; re
         placeholder="Type your message..."
         className="input input-bordered flex-grow"
       />
+      <button type="button" className="btn btn-ghost" title="Set expiration" onClick={toggleExpiration}>
+        {expiration ? expiration : "--"}
+      </button>
       <button type="submit" className="btn btn-primary" disabled={sending}>
         Send
       </button>
@@ -183,12 +221,22 @@ function DirectMessageView({
   );
 
   const loader$ = useMemo(
-    () => timelineLoader(pool.request.bind(pool), [relay], filters, { eventStore }),
+    () => timelineLoader(pool.request.bind(pool), [relay], filters, { eventStore, cache: cacheRequest }),
     [relay, corraspondant, pubkey],
   );
   useEffect(() => {
     loader$().subscribe();
   }, [loader$]);
+
+  // Create subscription for new events
+  useObservableMemo(
+    () =>
+      pool
+        .relay(relay)
+        .subscription({ kinds: [kinds.EncryptedDirectMessage], "#p": [pubkey] })
+        .pipe(onlyEvents(), mapEventsToStore(eventStore)),
+    [relay, pubkey],
+  );
 
   const loadMore = useCallback(() => {
     loader$().subscribe();

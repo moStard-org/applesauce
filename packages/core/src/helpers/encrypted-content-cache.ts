@@ -7,6 +7,7 @@ import {
   filter,
   isObservable,
   map,
+  merge,
   mergeMap,
   Observable,
   of,
@@ -113,8 +114,8 @@ export function persistEncryptedContent(
       log(`Restored encrypted content for ${seal.id}`);
     });
 
-  // Persist encrypted content when it is updated
-  const persist = combineLatest([eventStore.update$, storage$])
+  // Persist encrypted content when it is updated or inserted
+  const persist = combineLatest([merge(eventStore.update$, eventStore.insert$), storage$])
     .pipe(
       // Look for events that support encrypted content and are unlocked and not from the cache
       filter(
@@ -139,9 +140,9 @@ export function persistEncryptedContent(
       }
     });
 
-  // Persist seals when they are unlocked
+  // Persist seals when the gift warp is unlocked or inserted unlocked
   // This relies on the gift wrap event being updated when a seal is unlocked
-  const persistSeals = combineLatest([eventStore.update$, storage$])
+  const persistSeals = combineLatest([merge(eventStore.update$, eventStore.insert$), storage$])
     .pipe(
       // Look for gift wraps that are unlocked
       filter(([event]) => event.kind === kinds.GiftWrap && !isEncryptedContentLocked(event)),

@@ -1,6 +1,24 @@
 # Actions
 
-Actions are common pre-built async operations apps can perform. they use the `EventStore` as state, the `EventFactory` to build new events, and a `publish` method to publish or save the resulting events
+Actions are pre-built async operations apps can perform. they use the `EventStore` as state, the `EventFactory` to build new events, and a `publish` method to publish or save the resulting events
+
+## Installation
+
+:::code-group
+
+```sh [npm]
+npm install applesauce-actions
+```
+
+```sh [yarn]
+yarn install applesauce-actions
+```
+
+```sh [pnpm]
+pnpm install applesauce-actions
+```
+
+:::
 
 ## Action Hub
 

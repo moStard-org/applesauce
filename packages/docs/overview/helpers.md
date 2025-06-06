@@ -1,15 +1,13 @@
 # Helpers
 
-`applesauce-core` and other packages export a bunch of helper methods for working with events [bunch](https://hzrd149.github.io/applesauce/typedoc/modules/applesauce-core.Helpers.html) of methods to get data from events
+`applesauce-core` and other packages export helper methods for working with events.
 
 > [!WARNING]
-> Some helper methods my throw errors. so make sure to have error handling and use the `isValid*` helpers to filter out invalid events
+> Some helper methods my throw errors. make sure your app can handle errors correctly.
 
 ## Core helpers
 
 The [`applesauce-core`](https://hzrd149.github.io/applesauce/typedoc/modules/applesauce-core.Helpers.html) package contains the majority of the helper methods
-
-The helpers are broken into multiple categories based on what they can be used for, [mailboxes](https://github.com/hzrd149/applesauce/blob/master/packages/core/src/helpers/mailboxes.ts), [zaps](https://github.com/hzrd149/applesauce/blob/master/packages/core/src/helpers/zap.ts), [profiles](https://github.com/hzrd149/applesauce/blob/master/packages/core/src/helpers/profile.ts), and a lot [more](https://github.com/hzrd149/applesauce/tree/master/packages/core/src/helpers)
 
 ### Events
 
