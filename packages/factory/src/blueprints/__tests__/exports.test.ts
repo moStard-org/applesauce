@@ -20,6 +20,7 @@ describe("exports", () => {
         "NoteReplyBlueprint",
         "PicturePostBlueprint",
         "ReactionBlueprint",
+        "ShareBlueprint",
         "WrappedMessageBlueprint",
         "WrappedMessageReplyBlueprint",
       ]
