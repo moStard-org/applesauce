@@ -17,12 +17,13 @@ import {
   tap,
 } from "rxjs";
 
-import { makeCacheRequest } from "../helpers/cache.js";
+import { makeCacheRequest, wrapCacheRequest } from "../helpers/cache.js";
 import { consolidateEventPointers } from "../helpers/event-pointer.js";
 import { batchLoader } from "../helpers/loaders.js";
 import { groupByRelay } from "../helpers/pointer.js";
 import { wrapGeneratorFunction } from "../operators/generator.js";
-import { CacheRequest, NostrRequest } from "../types.js";
+import { CacheRequest, NostrRequest, UpstreamPool } from "../types.js";
+import { wrapUpstreamPool } from "../helpers/upstream.js";
 
 export type EventPointerLoader = (pointer: EventPointer) => Observable<NostrEvent>;
 export type EventPointersLoader = (pointers: EventPointer[]) => Observable<NostrEvent>;
@@ -120,7 +121,10 @@ export type EventPointerLoaderOptions = Partial<{
 }>;
 
 /** Create a pre-built address pointer loader that supports batching, caching, and lookup relays */
-export function eventPointerLoader(request: NostrRequest, opts?: EventPointerLoaderOptions): EventPointerLoader {
+export function eventPointerLoader(pool: UpstreamPool, opts?: EventPointerLoaderOptions): EventPointerLoader {
+  const request = wrapUpstreamPool(pool);
+  const cacheRequest = opts?.cacheRequest ? wrapCacheRequest(opts.cacheRequest) : undefined;
+
   return batchLoader(
     // Create batching sequence
     pipe(
@@ -134,7 +138,7 @@ export function eventPointerLoader(request: NostrRequest, opts?: EventPointerLoa
     // Create a loader for batching
     eventPointersLoadingSequence(
       // Step 1. load from cache if available
-      opts?.cacheRequest ? cacheEventPointersLoader(opts.cacheRequest) : undefined,
+      cacheRequest ? cacheEventPointersLoader(cacheRequest) : undefined,
       // Step 2. load from relay hints on pointers
       opts?.followRelayHints !== false ? relayHintsEventPointersLoader(request) : undefined,
       // Step 3. load from extra relays

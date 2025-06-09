@@ -16,7 +16,7 @@ const eventStore = new EventStore();
 const pool = new RelayPool();
 
 // Create the address loader instance
-const addressLoader = addressPointerLoader(pool.request.bind(pool), {
+const addressLoader = addressPointerLoader(pool, {
   // Pass all events to the event store to deduplicate them
   eventStore,
   // Optional configuration options
@@ -62,7 +62,7 @@ The `eventPointerLoader` is the other main loader used to load events from relay
 ```ts
 import { eventPointerLoader } from "applesauce-loaders/loaders";
 
-const eventLoader = eventPointerLoader(pool.request.bind(pool), {
+const eventLoader = eventPointerLoader(pool, {
   // Pass all events to the event store to deduplicate them
   eventStore,
   // Optional configuration options
@@ -99,7 +99,7 @@ async function cacheRequest(filters: Filter[]): Promise<NostrEvent[]> {
   return await cacheDatabase.getEvents(filters);
 }
 
-const eventLoader = eventPointerLoader(pool.request.bind(pool), {
+const eventLoader = eventPointerLoader(pool, {
   // Pass all events to the event store to deduplicate them
   eventStore,
   // Pass a custom cache method
@@ -130,7 +130,7 @@ Example using the social graph loader:
 ```ts
 import { socialGraphLoader, addressPointerLoader } from "applesauce-loaders/loaders";
 
-const addressLoader = addressPointerLoader(pool.request.bind(pool), { eventStore });
+const addressLoader = addressPointerLoader(pool, { eventStore });
 const graphLoader = socialGraphLoader(addressLoader, {
   eventStore,
   relays: ["wss://relay.example.com"],

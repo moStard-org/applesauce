@@ -60,7 +60,7 @@ const components: ComponentMap = {
   ),
 };
 
-const eventLoader = eventPointerLoader(pool.request.bind(pool), {
+const eventLoader = eventPointerLoader(pool, {
   eventStore,
   extraRelays: ["wss://relay.damus.io", "wss://nos.lol", "wss://relay.nostr.band"],
 });

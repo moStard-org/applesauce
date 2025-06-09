@@ -11,7 +11,7 @@ import {
 } from "applesauce-core/helpers";
 import { EventFactory } from "applesauce-factory";
 import { GroupMessageBlueprint } from "applesauce-factory/blueprints";
-import { addressPointerLoader } from "applesauce-loaders/loaders";
+import { createAddressLoader } from "applesauce-loaders/loaders";
 import { useObservableMemo } from "applesauce-react/hooks";
 import { onlyEvents, RelayPool } from "applesauce-relay";
 import { ExtensionSigner } from "applesauce-signers";
@@ -30,7 +30,7 @@ const factory = new EventFactory({
 
 const pool = new RelayPool();
 
-const addressLoader = addressPointerLoader(pool.request.bind(pool), {
+const addressLoader = createAddressLoader(pool, {
   eventStore,
   lookupRelays: ["wss://purplepag.es/"],
 });

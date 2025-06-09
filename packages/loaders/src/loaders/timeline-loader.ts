@@ -3,7 +3,8 @@ import { NostrEvent } from "nostr-tools";
 import { EMPTY, finalize, identity, merge, Observable, tap } from "rxjs";
 
 import { makeCacheRequest } from "../helpers/cache.js";
-import { CacheRequest, FilterRequest, NostrRequest, TimelessFilter } from "../types.js";
+import { wrapUpstreamPool } from "../helpers/upstream.js";
+import { CacheRequest, FilterRequest, NostrRequest, TimelessFilter, UpstreamPool } from "../types.js";
 
 /** A loader that optionally takes a timestamp to load till and returns a stream of events */
 export type TimelineLoader = (since?: number) => Observable<NostrEvent>;
@@ -80,12 +81,14 @@ export type TimelineLoaderOptions = Partial<{
 
 /** A common timeline loader that takes an array of relays and a cache method */
 export function timelineLoader(
-  request: NostrRequest,
+  pool: UpstreamPool,
   relays: string[],
   filters: TimelessFilter[] | TimelessFilter,
   opts?: TimelineLoaderOptions,
 ): TimelineLoader {
   if (!Array.isArray(filters)) filters = [filters];
+
+  const request = wrapUpstreamPool(pool);
 
   const cacheLoader = opts?.cache && cacheTimelineLoader(opts.cache, filters, opts);
   const relayLoader = relaysTimelineLoader(request, relays, filters, opts);

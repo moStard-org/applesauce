@@ -6,6 +6,9 @@ export type CacheRequest = (
   filters: Filter[],
 ) => Observable<NostrEvent> | Promise<NostrEvent | NostrEvent[]> | NostrEvent | NostrEvent[];
 
+/** A flexible type for the upstream relay pool */
+export type UpstreamPool = NostrRequest | { request: NostrRequest };
+
 /** A method for requesting events from a relay or cache` */
 export type FilterRequest = (filters: Filter[]) => Observable<NostrEvent>;
 

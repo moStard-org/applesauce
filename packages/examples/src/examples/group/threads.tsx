@@ -13,7 +13,7 @@ import { CommentsModel } from "applesauce-core/models";
 import { EventFactory } from "applesauce-factory";
 import { CommentBlueprint } from "applesauce-factory/blueprints";
 import { includeGroupHTag, includeSingletonTag, setShortTextContent } from "applesauce-factory/operations/event";
-import { addressPointerLoader } from "applesauce-loaders/loaders";
+import { createAddressLoader } from "applesauce-loaders/loaders";
 import { useObservableMemo } from "applesauce-react/hooks";
 import { onlyEvents, RelayPool } from "applesauce-relay";
 import { ExtensionSigner } from "applesauce-signers";
@@ -30,7 +30,7 @@ const pool = new RelayPool();
 const signer = new ExtensionSigner();
 const factory = new EventFactory({ signer });
 
-const addressLoader = addressPointerLoader(pool.request.bind(pool), {
+const addressLoader = createAddressLoader(pool, {
   eventStore,
   lookupRelays: ["wss://purplepag.es/"],
 });

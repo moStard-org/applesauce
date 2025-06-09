@@ -19,8 +19,11 @@ describe("exports", () => {
         "groupAddressPointersByPubkeyOrKind",
         "isLoadableAddressPointer",
         "makeCacheRequest",
+        "makeUpstreamRequest",
         "normalizeIdentityJson",
         "unwrapCacheRequest",
+        "wrapCacheRequest",
+        "wrapUpstreamPool",
       ]
     `);
   });

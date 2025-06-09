@@ -4,10 +4,11 @@ import { Filter, NostrEvent } from "nostr-tools";
 import { bufferTime, filter, merge, Observable, pipe } from "rxjs";
 
 import { unique } from "../helpers/array.js";
-import { makeCacheRequest } from "../helpers/cache.js";
+import { makeCacheRequest, wrapCacheRequest } from "../helpers/cache.js";
 import { batchLoader } from "../helpers/loaders.js";
 import { distinctRelaysBatch } from "../operators/distinct-relays.js";
-import { CacheRequest, NostrRequest } from "../types.js";
+import { CacheRequest, NostrRequest, UpstreamPool } from "../types.js";
+import { wrapUpstreamPool } from "../helpers/upstream.js";
 
 export type TagValuePointer = {
   /** The value of the tag to load */
@@ -95,7 +96,14 @@ export function relaysTagValueLoader(
 }
 
 /** Create a pre-built tag value loader that supports batching, caching, and relay hints */
-export function tagValueLoader(request: NostrRequest, tagName: string, opts?: TagValueLoaderOptions): TagValueLoader {
+export function createTagValueLoader(
+  pool: UpstreamPool,
+  tagName: string,
+  opts?: TagValueLoaderOptions,
+): TagValueLoader {
+  const request = wrapUpstreamPool(pool);
+  const cacheRequest = opts?.cacheRequest ? wrapCacheRequest(opts.cacheRequest) : undefined;
+
   return batchLoader(
     // Create batching sequence
     pipe(
@@ -110,7 +118,7 @@ export function tagValueLoader(request: NostrRequest, tagName: string, opts?: Ta
     (pointers) =>
       merge(
         // Step 1. load from cache if available
-        opts?.cacheRequest ? cacheTagValueLoader(opts.cacheRequest, tagName, opts)(pointers) : [],
+        cacheRequest ? cacheTagValueLoader(cacheRequest, tagName, opts)(pointers) : [],
         // Step 2. load from relays
         relaysTagValueLoader(request, tagName, opts)(pointers),
       ),

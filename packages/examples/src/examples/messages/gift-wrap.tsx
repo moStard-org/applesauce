@@ -294,12 +294,7 @@ function HomeView({ pubkey }: { pubkey: string }) {
   // Create a loader that loads all gift wraps for a pubkey
   const timeline = useMemo(
     () =>
-      timelineLoader(
-        pool.request.bind(pool),
-        [relay],
-        { kinds: [kinds.GiftWrap], "#p": [pubkey] },
-        { eventStore, cache: cacheRequest },
-      ),
+      timelineLoader(pool, [relay], { kinds: [kinds.GiftWrap], "#p": [pubkey] }, { eventStore, cache: cacheRequest }),
     [relay, pubkey],
   );
 

@@ -31,7 +31,7 @@ export default function TimelineExample() {
 
   // Create a new timeline loader when the relays change
   const loader = useMemo(() => {
-    return timelineLoader(pool.request.bind(pool), relays, [{ kinds: [1] }], { limit });
+    return timelineLoader(pool, relays, [{ kinds: [1] }], { limit });
   }, [relays, limit]);
 
   // clear the canvas when loader changes

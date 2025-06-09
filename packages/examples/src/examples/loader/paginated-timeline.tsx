@@ -44,7 +44,7 @@ export default function PaginatedTimelineExample() {
   const [relays, _setRelays] = useState(mergeRelaySets(["wss://relay.damus.io", "wss://nos.lol", "wss://nostr.land"]));
 
   const loader = useMemo(() => {
-    return timelineLoader(pool.request.bind(pool), relays, [{ kinds: [1] }], { limit, eventStore });
+    return timelineLoader(pool, relays, [{ kinds: [1] }], { limit, eventStore });
   }, [relays, limit]);
 
   const [events, setEvents] = useState<NostrEvent[]>([]);

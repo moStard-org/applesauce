@@ -10,7 +10,7 @@ import {
   ProfileContent,
 } from "applesauce-core/helpers";
 import { EventModel } from "applesauce-core/models";
-import { addressPointerLoader, eventPointerLoader } from "applesauce-loaders/loaders";
+import { createAddressLoader, eventPointerLoader } from "applesauce-loaders/loaders";
 import { useObservableMemo } from "applesauce-react/hooks";
 import { onlyEvents, RelayPool } from "applesauce-relay";
 import { addEvents, getEventsForFilters, openDB } from "nostr-idb";
@@ -54,12 +54,12 @@ eventStore.insert$
   });
 
 // Create some loaders using the cache method and the event store
-const addressLoader = addressPointerLoader(pool.request.bind(pool), {
+const addressLoader = createAddressLoader(pool, {
   eventStore,
   cacheRequest,
   lookupRelays: ["wss://purplepag.es/"],
 });
-const eventLoader = eventPointerLoader(pool.request.bind(pool), { eventStore, cacheRequest });
+const eventLoader = eventPointerLoader(pool, { eventStore, cacheRequest });
 
 /** A model that loads the profile if its not found in the event store */
 function ProfileQuery(user: ProfilePointer): Model<ProfileContent | undefined> {

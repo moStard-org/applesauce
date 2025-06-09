@@ -103,7 +103,7 @@ export default function ZapGraph() {
 
   const loader = useMemo(() => {
     if (!filters) return null;
-    return timelineLoader(pool.request.bind(pool), [relay], filters, { eventStore });
+    return timelineLoader(pool, [relay], filters, { eventStore });
   }, [relay, filters]);
 
   const events = useObservableMemo(() => (filters ? eventStore.timeline(filters) : EMPTY), [filters]);

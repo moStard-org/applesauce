@@ -1,4 +1,6 @@
 import { ProxySigner } from "applesauce-accounts";
+import { ActionHub } from "applesauce-actions";
+import { SendLegacyMessage } from "applesauce-actions/actions";
 import { defined, EventStore, mapEventsToStore } from "applesauce-core";
 import {
   getTagValue,
@@ -28,8 +30,6 @@ import LoginView from "../../components/login-view";
 import RelayPicker from "../../components/relay-picker";
 import UnlockView from "../../components/unlock-view";
 
-import { ActionHub } from "applesauce-actions";
-import { SendLegacyMessage } from "applesauce-actions/actions";
 import SecureStorage from "../../extra/encrypted-storage";
 
 const EXPIRATIONS: Record<string, number> = {
@@ -221,7 +221,7 @@ function DirectMessageView({
   );
 
   const loader$ = useMemo(
-    () => timelineLoader(pool.request.bind(pool), [relay], filters, { eventStore, cache: cacheRequest }),
+    () => timelineLoader(pool, [relay], filters, { eventStore, cache: cacheRequest }),
     [relay, corraspondant, pubkey],
   );
   useEffect(() => {
@@ -289,7 +289,7 @@ function HomeView({ pubkey, signer }: { pubkey: string; signer: ExtensionSigner 
   );
 
   // Create a loader and start it
-  const timeline = useMemo(() => timelineLoader(pool.request.bind(pool), [relay], filters, { eventStore }), [relay]);
+  const timeline = useMemo(() => timelineLoader(pool, [relay], filters, { eventStore }), [relay]);
   useEffect(() => {
     // Load first page of events
     timeline().subscribe();

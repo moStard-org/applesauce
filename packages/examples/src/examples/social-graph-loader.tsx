@@ -1,7 +1,7 @@
 import { EventStore, IEventStore, mapEventsToStore } from "applesauce-core";
 import { getProfilePointersFromList, mergeRelaySets } from "applesauce-core/helpers";
 import { LoadableAddressPointer } from "applesauce-loaders/helpers/address-pointer";
-import { addressPointerLoader, AddressPointerLoader } from "applesauce-loaders/loaders";
+import { createAddressLoader, AddressPointerLoader } from "applesauce-loaders/loaders";
 import { wrapGeneratorFunction } from "applesauce-loaders/operators";
 import { useObservableMemo } from "applesauce-react/hooks";
 import { RelayPool } from "applesauce-relay";
@@ -132,7 +132,7 @@ export function socialGraphLoader(
   });
 }
 
-const addressLoader = addressPointerLoader(pool.request.bind(pool), { eventStore });
+const addressLoader = createAddressLoader(pool, { eventStore });
 const graphLoader = socialGraphLoader(addressLoader, {
   eventStore,
   relays: ["ws://localhost:4869"],

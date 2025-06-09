@@ -4,22 +4,10 @@ import {
   getReplaceableAddress,
   getReplaceableIdentifier,
   isReplaceable,
-  mergeRelaySets
+  mergeRelaySets,
 } from "applesauce-core/helpers";
 import { NostrEvent } from "nostr-tools";
-import {
-  bufferTime,
-  catchError,
-  EMPTY,
-  filter,
-  isObservable,
-  map,
-  Observable,
-  of,
-  pipe,
-  switchMap,
-  take
-} from "rxjs";
+import { bufferTime, catchError, EMPTY, filter, isObservable, map, Observable, of, pipe, switchMap, take } from "rxjs";
 
 import {
   consolidateAddressPointers,
@@ -27,10 +15,11 @@ import {
   isLoadableAddressPointer,
   LoadableAddressPointer,
 } from "../helpers/address-pointer.js";
-import { makeCacheRequest } from "../helpers/cache.js";
+import { makeCacheRequest, wrapCacheRequest } from "../helpers/cache.js";
 import { batchLoader } from "../helpers/loaders.js";
 import { wrapGeneratorFunction } from "../operators/generator.js";
-import { CacheRequest, NostrRequest } from "../types.js";
+import { CacheRequest, NostrRequest, UpstreamPool } from "../types.js";
+import { wrapUpstreamPool } from "../helpers/upstream.js";
 
 /** A method that takes address pointers and returns an observable of events */
 export type AddressPointersLoader = (pointers: LoadableAddressPointer[]) => Observable<NostrEvent>;
@@ -49,7 +38,7 @@ export function cacheAddressPointersLoader(request: CacheRequest): AddressPointe
           // Ignore pointers that want to skip cache
           .filter((p) => p.force !== true),
       ),
-    )
+    );
 }
 
 /** Loads address pointers from the relay hints */
@@ -132,7 +121,10 @@ export type AddressLoaderOptions = Partial<{
 }>;
 
 /** Create a pre-built address pointer loader that supports batching, caching, and lookup relays */
-export function addressPointerLoader(request: NostrRequest, opts?: AddressLoaderOptions): AddressPointerLoader {
+export function createAddressLoader(pool: UpstreamPool, opts?: AddressLoaderOptions): AddressPointerLoader {
+  const request = wrapUpstreamPool(pool);
+  const cacheRequest = opts?.cacheRequest ? wrapCacheRequest(opts.cacheRequest) : undefined;
+
   return batchLoader(
     // Create batching sequence
     pipe(
@@ -148,7 +140,7 @@ export function addressPointerLoader(request: NostrRequest, opts?: AddressLoader
     // Create a loader for batching
     addressPointerLoadingSequence(
       // Step 1. load from cache if available
-      opts?.cacheRequest ? cacheAddressPointersLoader(opts.cacheRequest) : undefined,
+      cacheRequest ? cacheAddressPointersLoader(cacheRequest) : undefined,
       // Step 2. load from relay hints on pointers
       opts?.followRelayHints !== false ? relayHintsAddressPointersLoader(request) : undefined,
       // Step 3. load from extra relays

@@ -171,8 +171,7 @@ function HomeView({ pubkey, signer }: { pubkey: string; signer: ExtensionSigner 
 
   // Setup loader
   const loader$ = useMemo(
-    () =>
-      timelineLoader(pool.request.bind(pool), [relay], [{ kinds: [kinds.GiftWrap], "#p": [pubkey] }], { eventStore }),
+    () => timelineLoader(pool, [relay], [{ kinds: [kinds.GiftWrap], "#p": [pubkey] }], { eventStore }),
     [relay, pubkey],
   );
 

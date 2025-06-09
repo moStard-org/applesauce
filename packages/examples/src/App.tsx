@@ -148,7 +148,7 @@ function HomeView() {
           <a
             key={example.id}
             href={`#${example.id}`}
-            className="card bg-base-200 shadow-md hover:shadow-2xl transition-shadow"
+            className="card bg-base-200 shadow-md hover:shadow-lg transition-shadow"
           >
             <div className="card-body">
               <h2 className="card-title">{example.name}</h2>

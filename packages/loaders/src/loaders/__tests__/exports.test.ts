@@ -8,12 +8,16 @@ describe("exports", () => {
         "COMMON_LIST_KINDS",
         "COMMON_SET_KINDS",
         "DnsIdentityLoader",
-        "addressPointerLoader",
         "addressPointerLoadingSequence",
         "cacheAddressPointersLoader",
         "cacheEventPointersLoader",
         "cacheTagValueLoader",
         "cacheTimelineLoader",
+        "createAddressLoader",
+        "createReactionsLoader",
+        "createTagValueLoader",
+        "createUserListsLoader",
+        "createZapsLoader",
         "eventPointerLoader",
         "eventPointersLoadingSequence",
         "filterBlockLoader",
@@ -24,9 +28,7 @@ describe("exports", () => {
         "relaysEventPointersLoader",
         "relaysTagValueLoader",
         "relaysTimelineLoader",
-        "tagValueLoader",
         "timelineLoader",
-        "userListsLoader",
       ]
     `);
   });

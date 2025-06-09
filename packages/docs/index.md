@@ -15,7 +15,7 @@ hero:
       link: /typedoc/index.html
     - theme: alt
       text: Examples
-      link: /examples
+      link: /examples/
 
 features:
   - title: Utilities

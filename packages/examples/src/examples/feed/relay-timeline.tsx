@@ -6,7 +6,7 @@ import {
   mergeRelaySets,
   ProfileContent,
 } from "applesauce-core/helpers";
-import { addressPointerLoader } from "applesauce-loaders/loaders";
+import { createAddressLoader } from "applesauce-loaders/loaders";
 import { useObservableMemo } from "applesauce-react/hooks";
 import { onlyEvents, RelayPool } from "applesauce-relay";
 import { kinds, NostrEvent } from "nostr-tools";
@@ -23,7 +23,7 @@ const eventStore = new EventStore();
 const pool = new RelayPool();
 
 // Create an address loader to load user profiles
-const addressLoader = addressPointerLoader(pool.request.bind(pool), {
+const addressLoader = createAddressLoader(pool, {
   // Pass all events to the store
   eventStore,
   // Make the cache requests attempt to load from a local relay

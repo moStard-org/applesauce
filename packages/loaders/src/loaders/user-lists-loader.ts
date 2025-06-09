@@ -4,8 +4,9 @@ import { Filter, kinds, NostrEvent } from "nostr-tools";
 import { ProfilePointer } from "nostr-tools/nip19";
 import { EMPTY, identity, merge, Observable } from "rxjs";
 
-import { makeCacheRequest } from "../helpers/cache.js";
-import { CacheRequest, NostrRequest } from "../types.js";
+import { makeCacheRequest, wrapCacheRequest } from "../helpers/cache.js";
+import { wrapUpstreamPool } from "../helpers/upstream.js";
+import { CacheRequest, UpstreamPool } from "../types.js";
 
 /** A list of NIP-51 list kinds that most clients will use */
 export const COMMON_LIST_KINDS = [kinds.Contacts, kinds.Mutelist, kinds.Pinlist, kinds.BookmarkList];
@@ -31,7 +32,10 @@ export type UserListsLoaderOptions = Partial<{
  * A special address loader that can request addressable events without specifying the identifier
  * @todo this does not have a buffer, it may be useful to have one
  */
-export function userListsLoader(request: NostrRequest, opts?: UserListsLoaderOptions): UserListsLoader {
+export function createUserListsLoader(pool: UpstreamPool, opts?: UserListsLoaderOptions): UserListsLoader {
+  const request = wrapUpstreamPool(pool);
+  const cacheRequest = opts?.cacheRequest ? wrapCacheRequest(opts.cacheRequest) : undefined;
+
   return (user: ProfilePointer) => {
     const filter: Filter = {
       kinds: opts?.kinds || [...COMMON_LIST_KINDS, ...COMMON_SET_KINDS],
@@ -43,7 +47,7 @@ export function userListsLoader(request: NostrRequest, opts?: UserListsLoaderOpt
 
     return merge(
       // Load from cache
-      opts?.cacheRequest ? makeCacheRequest(opts.cacheRequest, [filter]) : EMPTY,
+      cacheRequest ? makeCacheRequest(cacheRequest, [filter]) : EMPTY,
       // Load from relays
       relays ? request(relays, [filter]) : EMPTY,
     ).pipe(

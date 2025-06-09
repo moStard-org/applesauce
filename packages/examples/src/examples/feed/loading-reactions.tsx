@@ -6,7 +6,8 @@ import {
   mergeRelaySets,
   ProfileContent,
 } from "applesauce-core/helpers";
-import { addressPointerLoader, tagValueLoader, timelineLoader } from "applesauce-loaders/loaders";
+import { ReactionsModel } from "applesauce-core/models";
+import { createAddressLoader, createReactionsLoader, timelineLoader } from "applesauce-loaders/loaders";
 import { useObservableMemo } from "applesauce-react/hooks";
 import { RelayPool } from "applesauce-relay";
 import { kinds, NostrEvent } from "nostr-tools";
@@ -14,7 +15,6 @@ import { ProfilePointer } from "nostr-tools/nip19";
 import { useEffect, useMemo, useState } from "react";
 import { defer, EMPTY, ignoreElements, map, merge } from "rxjs";
 
-import { ReactionsModel } from "applesauce-core/models";
 import RelayPicker from "../../components/relay-picker";
 
 // Create an event store for all events
@@ -24,21 +24,15 @@ const eventStore = new EventStore();
 const pool = new RelayPool();
 
 // Create an address loader to load user profiles
-const addressLoader = addressPointerLoader(pool.request.bind(pool), {
+const addressLoader = createAddressLoader(pool, {
   // Pass all events to the store
   eventStore,
-  // Make the cache requests attempt to load from a local relay
-  cacheRequest: (filters) => pool.relay("ws://localhost:4869").request(filters),
   // Fallback to lookup relays if profiles cant be found
   lookupRelays: ["wss://purplepag.es"],
 });
 
 // Create a tag value loader for reactions (kind 7 events with "e" tags)
-const reactionLoader = tagValueLoader(pool.request.bind(pool), "e", {
-  kinds: [kinds.Reaction], // Only load reaction events (kind 7)
-  eventStore,
-  cacheRequest: (filters) => pool.relay("ws://localhost:4869").request(filters),
-});
+const reactionLoader = createReactionsLoader(pool, { eventStore });
 
 /** A model that loads the profile if its not found in the event store */
 function ProfileQuery(user: ProfilePointer): Model<ProfileContent | undefined> {
@@ -67,7 +61,7 @@ function useReactions(event: NostrEvent) {
         map((reactions) =>
           reactions.reduce(
             (acc, reaction) => {
-              const content = reaction.content || "👍"; // Default to thumbs up if no content
+              const content = reaction.content || "+";
               acc[content] = (acc[content] || 0) + 1;
               return acc;
             },
@@ -79,7 +73,7 @@ function useReactions(event: NostrEvent) {
   );
 
   // Load reactions when component mounts
-  useObservableMemo(() => reactionLoader({ value: event.id, relays: mergeRelaySets(getSeenRelays(event)) }), [event]);
+  useObservableMemo(() => reactionLoader(event), [event]);
 
   return reactions || {};
 }
@@ -147,10 +141,7 @@ export default function FeedWithReactions() {
   );
 
   // Create a timeline loader
-  const timeline = useMemo(
-    () => timelineLoader(pool.request.bind(pool), [relay], filter, { eventStore, limit: 20 }),
-    [relay, filter],
-  );
+  const timeline = useMemo(() => timelineLoader(pool, [relay], filter, { eventStore, limit: 20 }), [relay, filter]);
 
   // Load the first page of the timeline on mount
   useEffect(() => {

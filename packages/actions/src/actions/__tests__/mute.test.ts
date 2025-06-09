@@ -77,7 +77,7 @@ describe("UnmuteThread", () => {
     await addSpy.onComplete();
 
     // Wait a second to ensure events have newer created_at
-    await vi.advanceTimersByTime(1000);
+    await vi.advanceTimersByTime(2000);
 
     // Then unmute it
     const spy = subscribeSpyTo(hub.exec(UnmuteThread, testEventId, true), { expectErrors: false });
