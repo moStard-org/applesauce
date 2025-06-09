@@ -15,6 +15,7 @@ describe("exports", () => {
         "cacheTimelineLoader",
         "createAddressLoader",
         "createReactionsLoader",
+        "createSocialGraphLoader",
         "createTagValueLoader",
         "createUserListsLoader",
         "createZapsLoader",

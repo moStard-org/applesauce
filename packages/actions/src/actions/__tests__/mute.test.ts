@@ -55,6 +55,8 @@ describe("MuteThread", () => {
 
 describe("UnmuteThread", () => {
   it("should remove an event from public tags in mute list", async () => {
+    vi.setSystemTime(new Date("2025-01-01T00:00:00Z"));
+
     // First add the thread to mute list
     const addSpy = subscribeSpyTo(hub.exec(MuteThread, testEventId), { expectErrors: false });
     await addSpy.onComplete();
@@ -72,6 +74,8 @@ describe("UnmuteThread", () => {
   });
 
   it("should remove an event from hidden tags in mute list", async () => {
+    vi.setSystemTime(new Date("2025-01-01T00:00:00Z"));
+
     // First add the thread to hidden mute list
     const addSpy = subscribeSpyTo(hub.exec(MuteThread, testEventId, true), { expectErrors: false });
     await addSpy.onComplete();
