@@ -115,7 +115,7 @@ The TimelineLoader is designed for loading paginated timelines of events. It han
 ```ts
 import { timelineLoader } from "applesauce-loaders";
 
-const timeline = timelineLoader(request, ["wss://relay.example.com"], [{ kinds: [1], limit: 50 }], {
+const timeline = createTimelineLoader(request, ["wss://relay.example.com"], [{ kinds: [1], limit: 50 }], {
   cache: cacheRequest,
   eventStore: eventStore,
   limit: 50,

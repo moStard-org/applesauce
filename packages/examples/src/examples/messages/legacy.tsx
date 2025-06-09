@@ -14,7 +14,7 @@ import {
 import { EncryptedContentModel } from "applesauce-core/models";
 import { EventFactory } from "applesauce-factory";
 import { CacheRequest } from "applesauce-loaders";
-import { timelineLoader } from "applesauce-loaders/loaders";
+import { createTimelineLoader } from "applesauce-loaders/loaders";
 import { useObservableEagerMemo, useObservableMemo, useObservableState } from "applesauce-react/hooks";
 import { onlyEvents, RelayPool } from "applesauce-relay";
 import { ExtensionSigner } from "applesauce-signers";
@@ -221,7 +221,7 @@ function DirectMessageView({
   );
 
   const loader$ = useMemo(
-    () => timelineLoader(pool, [relay], filters, { eventStore, cache: cacheRequest }),
+    () => createTimelineLoader(pool, [relay], filters, { eventStore, cache: cacheRequest }),
     [relay, corraspondant, pubkey],
   );
   useEffect(() => {
@@ -289,7 +289,7 @@ function HomeView({ pubkey, signer }: { pubkey: string; signer: ExtensionSigner 
   );
 
   // Create a loader and start it
-  const timeline = useMemo(() => timelineLoader(pool, [relay], filters, { eventStore }), [relay]);
+  const timeline = useMemo(() => createTimelineLoader(pool, [relay], filters, { eventStore }), [relay]);
   useEffect(() => {
     // Load first page of events
     timeline().subscribe();

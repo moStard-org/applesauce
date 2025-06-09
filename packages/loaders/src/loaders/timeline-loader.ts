@@ -80,7 +80,7 @@ export type TimelineLoaderOptions = Partial<{
   CommonTimelineLoaderOptions;
 
 /** A common timeline loader that takes an array of relays and a cache method */
-export function timelineLoader(
+export function createTimelineLoader(
   pool: UpstreamPool,
   relays: string[],
   filters: TimelessFilter[] | TimelessFilter,

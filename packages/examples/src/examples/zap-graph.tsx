@@ -1,6 +1,6 @@
 import { EventStore } from "applesauce-core";
 import { getZapPayment, getZapRecipient, isValidZap, normalizeToPubkey } from "applesauce-core/helpers";
-import { timelineLoader } from "applesauce-loaders/loaders";
+import { createTimelineLoader } from "applesauce-loaders/loaders";
 import { useObservableMemo } from "applesauce-react/hooks";
 import { RelayPool } from "applesauce-relay";
 import {
@@ -103,7 +103,7 @@ export default function ZapGraph() {
 
   const loader = useMemo(() => {
     if (!filters) return null;
-    return timelineLoader(pool, [relay], filters, { eventStore });
+    return createTimelineLoader(pool, [relay], filters, { eventStore });
   }, [relay, filters]);
 
   const events = useObservableMemo(() => (filters ? eventStore.timeline(filters) : EMPTY), [filters]);

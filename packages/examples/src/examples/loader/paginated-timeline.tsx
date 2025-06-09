@@ -1,6 +1,6 @@
 import { EventStore } from "applesauce-core";
 import { getSeenRelays, mergeRelaySets } from "applesauce-core/helpers";
-import { timelineLoader } from "applesauce-loaders/loaders";
+import { createTimelineLoader } from "applesauce-loaders/loaders";
 import { RelayPool } from "applesauce-relay";
 
 const eventStore = new EventStore();
@@ -44,7 +44,7 @@ export default function PaginatedTimelineExample() {
   const [relays, _setRelays] = useState(mergeRelaySets(["wss://relay.damus.io", "wss://nos.lol", "wss://nostr.land"]));
 
   const loader = useMemo(() => {
-    return timelineLoader(pool, relays, [{ kinds: [1] }], { limit, eventStore });
+    return createTimelineLoader(pool, relays, [{ kinds: [1] }], { limit, eventStore });
   }, [relays, limit]);
 
   const [events, setEvents] = useState<NostrEvent[]>([]);

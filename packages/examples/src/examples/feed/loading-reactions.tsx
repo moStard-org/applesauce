@@ -7,7 +7,7 @@ import {
   ProfileContent,
 } from "applesauce-core/helpers";
 import { ReactionsModel } from "applesauce-core/models";
-import { createAddressLoader, createReactionsLoader, timelineLoader } from "applesauce-loaders/loaders";
+import { createAddressLoader, createReactionsLoader, createTimelineLoader } from "applesauce-loaders/loaders";
 import { useObservableMemo } from "applesauce-react/hooks";
 import { RelayPool } from "applesauce-relay";
 import { kinds, NostrEvent } from "nostr-tools";
@@ -141,7 +141,10 @@ export default function FeedWithReactions() {
   );
 
   // Create a timeline loader
-  const timeline = useMemo(() => timelineLoader(pool, [relay], filter, { eventStore, limit: 20 }), [relay, filter]);
+  const timeline = useMemo(
+    () => createTimelineLoader(pool, [relay], filter, { eventStore, limit: 20 }),
+    [relay, filter],
+  );
 
   // Load the first page of the timeline on mount
   useEffect(() => {

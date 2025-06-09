@@ -1,7 +1,7 @@
 import { EventStore } from "applesauce-core";
 import { isGiftWrapLocked, persistEncryptedContent, unlockGiftWrap } from "applesauce-core/helpers";
 import { GiftWrapsModel, GiftWrapRumorModel } from "applesauce-core/models";
-import { timelineLoader } from "applesauce-loaders/loaders";
+import { createTimelineLoader } from "applesauce-loaders/loaders";
 import { useObservableEagerMemo, useObservableMemo, useObservableState } from "applesauce-react/hooks";
 import { RelayPool } from "applesauce-relay";
 import { ExtensionSigner } from "applesauce-signers";
@@ -171,7 +171,7 @@ function HomeView({ pubkey, signer }: { pubkey: string; signer: ExtensionSigner 
 
   // Setup loader
   const loader$ = useMemo(
-    () => timelineLoader(pool, [relay], [{ kinds: [kinds.GiftWrap], "#p": [pubkey] }], { eventStore }),
+    () => createTimelineLoader(pool, [relay], [{ kinds: [kinds.GiftWrap], "#p": [pubkey] }], { eventStore }),
     [relay, pubkey],
   );
 

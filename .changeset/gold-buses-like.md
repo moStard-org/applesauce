@@ -2,4 +2,4 @@
 "applesauce-loaders": minor
 ---
 
-Add `userListsLoader` loader
+Add `createUserListsLoader` loader

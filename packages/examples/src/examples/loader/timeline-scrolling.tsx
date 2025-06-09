@@ -1,6 +1,6 @@
 import { EventStore } from "applesauce-core";
 import { getSeenRelays, mergeRelaySets, unixNow } from "applesauce-core/helpers";
-import { timelineLoader } from "applesauce-loaders/loaders";
+import { createTimelineLoader } from "applesauce-loaders/loaders";
 import { RelayPool } from "applesauce-relay";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useThrottle } from "react-use";
@@ -31,7 +31,7 @@ export default function TimelineExample() {
 
   // Create a new timeline loader when the relays change
   const loader = useMemo(() => {
-    return timelineLoader(pool, relays, [{ kinds: [1] }], { limit });
+    return createTimelineLoader(pool, relays, [{ kinds: [1] }], { limit });
   }, [relays, limit]);
 
   // clear the canvas when loader changes

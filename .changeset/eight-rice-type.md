@@ -2,4 +2,4 @@
 "applesauce-loaders": minor
 ---
 
-Add `timelineLoader` loader method
+Add `createTimelineLoader` loader method

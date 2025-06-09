@@ -17,10 +17,11 @@ import {
 import { GiftWrapsModel, WrappedMessagesConversation, WrappedMessagesModel } from "applesauce-core/models";
 import { EventFactory } from "applesauce-factory";
 import { CacheRequest } from "applesauce-loaders";
-import { timelineLoader } from "applesauce-loaders/loaders";
+import { createTimelineLoader } from "applesauce-loaders/loaders";
 import { useObservableMemo, useObservableState } from "applesauce-react/hooks";
 import { onlyEvents, RelayPool } from "applesauce-relay";
 import { ExtensionSigner } from "applesauce-signers";
+import { addEvents, getEventsForFilters, openDB } from "nostr-idb";
 import { kinds, NostrEvent } from "nostr-tools";
 import { npubEncode } from "nostr-tools/nip19";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -31,7 +32,6 @@ import LoginView from "../../components/login-view";
 import RelayPicker from "../../components/relay-picker";
 import UnlockView from "../../components/unlock-view";
 
-import { addEvents, getEventsForFilters, openDB } from "nostr-idb";
 import SecureStorage from "../../extra/encrypted-storage";
 
 const EXPIRATIONS: Record<string, number> = {
@@ -294,7 +294,12 @@ function HomeView({ pubkey }: { pubkey: string }) {
   // Create a loader that loads all gift wraps for a pubkey
   const timeline = useMemo(
     () =>
-      timelineLoader(pool, [relay], { kinds: [kinds.GiftWrap], "#p": [pubkey] }, { eventStore, cache: cacheRequest }),
+      createTimelineLoader(
+        pool,
+        [relay],
+        { kinds: [kinds.GiftWrap], "#p": [pubkey] },
+        { eventStore, cache: cacheRequest },
+      ),
     [relay, pubkey],
   );
 

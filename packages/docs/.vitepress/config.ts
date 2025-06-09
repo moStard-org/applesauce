@@ -41,15 +41,6 @@ export default defineConfig({
         ],
       },
       {
-        text: "Social",
-        items: [
-          { text: "Notes", link: "/social/notes" },
-          { text: "Comments", link: "/social/comments" },
-          { text: "Reactions", link: "/social/reactions" },
-          { text: "Timelines", link: "/social/timelines" },
-        ],
-      },
-      {
         text: "React",
         items: [
           { text: "Getting Started", link: "/react/getting-started" },

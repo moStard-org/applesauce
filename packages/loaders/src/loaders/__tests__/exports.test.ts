@@ -17,6 +17,7 @@ describe("exports", () => {
         "createReactionsLoader",
         "createSocialGraphLoader",
         "createTagValueLoader",
+        "createTimelineLoader",
         "createUserListsLoader",
         "createZapsLoader",
         "eventPointerLoader",
@@ -29,7 +30,6 @@ describe("exports", () => {
         "relaysEventPointersLoader",
         "relaysTagValueLoader",
         "relaysTimelineLoader",
-        "timelineLoader",
       ]
     `);
   });
