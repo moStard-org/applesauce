@@ -11,7 +11,7 @@ import {
   mergeRelaySets,
   ProfileContent,
 } from "applesauce-core/helpers";
-import { createAddressLoader, eventPointerLoader } from "applesauce-loaders/loaders";
+import { createAddressLoader, createEventLoader } from "applesauce-loaders/loaders";
 import { useObservableMemo } from "applesauce-react/hooks";
 import { onlyEvents, RelayPool } from "applesauce-relay";
 import { addEvents, getEventsForFilters, openDB } from "nostr-idb";
@@ -58,7 +58,7 @@ const addressLoader = createAddressLoader(pool, {
   cacheRequest,
   lookupRelays: ["wss://purplepag.es/"],
 });
-const eventLoader = eventPointerLoader(pool, { eventStore, cacheRequest });
+const eventLoader = createEventLoader(pool, { eventStore, cacheRequest });
 
 /** A model that loads the profile if its not found in the event store */
 function ProfileQuery(user: ProfilePointer): Model<ProfileContent | undefined> {

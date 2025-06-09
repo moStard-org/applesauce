@@ -26,18 +26,15 @@ import { CacheRequest, NostrRequest, UpstreamPool } from "../types.js";
 import { wrapUpstreamPool } from "../helpers/upstream.js";
 
 export type EventPointerLoader = (pointer: EventPointer) => Observable<NostrEvent>;
-export type EventPointersLoader = (pointers: EventPointer[]) => Observable<NostrEvent>;
+export type createEventLoader = (pointers: EventPointer[]) => Observable<NostrEvent>;
 
 /** Creates a loader that gets a single event from the cache */
-export function cacheEventPointersLoader(request: CacheRequest): EventPointersLoader {
+export function cacheEventsLoader(request: CacheRequest): createEventLoader {
   return (pointers) => makeCacheRequest(request, [{ ids: pointers.map((p) => p.id) }]);
 }
 
 /** Creates a loader that gets an array of events from a list of relays */
-export function relaysEventPointersLoader(
-  request: NostrRequest,
-  relays: string[] | Observable<string[]>,
-): EventPointersLoader {
+export function relaysEventsLoader(request: NostrRequest, relays: string[] | Observable<string[]>): createEventLoader {
   return (pointers) =>
     // unwrap relays observable
     (isObservable(relays) ? relays : of(relays)).pipe(
@@ -49,16 +46,16 @@ export function relaysEventPointersLoader(
 }
 
 /** Creates a loader that gets an array of events from a single relay */
-export function relayEventPointersLoader(request: NostrRequest, relay: string): EventPointersLoader {
-  return relaysEventPointersLoader(request, [relay]);
+export function relayEventsLoader(request: NostrRequest, relay: string): createEventLoader {
+  return relaysEventsLoader(request, [relay]);
 }
 
 /** Creates a loader that creates a new loader for each relay hint and uses them to load events */
-export function relayHintsEventPointersLoader(
+export function relayHintsEventsLoader(
   request: NostrRequest,
-  upstream: (request: NostrRequest, relay: string) => EventPointersLoader = relayEventPointersLoader,
-): EventPointersLoader {
-  const loaders = new Map<string, EventPointersLoader>();
+  upstream: (request: NostrRequest, relay: string) => createEventLoader = relayEventsLoader,
+): createEventLoader {
+  const loaders = new Map<string, createEventLoader>();
 
   // Get or create a new loader for each relay
   const getLoader = (relay: string) => {
@@ -81,7 +78,7 @@ export function relayHintsEventPointersLoader(
 }
 
 /** Creates a loader that tries to load events from a list of loaders in order */
-export function eventPointersLoadingSequence(...loaders: (EventPointersLoader | undefined)[]): EventPointersLoader {
+export function eventLoadingSequence(...loaders: (createEventLoader | undefined)[]): createEventLoader {
   return wrapGeneratorFunction<[EventPointer[]], NostrEvent>(function* (pointers) {
     const found = new Set<string>();
     let remaining = Array.from(pointers);
@@ -121,7 +118,7 @@ export type EventPointerLoaderOptions = Partial<{
 }>;
 
 /** Create a pre-built address pointer loader that supports batching, caching, and lookup relays */
-export function eventPointerLoader(pool: UpstreamPool, opts?: EventPointerLoaderOptions): EventPointerLoader {
+export function createEventLoader(pool: UpstreamPool, opts?: EventPointerLoaderOptions): EventPointerLoader {
   const request = wrapUpstreamPool(pool);
   const cacheRequest = opts?.cacheRequest ? wrapCacheRequest(opts.cacheRequest) : undefined;
 
@@ -136,13 +133,13 @@ export function eventPointerLoader(pool: UpstreamPool, opts?: EventPointerLoader
       map(consolidateEventPointers),
     ),
     // Create a loader for batching
-    eventPointersLoadingSequence(
+    eventLoadingSequence(
       // Step 1. load from cache if available
-      cacheRequest ? cacheEventPointersLoader(cacheRequest) : undefined,
+      cacheRequest ? cacheEventsLoader(cacheRequest) : undefined,
       // Step 2. load from relay hints on pointers
-      opts?.followRelayHints !== false ? relayHintsEventPointersLoader(request) : undefined,
+      opts?.followRelayHints !== false ? relayHintsEventsLoader(request) : undefined,
       // Step 3. load from extra relays
-      opts?.extraRelays ? relaysEventPointersLoader(request, opts.extraRelays) : undefined,
+      opts?.extraRelays ? relaysEventsLoader(request, opts.extraRelays) : undefined,
     ),
     // Filter resutls based on requests
     (pointer, event) => event.id === pointer.id,
