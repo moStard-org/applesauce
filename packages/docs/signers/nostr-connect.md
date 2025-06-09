@@ -2,6 +2,63 @@
 
 The [`NostrConnectSigner`](https://hzrd149.github.io/applesauce/typedoc/classes/applesauce-signers.NostrConnectSigner.html) is a client side implementation of a [NIP-46](https://github.com/nostr-protocol/nips/blob/master/46.md) remote signer.
 
+## Relay Communication
+
+The `NostrConnectSigner` requires two methods for communicating with relays: a subscription method for receiving events and a publish method for sending events.
+
+These methods can be set either through the constructor or globally on the class. At least one of these approaches must be used before creating a `NostrConnectSigner` instance.
+
+```typescript
+import { Observable } from "rxjs";
+
+function subscriptionMethod(relays, filters) {
+  return new Observable((observer) => {
+    // Create subscription to relays
+    const cleanup = subscribeToRelays(relays, filters, (event) => {
+      observer.next(event);
+    });
+
+    return () => cleanup();
+  });
+}
+
+async function publishMethod(relays, event) {
+  for (const relay of relays) {
+    await publishToRelay(relay, event);
+  }
+}
+
+// Set methods globally once at app initialization
+NostrConnectSigner.subscriptionMethod = subscriptionMethod;
+NostrConnectSigner.publishMethod = publishMethod;
+
+// Or pass them as options when creating a signer
+const signer = new NostrConnectSigner({
+  relays: ["wss://relay.example.com"],
+  subscriptionMethod,
+  publishMethod,
+  // ... other options
+});
+```
+
+### Using the relay pool
+
+The simplest way to set these methods is to use the `RelayPool` from the `applesauce-relay` package.
+
+```typescript
+import { RelayPool } from "applesauce-relay";
+
+const pool = new RelayPool();
+
+// Set methods using arrow functions
+NostrConnectSigner.subscriptionMethod = (relays, filters) => pool.subscription(relays, filters);
+NostrConnectSigner.publishMethod = (relays, event) => pool.publish(relays, event);
+
+// Or using .bind
+NostrConnectSigner.subscriptionMethod = pool.subscription.bind(pool);
+NostrConnectSigner.publishMethod = pool.publish.bind(pool);
+```
+
 ## Connecting to a remote signer
 
 ```js
@@ -70,45 +127,6 @@ try {
 setTimeout(() => {
   controller.abort();
 }, 10_000);
-```
-
-## Relay Communication
-
-The `NostrConnectSigner` requires two methods for communicating with relays: a subscription method for receiving events and a publish method for sending events.
-
-These methods can be set either through the constructor or globally on the class. At least one of these approaches must be used before creating a `NostrConnectSigner` instance.
-
-```typescript
-import { Observable } from "rxjs";
-
-function subscriptionMethod(relays, filters) {
-  return new Observable((observer) => {
-    // Create subscription to relays
-    const cleanup = subscribeToRelays(relays, filters, (event) => {
-      observer.next(event);
-    });
-
-    return () => cleanup();
-  });
-}
-
-async function publishMethod(relays, event) {
-  for (const relay of relays) {
-    await publishToRelay(relay, event);
-  }
-}
-
-// Set methods globally once at app initialization
-NostrConnectSigner.subscriptionMethod = subscriptionMethod;
-NostrConnectSigner.publishMethod = publishMethod;
-
-// Or pass them as options when creating a signer
-const signer = new NostrConnectSigner({
-  relays: ["wss://relay.example.com"],
-  subscriptionMethod,
-  publishMethod,
-  // ... other options
-});
 ```
 
 ## Handling bunker URIs

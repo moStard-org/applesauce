@@ -22,35 +22,46 @@ export default defineConfig({
         ],
       },
       {
-        text: "Overview",
+        text: "Core",
         items: [
-          { text: "Events", link: "/overview/events" },
-          { text: "Models", link: "/overview/models" },
-          { text: "Helpers", link: "/overview/helpers" },
-          { text: "Factory", link: "/overview/factory" },
-          { text: "Relays", link: "/overview/relays" },
-          { text: "Loaders", link: "/overview/loaders" },
-          { text: "Actions", link: "/overview/actions" },
+          { text: "Events", link: "/core/events" },
+          { text: "Helpers", link: "/core/helpers" },
+          { text: "Models", link: "/core/models" },
+          { text: "Factory", link: "/core/factory" },
+          { text: "Actions", link: "/core/actions" },
+        ],
+      },
+      {
+        text: "Relays",
+        items: [
+          { text: "Package", link: "/relays/package" },
+          { text: "Relays", link: "/relays/relays" },
+          { text: "Relay Pool", link: "/relays/pool" },
+          { text: "Operators", link: "/relays/operators" },
+        ],
+      },
+      {
+        text: "Loaders",
+        items: [
+          { text: "Package", link: "/loaders/package" },
+          { text: "Event Loader", link: "/loaders/event-loader" },
+          { text: "Address Loader", link: "/loaders/address-loader" },
+          { text: "Timeline Loader", link: "/loaders/timeline-loader" },
+          { text: "Tag Value Loader", link: "/loaders/tag-value-loader" },
         ],
       },
       {
         text: "Accounts",
         items: [
-          { text: "Accounts", link: "/accounts/accounts" },
+          { text: "Package", link: "/accounts/package" },
           { text: "Manager", link: "/accounts/manager" },
-        ],
-      },
-      {
-        text: "React",
-        items: [
-          { text: "Getting Started", link: "/react/getting-started" },
-          { text: "Providers", link: "/react/providers" },
-          { text: "Hooks", link: "/react/hooks" },
+          { text: "Accounts", link: "/accounts/accounts" },
         ],
       },
       {
         text: "Signers",
         items: [
+          { text: "Package", link: "/signers/package" },
           { text: "Signers", link: "/signers/signers" },
           { text: "Nostr Connect", link: "/signers/nostr-connect" },
         ],
@@ -58,14 +69,23 @@ export default defineConfig({
       {
         text: "Content",
         items: [
+          { text: "Package", link: "/content/package" },
           { text: "Text", link: "/content/text" },
           { text: "Markdown", link: "/content/markdown" },
         ],
       },
       {
+        text: "React",
+        items: [
+          { text: "Package", link: "/react/package" },
+          { text: "Providers", link: "/react/providers" },
+          { text: "Hooks", link: "/react/hooks" },
+        ],
+      },
+      {
         text: "Wallet",
         items: [
-          { text: "Getting Started", link: "/wallet/getting-started" },
+          { text: "Package", link: "/wallet/package" },
           { text: "Actions", link: "/wallet/actions" },
           { text: "Queries", link: "/wallet/queries" },
         ],

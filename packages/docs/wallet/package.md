@@ -2,6 +2,10 @@
 
 The `applesauce-wallet` package provides a set of actions and queries for managing [NIP-60](https://github.com/nostr-protocol/nips/blob/master/60.md) wallets and [Cashu](https://github.com/cashubtc/cashu) tokens.
 
+:::warning
+The `applesauce-wallet` package is still a work-in-progress and is still missing many features.
+:::
+
 ## Installation
 
 :::code-group
@@ -18,8 +22,4 @@ yarn install applesauce-wallet
 pnpm install applesauce-wallet
 ```
 
-:::
-
-:::warning
-The `applesauce-wallet` package is still a work-in-progress and is still missing many features.
 :::

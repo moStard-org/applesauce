@@ -2,6 +2,10 @@
 
 Models are pre-built methods for subscribing to computed state from the `EventStore`.
 
+:::info
+Models do not fetch any events from relays, they only subscribe to the events that are already in the event store.
+:::
+
 ## Using models
 
 The [`eventStore.model`](https://hzrd149.github.io/applesauce/typedoc/classes/applesauce-core.EventStore.html#model) method can be used to create a model and returns a rxjs observable that can be subscribed to.

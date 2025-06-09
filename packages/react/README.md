@@ -10,7 +10,7 @@ npm install applesauce-react
 
 ## Example
 
-```jsx
+```tsx
 import { EventStore, QueryStore, Queries } from "applesauce-core";
 import { QueryStoreProvider } from "applesauce-react/providers";
 import { useStoreQuery } from "applesauce-react/hooks";

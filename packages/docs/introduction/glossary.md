@@ -14,7 +14,7 @@ A function that takes an event and returns some computed value from it.
 
 ## Event store
 
-A in-memory database of events that can be subscribed to. (see [Event Store](../overview/events.md))
+A in-memory database of events that can be subscribed to. (see [Event Store](../core/events.md))
 
 ## Observable
 
@@ -22,7 +22,7 @@ A lazy stream of values that is active when subscribed to. (see [Observables](ht
 
 ## Model
 
-Computed state from the event store that can be subscribed to. (see [Models](../overview/models.md))
+Computed state from the event store that can be subscribed to. (see [Models](../core/models.md))
 
 ## Encrypted content
 

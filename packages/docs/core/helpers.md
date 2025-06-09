@@ -3,7 +3,7 @@
 `applesauce-core` and other packages export helper methods for working with events.
 
 > [!WARNING]
-> Some helper methods my throw errors. make sure your app can handle errors correctly.
+> Some helper methods may throw errors. make sure your app can handle errors correctly.
 
 ## Core helpers
 

@@ -24,6 +24,6 @@ features:
     details: AppleSauce is built using RxJS observables, which makes subscribing to events and filters simple.
   - title: Modular
     details: Every piece of the packages can be used independently, helpers, event store, and signers.
-  - title: No networking
-    details: Batteries are not included, so use any other nostr library to talk to relays. nostr-tools, ndk, nostrify, rx-nostr, etc...
+  - title: Flexible
+    details: Easily request events from relays without making connection state. or use any other nostr library to talk to relays.
 ---

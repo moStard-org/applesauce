@@ -120,18 +120,17 @@ And finally update `index.js` to use the Providers
 
 ```js
 // index.js
-import { EventStore, QueryStore } from "applesauce-core";
+import { EventStore } from "applesauce-core";
 import { EventFactory } from "applesauce-factory";
 import { NoteBlueprint } from "applesauce-factory/blueprints";
-import { useEventStore, useEventFactory, useActiveAccount } from "applesauce-react/hooks";
-import { QueryStoreProvider, AccountsProvider, FactoryProvider } from "applesauce-react/providers";
+import { useEventStore, useEventFactory, useActiveAccount, EventStoreProvider } from "applesauce-react/hooks";
+import { AccountsProvider, FactoryProvider } from "applesauce-react/providers";
 
 import accountManager from "./accounts.js";
 import App from "./app.js";
 
 // create event store and factory
 const eventStore = new EventStore();
-const queryStore = new QueryStore(eventStore);
 
 const factory = new EventFactory({
   // use the active signer from the account manager
@@ -142,12 +141,12 @@ const root = createRoot(document.getElementById("root"));
 
 root.render(
   // provide the stores, factory, and accounts to the react app
-  <QueryStoreProvider queryStore={queryStore}>
+  <EventStoreProvider eventStore={eventStore}>
     <AccountsProvider manager={accountManager}>
       <FactoryProvider factory={factory}>
         <App />
       </FactoryProvider>
     </AccountsProvider>
-  </QueryStoreProvider>,
+  </EventStoreProvider>,
 );
 ```
