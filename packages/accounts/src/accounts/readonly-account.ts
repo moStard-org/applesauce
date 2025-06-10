@@ -17,7 +17,9 @@ export class ReadonlyAccount<Metadata extends unknown> extends BaseAccount<Reado
     return super.loadCommonFields(account, json);
   }
 
+  /** Creates a ReadonlyAccount from a hex public key or NIP-19 npub */
   static fromPubkey(pubkey: string) {
-    return new ReadonlyAccount(pubkey, new ReadonlySigner(pubkey));
+    const signer = ReadonlySigner.fromPubkey(pubkey);
+    return new ReadonlyAccount(signer.getPublicKey(), signer);
   }
 }

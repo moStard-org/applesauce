@@ -223,8 +223,9 @@ export function normalizeToPubkey(str: string): string {
 }
 
 /** Converts hex to nsec strings into Uint8 secret keys */
-export function normalizeToSecretKey(str: string): Uint8Array {
-  if (isHexKey(str)) return hexToBytes(str);
+export function normalizeToSecretKey(str: string | Uint8Array): Uint8Array {
+  if (str instanceof Uint8Array) return str;
+  else if (isHexKey(str)) return hexToBytes(str);
   else {
     const decode = nip19.decode(str);
     if (decode.type !== "nsec") throw new Error(`Cant get secret key from ${decode.type}`);
