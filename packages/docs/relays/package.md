@@ -1,6 +1,6 @@
 # Relays
 
-The `applesauce-relays` package contains a few classes to make connecting to relays easier.
+The `applesauce-relay` package contains a few classes to make connecting to relays easier.
 
 ## Features
 
@@ -14,15 +14,15 @@ The `applesauce-relays` package contains a few classes to make connecting to rel
 :::code-group
 
 ```sh [npm]
-npm install applesauce-relays
+npm install applesauce-relay
 ```
 
 ```sh [yarn]
-yarn install applesauce-relays
+yarn install applesauce-relay
 ```
 
 ```sh [pnpm]
-pnpm install applesauce-relays
+pnpm install applesauce-relay
 ```
 
 :::
