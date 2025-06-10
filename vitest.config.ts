@@ -8,5 +8,10 @@ export default defineConfig({
       // https://vitest.dev/guide/browser/playwright
       instances: [{ browser: "chromium" }],
     },
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json", "html", "lcov"],
+      exclude: ["**/node_modules/**/*", "dist/**/*", "coverage/**/*"],
+    },
   },
 });

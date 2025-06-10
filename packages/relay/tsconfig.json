@@ -21,9 +21,8 @@
     "declaration": true,
     "strict": true,
 
-    "pretty": true,
-
-    "jsx": "react-jsx"
+    "pretty": true
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["src/**/*.test.ts", "src/**/__tests__/**/*"]
 }
