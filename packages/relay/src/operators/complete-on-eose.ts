@@ -7,8 +7,7 @@ export function completeOnEose(includeEose: true): MonoTypeOperatorFunction<Subs
 export function completeOnEose(): OperatorFunction<SubscriptionResponse, NostrEvent>;
 export function completeOnEose(includeEose: false): OperatorFunction<SubscriptionResponse, NostrEvent>;
 export function completeOnEose(
-  includeEose?: boolean,
+  inclusive?: boolean,
 ): OperatorFunction<SubscriptionResponse, NostrEvent> | MonoTypeOperatorFunction<SubscriptionResponse> {
-  if (includeEose) return takeWhile((m) => m !== "EOSE", true);
-  else return takeWhile((m) => m !== "EOSE", false);
+  return takeWhile((m) => m !== "EOSE", inclusive);
 }

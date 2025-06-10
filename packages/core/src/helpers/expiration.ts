@@ -9,7 +9,7 @@ export const ExpirationTimestampSymbol = Symbol("expiration-timestamp");
 export function getExpirationTimestamp(event: NostrEvent): number | undefined {
   return getOrComputeCachedValue(event, ExpirationTimestampSymbol, () => {
     const expiration = getTagValue(event, "expiration");
-    return expiration ? parseInt(expiration[1]) : undefined;
+    return expiration ? parseInt(expiration) : undefined;
   });
 }
 

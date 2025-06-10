@@ -6,6 +6,7 @@ export type ParsedInvoice = {
   amount?: number;
   timestamp: number;
   expiry: number;
+  paymentHash?: string;
 };
 
 /** Parses a lightning invoice */
@@ -18,6 +19,7 @@ export function parseBolt11(paymentRequest: string): ParsedInvoice {
   const amount = parseInt(
     (decoded.sections.find((s) => s.name === "amount") as { value: string } | undefined)?.value ?? "0",
   );
+  const paymentHash = decoded.sections.find((s) => s.name === "payment_hash") as { value: string } | undefined;
 
   return {
     paymentRequest: decoded.paymentRequest,
@@ -25,5 +27,6 @@ export function parseBolt11(paymentRequest: string): ParsedInvoice {
     amount: amount,
     timestamp: timestamp,
     expiry: timestamp + decoded.expiry,
+    paymentHash: paymentHash?.value,
   };
 }
