@@ -10,22 +10,21 @@ npm install applesauce-react
 
 To start using applesauce with react you must add some of the providers to your react root
 
-- If you want to use the `useStoreQuery` hook you must add the [QueryStoreProvider](https://hzrd149.github.io/applesauce/typedoc/functions/applesauce-react.QueryStoreProvider.html)
+- If you want to use the `useEventModel` hook you must add the [EventStoreProvider](https://hzrd149.github.io/applesauce/typedoc/functions/applesauce-react.EventStoreProvider.html)
 - If you want to use the `useEventFactory` hook you must add the [FactoryProvider](https://hzrd149.github.io/applesauce/typedoc/functions/applesauce-react.FactoryProvider.html)
 - If you want to use the `useAccountManager` or `useActiveAccount` hook you must add the [AccountsProvider](https://hzrd149.github.io/applesauce/typedoc/functions/applesauce-react.AccountsProvider.html)
-- If you want to use the `useEventStore` hook you must add the `EventStoreProvider` or [QueryStoreProvider](https://hzrd149.github.io/applesauce/typedoc/functions/applesauce-react.QueryStoreProvider.html)
+- If you want to use the `useEventStore` hook you must add the `EventStoreProvider` or [EventStoreProvider](https://hzrd149.github.io/applesauce/typedoc/functions/applesauce-react.EventStoreProvider.html)
 
 ## Simple setup
 
 A simple example would look like
 
 ```js
-import { EventStore, QueryStore } from "applesauce-core";
+import { EventStore } from "applesauce-core";
 import { useEventStore } from "applesauce-react/hooks";
-import { QueryStoreProvider } from "applesauce-react/providers";
+import { EventStoreProvider } from "applesauce-react/providers";
 
 const eventStore = new EventStore();
-const queryStore = new QueryStore(eventStore);
 
 function App() {
   // get event store from context
@@ -37,10 +36,10 @@ function App() {
 const root = createRoot(document.getElementById("root"));
 
 root.render(
-  // the QueryStoreProvider also wraps the EventStoreProvider
-  <QueryStoreProvider queryStore={queryStore}>
+  // the EventStoreProvider also wraps the EventStoreProvider
+  <EventStoreProvider eventStore={eventStore}>
     <App />
-  </QueryStoreProvider>,
+  </EventStoreProvider>,
 );
 ```
 

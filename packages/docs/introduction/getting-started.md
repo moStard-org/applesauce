@@ -24,8 +24,8 @@ Models are more complex subscriptions that can be run against the `EventStore`
 For example the [ProfileModel](https://hzrd149.github.io/applesauce/typedoc/functions/applesauce-core.Models.ProfileModel.html) can be used to subscribe to changes to a users profile
 
 ```ts
-const sub = queryStore
-  .createQuery(ProfileModel, "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d")
+const sub = eventStore
+  .model(ProfileModel, "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d")
   .subscribe((profile) => {
     if (profile) console.log(profile);
   });
@@ -34,8 +34,8 @@ const sub = queryStore
 Or the [MailboxesModel](https://hzrd149.github.io/applesauce/typedoc/functions/applesauce-core.Models.MailboxesModel.html) can be used to subscribe to changes to a users outbox and inbox relays
 
 ```ts
-const sub = queryStore
-  .createQuery(MailboxesModel, "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d")
+const sub = eventStore
+  .model(MailboxesModel, "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d")
   .subscribe((mailboxes) => {
     if (mailboxes) {
       console.log(mailboxes.inboxes, mailboxes.outboxes);

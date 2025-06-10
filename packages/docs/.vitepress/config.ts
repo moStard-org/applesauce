@@ -104,7 +104,7 @@ export default defineConfig({
         items: [
           { text: "Package", link: "/wallet/package" },
           { text: "Actions", link: "/wallet/actions" },
-          { text: "Queries", link: "/wallet/queries" },
+          { text: "Models", link: "/wallet/models" },
         ],
       },
       {
