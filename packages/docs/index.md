@@ -12,10 +12,10 @@ hero:
       link: /introduction/getting-started
     - theme: alt
       text: Reference
-      link: /typedoc/index.html
+      link: https://hzrd149.github.io/applesauce/typedoc/index.html
     - theme: alt
       text: Examples
-      link: /examples/
+      link: https://hzrd149.github.io/applesauce/examples/
     - theme: alt
       text: Migrations
       link: /migration/v1-v2
