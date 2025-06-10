@@ -16,6 +16,9 @@ hero:
     - theme: alt
       text: Examples
       link: /examples/
+    - theme: alt
+      text: Migrations
+      link: /migration/v1-v2
 
 features:
   - title: Utilities

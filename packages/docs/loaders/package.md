@@ -4,9 +4,10 @@ The `applesauce-loaders` package provides a set of pre-built loaders for common 
 
 ## Features
 
-- Easy to setup
+- Easy to setup and use
 - Built-in request batching
 - Built-in event deduplication (using an event store)
+- Flexible enough to work with any relay connection pool
 
 ## Installation
 

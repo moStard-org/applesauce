@@ -25,10 +25,8 @@ export default defineConfig({
         text: "Core",
         items: [
           { text: "Events", link: "/core/events" },
-          { text: "Helpers", link: "/core/helpers" },
           { text: "Models", link: "/core/models" },
-          { text: "Factory", link: "/core/factory" },
-          { text: "Actions", link: "/core/actions" },
+          { text: "Helpers", link: "/core/helpers" },
         ],
       },
       {
@@ -48,6 +46,18 @@ export default defineConfig({
           { text: "Address Loader", link: "/loaders/address-loader" },
           { text: "Timeline Loader", link: "/loaders/timeline-loader" },
           { text: "Tag Value Loader", link: "/loaders/tag-value-loader" },
+          { text: "Zaps Loader", link: "/loaders/zaps-loader" },
+          { text: "Reactions Loader", link: "/loaders/reactions-loader" },
+        ],
+      },
+      {
+        text: "Factory",
+        items: [
+          { text: "Package", link: "/factory/package" },
+          { text: "Event Factory", link: "/factory/event-factory" },
+          { text: "Event Operations", link: "/factory/event-operations" },
+          { text: "Tag Operations", link: "/factory/tag-operations" },
+          { text: "Blueprints", link: "/factory/blueprints" },
         ],
       },
       {
@@ -67,6 +77,14 @@ export default defineConfig({
         ],
       },
       {
+        text: "Actions",
+        items: [
+          { text: "Package", link: "/actions/package" },
+          { text: "Action Hub", link: "/actions/action-hub" },
+          { text: "Actions", link: "/actions/actions" },
+        ],
+      },
+      {
         text: "Content",
         items: [
           { text: "Package", link: "/content/package" },
@@ -78,7 +96,6 @@ export default defineConfig({
         text: "React",
         items: [
           { text: "Package", link: "/react/package" },
-          { text: "Providers", link: "/react/providers" },
           { text: "Hooks", link: "/react/hooks" },
         ],
       },
@@ -89,6 +106,10 @@ export default defineConfig({
           { text: "Actions", link: "/wallet/actions" },
           { text: "Queries", link: "/wallet/queries" },
         ],
+      },
+      {
+        text: "Migration",
+        items: [{ text: "v1 to v2", link: "/migration/v1-v2" }],
       },
     ],
 
