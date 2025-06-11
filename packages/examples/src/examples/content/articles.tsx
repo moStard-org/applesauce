@@ -1,6 +1,6 @@
 import { remarkNostrMentions } from "applesauce-content/markdown";
 import { EventStore, mapEventsToStore, mapEventsToTimeline } from "applesauce-core";
-import { getArticleImage, getArticlePublishd, getArticleSummary, getArticleTitle } from "applesauce-core/helpers";
+import { getArticleImage, getArticlePublished, getArticleSummary, getArticleTitle } from "applesauce-core/helpers";
 import { useObservableMemo } from "applesauce-react/hooks";
 import { onlyEvents, RelayPool } from "applesauce-relay";
 import { NostrEvent } from "nostr-tools";
@@ -25,7 +25,7 @@ function ArticleCard({ article, onClick }: { article: NostrEvent; onClick: () =>
         <h2 className="card-title text-lg truncate">{getArticleTitle(article)}</h2>
         <p className="text-sm opacity-70">
           By {npubEncode(article.pubkey).slice(0, 8)} •{" "}
-          {new Date(getArticlePublishd(article) * 1000).toLocaleDateString()}
+          {new Date(getArticlePublished(article) * 1000).toLocaleDateString()}
         </p>
         <p className="line-clamp-2">{getArticleSummary(article)}</p>
         <div className="card-actions justify-end mt-auto">

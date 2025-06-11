@@ -22,9 +22,23 @@ export default defineConfig({
         ],
       },
       {
+        text: "Tutorial",
+        items: [
+          { text: "Introduction", link: "/tutorial/00-introduction" },
+          { text: "The Event Store", link: "/tutorial/01-event-store" },
+          { text: "Helper Methods", link: "/tutorial/02-helpers" },
+          { text: "Using Models", link: "/tutorial/03-models" },
+          { text: "Connecting to Relays", link: "/tutorial/04-relays" },
+          { text: "Using Loaders", link: "/tutorial/05-loaders" },
+          { text: "Creating Events", link: "/tutorial/06-event-factory" },
+          { text: "Publishing Events", link: "/tutorial/07-publishing" },
+          { text: "Using Actions", link: "/tutorial/08-actions" },
+        ],
+      },
+      {
         text: "Core",
         items: [
-          { text: "Events", link: "/core/events" },
+          { text: "Event Store", link: "/core/event-store" },
           { text: "Models", link: "/core/models" },
           { text: "Helpers", link: "/core/helpers" },
         ],

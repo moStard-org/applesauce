@@ -14,7 +14,7 @@ A function that takes an event and returns some computed value from it.
 
 ## Event store
 
-A in-memory database of events that can be subscribed to. (see [Event Store](../core/events.md))
+A in-memory database of events that can be subscribed to. (see [Event Store](../core/event-store.md))
 
 ## Observable
 

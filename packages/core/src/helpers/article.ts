@@ -17,7 +17,7 @@ export function getArticleSummary(article: NostrEvent): string | undefined {
 }
 
 /** Returns an articles published date, if it exists */
-export function getArticlePublishd(article: NostrEvent): number {
+export function getArticlePublished(article: NostrEvent): number {
   const ts = getTagValue(article, "published_at");
 
   if (ts && !Number.isNaN(parseInt(ts))) return parseInt(ts);

@@ -88,7 +88,7 @@ describe("exports", () => {
         "getAddressPointerFromATag",
         "getAddressPointersFromList",
         "getArticleImage",
-        "getArticlePublishd",
+        "getArticlePublished",
         "getArticleSummary",
         "getArticleTitle",
         "getBlossomServersFromList",
