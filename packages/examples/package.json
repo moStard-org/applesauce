@@ -24,6 +24,7 @@
     "applesauce-relay": "^2.0.0",
     "applesauce-signers": "^2.0.0",
     "chart.js": "^4.4.9",
+    "clsx": "^2.1.1",
     "daisyui": "^5.0.35",
     "localforage": "^1.10.0",
     "nanoid": "^5.1.5",

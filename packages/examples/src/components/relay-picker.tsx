@@ -8,6 +8,8 @@ const COMMON_RELAYS = mergeRelaySets([
   "wss://nos.lol",
   "wss://relay.nostr.band",
   "wss://relay.primal.net",
+  "wss://nostr.wine",
+  "wss://nostr-pub.wellorder.net/",
 ]);
 
 function RelayPickerModal({
