@@ -1,29 +1,15 @@
 import { IEventStore, mapEventsToStore } from "applesauce-core";
 import { NostrEvent } from "nostr-tools";
 import { EventPointer } from "nostr-tools/nip19";
-import {
-  bufferTime,
-  catchError,
-  EMPTY,
-  filter,
-  isObservable,
-  map,
-  merge,
-  Observable,
-  of,
-  pipe,
-  switchMap,
-  take,
-  tap,
-} from "rxjs";
+import { bufferTime, catchError, EMPTY, filter, map, merge, Observable, pipe, tap } from "rxjs";
 
 import { makeCacheRequest, wrapCacheRequest } from "../helpers/cache.js";
 import { consolidateEventPointers } from "../helpers/event-pointer.js";
 import { batchLoader, unwrap } from "../helpers/loaders.js";
 import { groupByRelay } from "../helpers/pointer.js";
+import { wrapUpstreamPool } from "../helpers/upstream.js";
 import { wrapGeneratorFunction } from "../operators/generator.js";
 import { CacheRequest, NostrRequest, UpstreamPool } from "../types.js";
-import { wrapUpstreamPool } from "../helpers/upstream.js";
 
 export type EventPointerLoader = (pointer: EventPointer) => Observable<NostrEvent>;
 export type createEventLoader = (pointers: EventPointer[]) => Observable<NostrEvent>;

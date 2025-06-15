@@ -7,7 +7,7 @@ import {
   mergeRelaySets,
 } from "applesauce-core/helpers";
 import { NostrEvent } from "nostr-tools";
-import { bufferTime, catchError, EMPTY, filter, isObservable, map, Observable, of, pipe, switchMap, take } from "rxjs";
+import { bufferTime, catchError, EMPTY, filter, map, Observable, pipe } from "rxjs";
 
 import {
   consolidateAddressPointers,
@@ -17,9 +17,9 @@ import {
 } from "../helpers/address-pointer.js";
 import { makeCacheRequest, wrapCacheRequest } from "../helpers/cache.js";
 import { batchLoader, unwrap } from "../helpers/loaders.js";
+import { wrapUpstreamPool } from "../helpers/upstream.js";
 import { wrapGeneratorFunction } from "../operators/generator.js";
 import { CacheRequest, NostrRequest, UpstreamPool } from "../types.js";
-import { wrapUpstreamPool } from "../helpers/upstream.js";
 
 /** A method that takes address pointers and returns an observable of events */
 export type AddressPointersLoader = (pointers: LoadableAddressPointer[]) => Observable<NostrEvent>;

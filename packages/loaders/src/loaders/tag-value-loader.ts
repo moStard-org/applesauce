@@ -1,14 +1,14 @@
 import { IEventStore, mapEventsToStore } from "applesauce-core";
 import { mergeRelaySets } from "applesauce-core/helpers";
 import { Filter, NostrEvent } from "nostr-tools";
-import { bufferTime, combineLatest, filter, merge, Observable, pipe } from "rxjs";
+import { bufferTime, filter, merge, Observable, pipe } from "rxjs";
 
 import { unique } from "../helpers/array.js";
 import { makeCacheRequest, wrapCacheRequest } from "../helpers/cache.js";
 import { batchLoader, unwrap } from "../helpers/loaders.js";
+import { wrapUpstreamPool } from "../helpers/upstream.js";
 import { distinctRelaysBatch } from "../operators/distinct-relays.js";
 import { CacheRequest, NostrRequest, UpstreamPool } from "../types.js";
-import { wrapUpstreamPool } from "../helpers/upstream.js";
 
 export type TagValuePointer = {
   /** The value of the tag to load */

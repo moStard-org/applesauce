@@ -5,9 +5,9 @@ import { ProfilePointer } from "nostr-tools/nip19";
 import { EMPTY, identity, merge, Observable } from "rxjs";
 
 import { makeCacheRequest, wrapCacheRequest } from "../helpers/cache.js";
+import { unwrap } from "../helpers/loaders.js";
 import { wrapUpstreamPool } from "../helpers/upstream.js";
 import { CacheRequest, UpstreamPool } from "../types.js";
-import { unwrap } from "../helpers/loaders.js";
 
 /** A list of NIP-51 list kinds that most clients will use */
 export const COMMON_LIST_KINDS = [kinds.Contacts, kinds.Mutelist, kinds.Pinlist, kinds.BookmarkList];
