@@ -7,6 +7,7 @@ import { EMPTY, identity, merge, Observable } from "rxjs";
 import { makeCacheRequest, wrapCacheRequest } from "../helpers/cache.js";
 import { wrapUpstreamPool } from "../helpers/upstream.js";
 import { CacheRequest, UpstreamPool } from "../types.js";
+import { unwrap } from "../helpers/loaders.js";
 
 /** A list of NIP-51 list kinds that most clients will use */
 export const COMMON_LIST_KINDS = [kinds.Contacts, kinds.Mutelist, kinds.Pinlist, kinds.BookmarkList];
@@ -23,7 +24,7 @@ export type UserListsLoaderOptions = Partial<{
   /** A method used to load events from a local cache */
   cacheRequest?: CacheRequest;
   /** An array of extra relay to load from */
-  extraRelays?: string[];
+  extraRelays?: string[] | Observable<string[]>;
   /** An event store used to deduplicate events */
   eventStore: IEventStore;
 }>;
@@ -36,23 +37,24 @@ export function createUserListsLoader(pool: UpstreamPool, opts?: UserListsLoader
   const request = wrapUpstreamPool(pool);
   const cacheRequest = opts?.cacheRequest ? wrapCacheRequest(opts.cacheRequest) : undefined;
 
-  return (user: ProfilePointer) => {
-    const filter: Filter = {
-      kinds: opts?.kinds || [...COMMON_LIST_KINDS, ...COMMON_SET_KINDS],
-      authors: [user.pubkey],
-    };
+  return (user: ProfilePointer) =>
+    unwrap(opts?.extraRelays, (extraRelays) => {
+      const filter: Filter = {
+        kinds: opts?.kinds || [...COMMON_LIST_KINDS, ...COMMON_SET_KINDS],
+        authors: [user.pubkey],
+      };
 
-    // Merge extra relays with user relays
-    const relays = opts?.extraRelays ? mergeRelaySets(user.relays, opts.extraRelays) : user.relays;
+      // Merge extra relays with user relays
+      const relays = mergeRelaySets(user.relays, extraRelays);
 
-    return merge(
-      // Load from cache
-      cacheRequest ? makeCacheRequest(cacheRequest, [filter]) : EMPTY,
-      // Load from relays
-      relays ? request(relays, [filter]) : EMPTY,
-    ).pipe(
-      // If event store is set, deduplicate events
-      opts?.eventStore ? mapEventsToStore(opts.eventStore) : identity,
-    );
-  };
+      return merge(
+        // Load from cache
+        cacheRequest ? makeCacheRequest(cacheRequest, [filter]) : EMPTY,
+        // Load from relays
+        relays ? request(relays, [filter]) : EMPTY,
+      ).pipe(
+        // If event store is set, deduplicate events
+        opts?.eventStore ? mapEventsToStore(opts.eventStore) : identity,
+      );
+    });
 }

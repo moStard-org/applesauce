@@ -1,6 +1,7 @@
 import {
   filter,
   identity,
+  isObservable,
   map,
   mergeAll,
   MonoTypeOperatorFunction,
@@ -8,8 +9,14 @@ import {
   OperatorFunction,
   share,
   Subject,
+  switchMap,
   take,
 } from "rxjs";
+
+/** Takes a value optionally wrapped in an observable and unwraps it */
+export function unwrap<T, R>(value: T | Observable<T>, next: (value: T) => Observable<R>): Observable<R> {
+  return isObservable(value) ? value.pipe(take(1), switchMap(next)) : next(value);
+}
 
 /** Creates a loader that takes a single value and batches the requests to an upstream loader */
 export function batchLoader<Input extends unknown = unknown, Output extends unknown = unknown>(

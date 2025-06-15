@@ -19,7 +19,7 @@ import {
 
 import { makeCacheRequest, wrapCacheRequest } from "../helpers/cache.js";
 import { consolidateEventPointers } from "../helpers/event-pointer.js";
-import { batchLoader } from "../helpers/loaders.js";
+import { batchLoader, unwrap } from "../helpers/loaders.js";
 import { groupByRelay } from "../helpers/pointer.js";
 import { wrapGeneratorFunction } from "../operators/generator.js";
 import { CacheRequest, NostrRequest, UpstreamPool } from "../types.js";
@@ -36,13 +36,9 @@ export function cacheEventsLoader(request: CacheRequest): createEventLoader {
 /** Creates a loader that gets an array of events from a list of relays */
 export function relaysEventsLoader(request: NostrRequest, relays: string[] | Observable<string[]>): createEventLoader {
   return (pointers) =>
-    // unwrap relays observable
-    (isObservable(relays) ? relays : of(relays)).pipe(
-      // take the first value
-      take(1),
-      // Request events from relays
-      switchMap((relays) => request(relays, [{ ids: pointers.map((p) => p.id) }])),
-    );
+    unwrap(relays, (relays) => {
+      return request(relays, [{ ids: pointers.map((p) => p.id) }]);
+    });
 }
 
 /** Creates a loader that gets an array of events from a single relay */

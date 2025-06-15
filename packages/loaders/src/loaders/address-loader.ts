@@ -16,7 +16,7 @@ import {
   LoadableAddressPointer,
 } from "../helpers/address-pointer.js";
 import { makeCacheRequest, wrapCacheRequest } from "../helpers/cache.js";
-import { batchLoader } from "../helpers/loaders.js";
+import { batchLoader, unwrap } from "../helpers/loaders.js";
 import { wrapGeneratorFunction } from "../operators/generator.js";
 import { CacheRequest, NostrRequest, UpstreamPool } from "../types.js";
 import { wrapUpstreamPool } from "../helpers/upstream.js";
@@ -58,18 +58,12 @@ export function relaysAddressPointersLoader(
   relays: Observable<string[]> | string[],
 ): AddressPointersLoader {
   return (pointers) =>
-    // Resolve the relays as an observable
-    (isObservable(relays) ? relays : of(relays)).pipe(
-      // Only take the first value
-      take(1),
-      // Make the request
-      switchMap((relays) => {
-        if (relays.length === 0) return EMPTY;
+    unwrap(relays, (relays) => {
+      if (relays.length === 0) return EMPTY;
 
-        const filters = createFiltersFromAddressPointers(pointers);
-        return request(relays, filters);
-      }),
-    );
+      const filters = createFiltersFromAddressPointers(pointers);
+      return request(relays, filters);
+    });
 }
 
 /** Creates a loader that loads all event pointers based on their relays */

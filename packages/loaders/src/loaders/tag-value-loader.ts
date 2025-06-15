@@ -1,11 +1,11 @@
 import { IEventStore, mapEventsToStore } from "applesauce-core";
 import { mergeRelaySets } from "applesauce-core/helpers";
 import { Filter, NostrEvent } from "nostr-tools";
-import { bufferTime, filter, merge, Observable, pipe } from "rxjs";
+import { bufferTime, combineLatest, filter, merge, Observable, pipe } from "rxjs";
 
 import { unique } from "../helpers/array.js";
 import { makeCacheRequest, wrapCacheRequest } from "../helpers/cache.js";
-import { batchLoader } from "../helpers/loaders.js";
+import { batchLoader, unwrap } from "../helpers/loaders.js";
 import { distinctRelaysBatch } from "../operators/distinct-relays.js";
 import { CacheRequest, NostrRequest, UpstreamPool } from "../types.js";
 import { wrapUpstreamPool } from "../helpers/upstream.js";
@@ -33,7 +33,7 @@ export type TagValueLoaderOptions = {
   /** Method used to load from the cache */
   cacheRequest?: CacheRequest;
   /** An array of relays to always fetch from */
-  extraRelays?: string[];
+  extraRelays?: string[] | Observable<string[]>;
   /** An event store used to deduplicate events */
   eventStore?: IEventStore;
 };
@@ -67,32 +67,33 @@ export function relaysTagValueLoader(
 ): (pointers: TagValuePointer[]) => Observable<NostrEvent> {
   const filterTag: `#${string}` = `#${tagName}`;
 
-  return (pointers) => {
-    const baseFilter: Filter = {};
-    if (opts?.kinds) baseFilter.kinds = opts.kinds;
-    if (opts?.authors) baseFilter.authors = opts.authors;
-    if (opts?.since) baseFilter.since = opts.since;
+  return (pointers) =>
+    unwrap(opts?.extraRelays, (extraRelays) => {
+      const baseFilter: Filter = {};
+      if (opts?.kinds) baseFilter.kinds = opts.kinds;
+      if (opts?.authors) baseFilter.authors = opts.authors;
+      if (opts?.since) baseFilter.since = opts.since;
 
-    // build request map for relays
-    const requestMap = pointers.reduce<Record<string, Filter>>((map, pointer) => {
-      const relays = mergeRelaySets(pointer.relays, opts?.extraRelays);
+      // build request map for relays
+      const requestMap = pointers.reduce<Record<string, Filter>>((map, pointer) => {
+        const relays = mergeRelaySets(pointer.relays, extraRelays);
 
-      for (const relay of relays) {
-        if (!map[relay]) {
-          // create new filter for relay
-          map[relay] = { ...baseFilter, [filterTag]: [pointer.value] };
-        } else {
-          // map for relay already exists, add the tag value
-          map[relay][filterTag]!.push(pointer.value);
+        for (const relay of relays) {
+          if (!map[relay]) {
+            // create new filter for relay
+            map[relay] = { ...baseFilter, [filterTag]: [pointer.value] };
+          } else {
+            // map for relay already exists, add the tag value
+            map[relay][filterTag]!.push(pointer.value);
+          }
         }
-      }
-      return map;
-    }, {});
+        return map;
+      }, {});
 
-    const requests = Object.entries(requestMap).map(([relay, filter]) => request([relay], [filter]));
+      const requests = Object.entries(requestMap).map(([relay, filter]) => request([relay], [filter]));
 
-    return merge(...requests);
-  };
+      return merge(...requests);
+    });
 }
 
 /** Create a pre-built tag value loader that supports batching, caching, and relay hints */
