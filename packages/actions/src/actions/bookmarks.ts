@@ -39,7 +39,7 @@ export function BookmarkEvent(event: NostrEvent, identifier?: string, hidden = f
  * @param identifier the "d" tag of the bookmark set
  * @param hidden set to true to remove from hidden bookmarks
  */
-export function UnbookmarkEvent(event: NostrEvent, identifier: string, hidden = false): Action {
+export function UnbookmarkEvent(event: NostrEvent, identifier?: string, hidden = false): Action {
   return async function* ({ events, factory, self }) {
     const bookmarks = getBookmarkEvent(events, self, identifier);
     if (!bookmarks) throw new Error("Cant find bookmarks");

@@ -3,7 +3,7 @@ import { kinds, NostrEvent } from "nostr-tools";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { FakeUser } from "../../__tests__/fixtures.js";
-import { getEventUID } from "../../helpers/event.js";
+import { getReplaceableAddress } from "../../helpers/event.js";
 import { addSeenRelay, getSeenRelays } from "../../helpers/relays.js";
 import { EventModel } from "../../models/common.js";
 import { ProfileModel } from "../../models/profile.js";
@@ -431,33 +431,33 @@ describe("replaceableSet", () => {
   it("should emit existing events", () => {
     eventStore.add(profile);
     const spy = subscribeSpyTo(eventStore.replaceableSet([{ kind: 0, pubkey: user.pubkey }]));
-    expect(spy.getValues()).toEqual([{ [getEventUID(profile)]: profile }]);
+    expect(spy.getValues()).toEqual([{ [getReplaceableAddress(profile)]: profile }]);
   });
 
   it("should remove event when removed", () => {
     eventStore.add(profile);
     const spy = subscribeSpyTo(eventStore.replaceableSet([{ kind: 0, pubkey: user.pubkey }]));
     eventStore.remove(profile);
-    expect(spy.getValues()).toEqual([{ [getEventUID(profile)]: profile }, {}]);
+    expect(spy.getValues()).toEqual([{ [getReplaceableAddress(profile)]: profile }, {}]);
   });
 
   it("should replace older events", () => {
     const event2 = { ...profile, created_at: profile.created_at + 100, id: "newer-event" };
-    const uid = getEventUID(profile);
+    const address = getReplaceableAddress(profile);
     eventStore.add(profile);
     const spy = subscribeSpyTo(eventStore.replaceableSet([{ kind: 0, pubkey: user.pubkey }]));
     eventStore.add(event2);
 
-    expect(spy.getValues()).toEqual([{ [uid]: profile }, { [uid]: event2 }]);
+    expect(spy.getValues()).toEqual([{ [address]: profile }, { [address]: event2 }]);
   });
 
   it("should ignore old events added later", () => {
     const old = user.profile({ name: "old-name" }, { created_at: profile.created_at - 1000 });
-    const uid = getEventUID(profile);
+    const address = getReplaceableAddress(profile);
     eventStore.add(profile);
     const spy = subscribeSpyTo(eventStore.replaceableSet([{ kind: 0, pubkey: user.pubkey }]));
     eventStore.add(old);
 
-    expect(spy.getValues()).toEqual([{ [uid]: profile }]);
+    expect(spy.getValues()).toEqual([{ [address]: profile }]);
   });
 });

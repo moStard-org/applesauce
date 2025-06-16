@@ -2,7 +2,7 @@ import { Filter, NostrEvent } from "nostr-tools";
 import { binarySearch, insertEventIntoDescendingList } from "nostr-tools/utils";
 import { Subject } from "rxjs";
 
-import { createReplaceableAddress, getEventUID, getIndexableTags, isReplaceable } from "../helpers/event.js";
+import { createReplaceableAddress, getIndexableTags, getReplaceableAddress, isReplaceable } from "../helpers/event.js";
 import { LRU } from "../helpers/lru.js";
 import { logger } from "../logger.js";
 import { INDEXABLE_TAGS } from "./common.js";
@@ -24,7 +24,7 @@ export class EventSet implements IEventSet {
   /** LRU cache of last events touched */
   events = new LRU<NostrEvent>();
 
-  /** A sorted array of replaceable events by uid */
+  /** A sorted array of replaceable events by address */
   protected replaceable = new Map<string, NostrEvent[]>();
 
   /** A stream of events inserted into the database */
@@ -112,13 +112,13 @@ export class EventSet implements IEventSet {
 
     // Insert into replaceable index
     if (isReplaceable(event.kind)) {
-      const uid = getEventUID(event);
+      const address = getReplaceableAddress(event);
 
-      let array = this.replaceable.get(uid)!;
-      if (!this.replaceable.has(uid)) {
+      let array = this.replaceable.get(address)!;
+      if (!this.replaceable.has(address)) {
         // add an empty array if there is no array
         array = [];
-        this.replaceable.set(uid, array);
+        this.replaceable.set(address, array);
       }
 
       // insert the event into the sorted array
@@ -165,8 +165,8 @@ export class EventSet implements IEventSet {
 
     // remove from replaceable index
     if (isReplaceable(event.kind)) {
-      const uid = getEventUID(event);
-      const array = this.replaceable.get(uid);
+      const address = getReplaceableAddress(event);
+      const array = this.replaceable.get(address);
       if (array && array.includes(event)) {
         const idx = array.indexOf(event);
         array.splice(idx, 1);

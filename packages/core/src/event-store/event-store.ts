@@ -4,7 +4,7 @@ import { EMPTY, filter, finalize, from, merge, mergeMap, Observable, ReplaySubje
 
 import hash_sum from "hash-sum";
 import { getDeleteCoordinates, getDeleteIds } from "../helpers/delete.js";
-import { FromCacheSymbol, getEventUID, getTagValue, isReplaceable } from "../helpers/event.js";
+import { FromCacheSymbol, getReplaceableAddress, getTagValue, isReplaceable } from "../helpers/event.js";
 import { matchFilters } from "../helpers/filter.js";
 import { parseCoordinate } from "../helpers/pointers.js";
 import { addSeenRelay, getSeenRelays } from "../helpers/relays.js";
@@ -78,7 +78,7 @@ export class EventStore implements IEventStore {
       if (this.deletedIds.has(event.id)) return true;
 
       if (isAddressableKind(event.kind)) {
-        const deleted = this.deletedCoords.get(getEventUID(event));
+        const deleted = this.deletedCoords.get(getReplaceableAddress(event));
         if (deleted) return deleted > event.created_at;
       }
 

@@ -7,17 +7,10 @@ import { getOrComputeCachedValue } from "./cache.js";
 import { getHiddenTags } from "./hidden-tags.js";
 
 export const EventUIDSymbol = Symbol.for("event-uid");
+export const ReplaceableAddressSymbol = Symbol.for("replaceable-address");
 export const EventIndexableTagsSymbol = Symbol.for("indexable-tags");
 export const FromCacheSymbol = Symbol.for("from-cache");
 export const ReplaceableIdentifierSymbol = Symbol.for("replaceable-identifier");
-
-declare module "nostr-tools" {
-  export interface Event {
-    [EventUIDSymbol]?: string;
-    [EventIndexableTagsSymbol]?: Set<string>;
-    [FromCacheSymbol]?: boolean;
-  }
-}
 
 /**
  * Checks if an object is a nostr event
@@ -53,13 +46,12 @@ export function isReplaceable(kind: number) {
  * For parametrized replaceable events this is ( event.kind + ":" + event.pubkey + ":" + event.tags.d )
  */
 export function getEventUID(event: NostrEvent) {
-  let uid = event[EventUIDSymbol];
+  let uid = Reflect.get(event, EventUIDSymbol) as string | undefined;
 
   if (!uid) {
     if (isReplaceable(event.kind)) uid = getReplaceableAddress(event);
     else uid = event.id;
-
-    event[EventUIDSymbol] = uid;
+    Reflect.set(event, EventUIDSymbol, uid);
   }
 
   return uid;
@@ -69,8 +61,10 @@ export function getEventUID(event: NostrEvent) {
 export function getReplaceableAddress(event: NostrEvent): string {
   if (!isReplaceable(event.kind)) throw new Error("Event is not replaceable or addressable");
 
-  const identifier = isAddressableKind(event.kind) ? getReplaceableIdentifier(event) : undefined;
-  return createReplaceableAddress(event.kind, event.pubkey, identifier);
+  return getOrComputeCachedValue(event, ReplaceableAddressSymbol, () => {
+    const identifier = isAddressableKind(event.kind) ? getReplaceableIdentifier(event) : undefined;
+    return createReplaceableAddress(event.kind, event.pubkey, identifier);
+  });
 }
 
 /** Creates a replaceable event address from a kind, pubkey, and identifier */
@@ -83,7 +77,7 @@ export const getReplaceableUID = createReplaceableAddress;
 
 /** Returns a Set of tag names and values that are indexable */
 export function getIndexableTags(event: NostrEvent): Set<string> {
-  let indexable = event[EventIndexableTagsSymbol];
+  let indexable = Reflect.get(event, EventIndexableTagsSymbol) as Set<string> | undefined;
   if (!indexable) {
     const tags = new Set<string>();
 
@@ -93,7 +87,8 @@ export function getIndexableTags(event: NostrEvent): Set<string> {
       }
     }
 
-    indexable = event[EventIndexableTagsSymbol] = tags;
+    indexable = tags;
+    Reflect.set(event, EventIndexableTagsSymbol, tags);
   }
 
   return indexable;
@@ -122,12 +117,12 @@ export function fakeVerifyEvent(event: NostrEvent): event is VerifiedEvent {
 
 /** Marks an event as being from a cache */
 export function markFromCache(event: NostrEvent) {
-  event[FromCacheSymbol] = true;
+  Reflect.set(event, FromCacheSymbol, true);
 }
 
 /** Returns if an event was from a cache */
 export function isFromCache(event: NostrEvent) {
-  return !!event[FromCacheSymbol];
+  return Reflect.get(event, FromCacheSymbol) === true;
 }
 
 /** Returns the EventStore of an event if its been added to one */
