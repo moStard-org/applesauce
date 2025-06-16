@@ -2,9 +2,10 @@ import { NostrEvent } from "nostr-tools";
 import { isAddressableKind, isReplaceableKind } from "nostr-tools/kinds";
 import { AddressPointer, EventPointer, ProfilePointer } from "nostr-tools/nip19";
 
-import { getReplaceableIdentifier } from "./event.js";
+import { getReplaceableIdentifier, isReplaceable } from "./event.js";
 import { getHiddenTags } from "./hidden-tags.js";
 import {
+  getAddressPointerForEvent,
   getAddressPointerFromATag,
   getCoordinateFromAddressPointer,
   getEventPointerFromETag,
@@ -75,6 +76,13 @@ export function isProfilePointerInList(
   const pubkey = typeof pointer === "string" ? pointer : pointer.pubkey;
   const tags = getListTags(list, type);
   return tags.some((t) => t[0] === "p" && t[1] === pubkey);
+}
+
+/** Returns if an event is in a list */
+export function isEventInList(list: NostrEvent, event: NostrEvent): boolean {
+  return isReplaceable(event.kind)
+    ? isAddressPointerInList(list, getAddressPointerForEvent(event))
+    : isEventPointerInList(list, event);
 }
 
 /**
