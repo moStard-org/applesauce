@@ -1,9 +1,9 @@
 import { ModelConstructor, withImmediateValueOrDefault } from "applesauce-core";
-import { useObservableEagerState } from "observable-hooks";
-import { useMemo } from "react";
+import hash_sum from "hash-sum";
 import { of } from "rxjs";
 
 import { useEventStore } from "./use-event-store.js";
+import { useObservableEagerMemo } from "./use-observable-memo.js";
 
 /** Runs and subscribes to a model on the event store */
 export function useEventModel<T extends unknown, Args extends Array<any>>(
@@ -11,10 +11,9 @@ export function useEventModel<T extends unknown, Args extends Array<any>>(
   args?: Args | null,
 ): T | undefined {
   const store = useEventStore();
-  const observable$ = useMemo(() => {
+
+  return useObservableEagerMemo(() => {
     if (args) return store.model(factory, ...args).pipe(withImmediateValueOrDefault(undefined));
     else return of(undefined);
-  }, [args, store]);
-
-  return useObservableEagerState(observable$);
+  }, [hash_sum(args), store, factory]);
 }

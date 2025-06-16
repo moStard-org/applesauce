@@ -7,13 +7,11 @@ describe("exports", () => {
       [
         "IdentityStatus",
         "batchLoader",
-        "consolidateAddressPointers",
         "consolidateEventPointers",
         "createFilterFromAddressPointers",
         "createFiltersFromAddressPointers",
         "getIdentitiesFromJson",
         "getIdentityFromJson",
-        "getRelaysFromPointers",
         "groupAddressPointersByKind",
         "groupAddressPointersByPubkey",
         "groupAddressPointersByPubkeyOrKind",

@@ -11,20 +11,26 @@ import { wrapUpstreamPool } from "../helpers/upstream.js";
 import { wrapGeneratorFunction } from "../operators/generator.js";
 import { CacheRequest, NostrRequest, UpstreamPool } from "../types.js";
 
-export type EventPointerLoader = (pointer: EventPointer) => Observable<NostrEvent>;
-export type createEventLoader = (pointers: EventPointer[]) => Observable<NostrEvent>;
+export type LoadableEventPointer = EventPointer & {
+  cache?: boolean;
+};
+
+export type EventPointerLoader = (pointer: LoadableEventPointer) => Observable<NostrEvent>;
+export type createEventLoader = (pointers: LoadableEventPointer[]) => Observable<NostrEvent>;
 
 /** Creates a loader that gets a single event from the cache */
 export function cacheEventsLoader(request: CacheRequest): createEventLoader {
-  return (pointers) => makeCacheRequest(request, [{ ids: pointers.map((p) => p.id) }]);
+  return (pointers) => {
+    pointers = pointers.filter((p) => p.cache !== false);
+
+    if (pointers.length === 0) return EMPTY;
+    return makeCacheRequest(request, [{ ids: pointers.map((p) => p.id) }]);
+  };
 }
 
 /** Creates a loader that gets an array of events from a list of relays */
 export function relaysEventsLoader(request: NostrRequest, relays: string[] | Observable<string[]>): createEventLoader {
-  return (pointers) =>
-    unwrap(relays, (relays) => {
-      return request(relays, [{ ids: pointers.map((p) => p.id) }]);
-    });
+  return (pointers) => unwrap(relays, (relays) => request(relays, [{ ids: pointers.map((p) => p.id) }]));
 }
 
 /** Creates a loader that gets an array of events from a single relay */

@@ -13,6 +13,7 @@ describe("exports", () => {
         "cacheEventsLoader",
         "cacheTagValueLoader",
         "cacheTimelineLoader",
+        "consolidateAddressPointers",
         "createAddressLoader",
         "createEventLoader",
         "createReactionsLoader",

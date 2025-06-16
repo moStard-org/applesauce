@@ -9,17 +9,23 @@ import {
 import { NostrEvent } from "nostr-tools";
 import { bufferTime, catchError, EMPTY, filter, map, Observable, pipe } from "rxjs";
 
-import {
-  consolidateAddressPointers,
-  createFiltersFromAddressPointers,
-  isLoadableAddressPointer,
-  LoadableAddressPointer,
-} from "../helpers/address-pointer.js";
+import { createFiltersFromAddressPointers, isLoadableAddressPointer } from "../helpers/address-pointer.js";
 import { makeCacheRequest, wrapCacheRequest } from "../helpers/cache.js";
 import { batchLoader, unwrap } from "../helpers/loaders.js";
 import { wrapUpstreamPool } from "../helpers/upstream.js";
 import { wrapGeneratorFunction } from "../operators/generator.js";
 import { CacheRequest, NostrRequest, UpstreamPool } from "../types.js";
+
+export type LoadableAddressPointer = {
+  kind: number;
+  pubkey: string;
+  /** Optional "d" tag for paramaritized replaceable */
+  identifier?: string;
+  /** Relays to load from */
+  relays?: string[];
+  /** Whether to ignore the cache */
+  cache?: boolean;
+};
 
 /** A method that takes address pointers and returns an observable of events */
 export type AddressPointersLoader = (pointers: LoadableAddressPointer[]) => Observable<NostrEvent>;
@@ -30,15 +36,12 @@ export type AddressPointerLoader = (pointer: LoadableAddressPointer) => Observab
  * @note ignores pointers with force=true
  */
 export function cacheAddressPointersLoader(request: CacheRequest): AddressPointersLoader {
-  return (pointers) =>
-    makeCacheRequest(
-      request,
-      createFiltersFromAddressPointers(
-        pointers
-          // Ignore pointers that want to skip cache
-          .filter((p) => p.force !== true),
-      ),
-    );
+  return (pointers) => {
+    pointers = pointers.filter((p) => p.cache !== false);
+
+    if (pointers.length === 0) return EMPTY;
+    return makeCacheRequest(request, createFiltersFromAddressPointers(pointers));
+  };
 }
 
 /** Loads address pointers from the relay hints */
@@ -87,14 +90,44 @@ export function addressPointerLoadingSequence(
       );
 
       // Remove the pointers that were loaded
-      remaining = remaining.filter(
-        (p) => !addresses.has(createReplaceableAddress(p.kind, p.pubkey, p.identifier)) || p.force === true,
-      );
+      remaining = remaining.filter((p) => !addresses.has(createReplaceableAddress(p.kind, p.pubkey, p.identifier)));
 
       // If there are no remaining pointers, complete
       if (remaining.length === 0) return;
     }
   });
+}
+
+/** deep clone a loadable pointer to ensure its safe to modify */
+function cloneLoadablePointer(pointer: LoadableAddressPointer): LoadableAddressPointer {
+  const clone = { ...pointer };
+  if (pointer.relays) clone.relays = [...pointer.relays];
+  return clone;
+}
+
+/** deduplicates an array of address pointers and merges their relays array */
+export function consolidateAddressPointers(pointers: LoadableAddressPointer[]): LoadableAddressPointer[] {
+  const byAddress = new Map<string, LoadableAddressPointer>();
+
+  for (const pointer of pointers) {
+    const addr = createReplaceableAddress(pointer.kind, pointer.pubkey, pointer.identifier);
+    if (byAddress.has(addr)) {
+      // duplicate, merge pointers
+      const current = byAddress.get(addr)!;
+
+      // merge relays
+      if (pointer.relays) {
+        if (current.relays) current.relays = mergeRelaySets(current.relays, pointer.relays);
+        else current.relays = pointer.relays;
+      }
+
+      // merge cache flag
+      if (pointer.cache === false) current.cache = false;
+    } else byAddress.set(addr, cloneLoadablePointer(pointer));
+  }
+
+  // return consolidated pointers
+  return Array.from(byAddress.values());
 }
 
 export type AddressLoaderOptions = Partial<{
@@ -108,10 +141,10 @@ export type AddressLoaderOptions = Partial<{
   cacheRequest: CacheRequest;
   /** Whether to follow relay hints ( default true ) */
   followRelayHints: boolean;
-  /** Fallback lookup relays to check when event cant be found */
-  lookupRelays: string[] | Observable<string[]>;
   /** An array of relays to always fetch from */
   extraRelays: string[] | Observable<string[]>;
+  /** Fallback lookup relays to check when event cant be found */
+  lookupRelays: string[] | Observable<string[]>;
 }>;
 
 /** Create a pre-built address pointer loader that supports batching, caching, and lookup relays */

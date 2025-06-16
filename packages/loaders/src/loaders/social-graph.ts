@@ -4,9 +4,8 @@ import { kinds, NostrEvent } from "nostr-tools";
 import { ProfilePointer } from "nostr-tools/nip19";
 import { firstValueFrom, identity, isObservable, lastValueFrom, Observable, toArray } from "rxjs";
 
-import { LoadableAddressPointer } from "../helpers/address-pointer.js";
 import { wrapGeneratorFunction } from "../operators/generator.js";
-import { AddressPointerLoader } from "./address-loader.js";
+import { AddressPointerLoader, LoadableAddressPointer } from "./address-loader.js";
 
 /** A loader that loads the social graph of a user out to a set distance */
 export type SocialGraphLoader = (user: ProfilePointer & { distance: number }) => Observable<NostrEvent>;
