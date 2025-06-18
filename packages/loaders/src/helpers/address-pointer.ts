@@ -20,8 +20,8 @@ export function createFilterFromAddressPointers(pointers: AddressPointerWithoutD
 /** Takes a set of address pointers, groups them, then returns filters for the groups */
 export function createFiltersFromAddressPointers(pointers: AddressPointerWithoutD[]): Filter[] {
   // split the points in to two groups so they they don't mix in the filters
-  const parameterizedReplaceable = pointers.filter((p) => isAddressableKind(p.kind));
   const replaceable = pointers.filter((p) => isReplaceableKind(p.kind));
+  const addressable = pointers.filter((p) => isAddressableKind(p.kind));
 
   const filters: Filter[] = [];
 
@@ -30,8 +30,8 @@ export function createFiltersFromAddressPointers(pointers: AddressPointerWithout
     filters.push(...Array.from(groups.values()).map(createFilterFromAddressPointers));
   }
 
-  if (parameterizedReplaceable.length > 0) {
-    const groups = groupAddressPointersByPubkeyOrKind(parameterizedReplaceable);
+  if (addressable.length > 0) {
+    const groups = groupAddressPointersByPubkeyOrKind(addressable);
     filters.push(...Array.from(groups.values()).map(createFilterFromAddressPointers));
   }
 

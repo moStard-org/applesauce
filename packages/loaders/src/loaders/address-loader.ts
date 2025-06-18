@@ -7,10 +7,10 @@ import {
   mergeRelaySets,
 } from "applesauce-core/helpers";
 import { NostrEvent } from "nostr-tools";
-import { bufferTime, catchError, EMPTY, filter, map, Observable, pipe } from "rxjs";
+import { bufferTime, catchError, EMPTY, Observable } from "rxjs";
 
 import { createFiltersFromAddressPointers, isLoadableAddressPointer } from "../helpers/address-pointer.js";
-import { makeCacheRequest, wrapCacheRequest } from "../helpers/cache.js";
+import { makeCacheRequest } from "../helpers/cache.js";
 import { batchLoader, unwrap } from "../helpers/loaders.js";
 import { wrapUpstreamPool } from "../helpers/upstream.js";
 import { wrapGeneratorFunction } from "../operators/generator.js";
@@ -39,7 +39,9 @@ export function cacheAddressPointersLoader(request: CacheRequest): AddressPointe
   return (pointers) => {
     pointers = pointers.filter((p) => p.cache !== false);
 
+    // Skip if there are no pointers to load from cache
     if (pointers.length === 0) return EMPTY;
+
     return makeCacheRequest(request, createFiltersFromAddressPointers(pointers));
   };
 }
@@ -74,6 +76,13 @@ export function addressPointerLoadingSequence(
   ...loaders: (AddressPointersLoader | undefined)[]
 ): AddressPointersLoader {
   return wrapGeneratorFunction<[LoadableAddressPointer[]], NostrEvent>(function* (pointers) {
+    // Filter out invalid pointers and consolidate
+    pointers = consolidateAddressPointers(pointers.filter(isLoadableAddressPointer));
+
+    // Skip if there are no pointers
+    if (pointers.length === 0) return;
+
+    // Keep track of remaining pointers to load
     let remaining = Array.from(pointers);
 
     for (const loader of loaders) {
@@ -116,7 +125,7 @@ export function consolidateAddressPointers(pointers: LoadableAddressPointer[]): 
       const current = byAddress.get(addr)!;
 
       // merge relays
-      if (pointer.relays) {
+      if (pointer.relays && pointer.relays.length > 0) {
         if (current.relays) current.relays = mergeRelaySets(current.relays, pointer.relays);
         else current.relays = pointer.relays;
       }
@@ -150,24 +159,14 @@ export type AddressLoaderOptions = Partial<{
 /** Create a pre-built address pointer loader that supports batching, caching, and lookup relays */
 export function createAddressLoader(pool: UpstreamPool, opts?: AddressLoaderOptions): AddressPointerLoader {
   const request = wrapUpstreamPool(pool);
-  const cacheRequest = opts?.cacheRequest ? wrapCacheRequest(opts.cacheRequest) : undefined;
 
   return batchLoader(
-    // Create batching sequence
-    pipe(
-      // filter out invalid pointers
-      filter(isLoadableAddressPointer),
-      // buffer requests by time or size
-      bufferTime(opts?.bufferTime ?? 1000, undefined, opts?.bufferSize ?? 200),
-      // Ingore empty buffers
-      filter((b) => b.length > 0),
-      // consolidate buffered pointers
-      map(consolidateAddressPointers),
-    ),
+    // buffer requests by time or size
+    bufferTime(opts?.bufferTime ?? 1000, undefined, opts?.bufferSize ?? 200),
     // Create a loader for batching
     addressPointerLoadingSequence(
       // Step 1. load from cache if available
-      cacheRequest ? cacheAddressPointersLoader(cacheRequest) : undefined,
+      opts?.cacheRequest ? cacheAddressPointersLoader(opts.cacheRequest) : undefined,
       // Step 2. load from relay hints on pointers
       opts?.followRelayHints !== false ? relayHintsAddressPointersLoader(request) : undefined,
       // Step 3. load from extra relays

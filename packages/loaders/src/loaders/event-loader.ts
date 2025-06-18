@@ -1,9 +1,9 @@
 import { IEventStore, mapEventsToStore } from "applesauce-core";
 import { NostrEvent } from "nostr-tools";
 import { EventPointer } from "nostr-tools/nip19";
-import { bufferTime, catchError, EMPTY, filter, map, merge, Observable, pipe, tap } from "rxjs";
+import { bufferTime, catchError, EMPTY, merge, Observable, tap } from "rxjs";
 
-import { makeCacheRequest, wrapCacheRequest } from "../helpers/cache.js";
+import { makeCacheRequest } from "../helpers/cache.js";
 import { consolidateEventPointers } from "../helpers/event-pointer.js";
 import { batchLoader, unwrap } from "../helpers/loaders.js";
 import { groupByRelay } from "../helpers/pointer.js";
@@ -68,6 +68,12 @@ export function relayHintsEventsLoader(
 /** Creates a loader that tries to load events from a list of loaders in order */
 export function eventLoadingSequence(...loaders: (createEventLoader | undefined)[]): createEventLoader {
   return wrapGeneratorFunction<[EventPointer[]], NostrEvent>(function* (pointers) {
+    // Filter out invalid pointers and consolidate
+    pointers = consolidateEventPointers(pointers);
+
+    // Skip if there are no pointers
+    if (pointers.length === 0) return;
+
     const found = new Set<string>();
     let remaining = Array.from(pointers);
 
@@ -108,22 +114,15 @@ export type EventPointerLoaderOptions = Partial<{
 /** Create a pre-built address pointer loader that supports batching, caching, and lookup relays */
 export function createEventLoader(pool: UpstreamPool, opts?: EventPointerLoaderOptions): EventPointerLoader {
   const request = wrapUpstreamPool(pool);
-  const cacheRequest = opts?.cacheRequest ? wrapCacheRequest(opts.cacheRequest) : undefined;
 
   return batchLoader(
     // Create batching sequence
-    pipe(
-      // buffer requests by time or size
-      bufferTime(opts?.bufferTime ?? 1000, undefined, opts?.bufferSize ?? 200),
-      // Ingore empty buffers
-      filter((b) => b.length > 0),
-      // consolidate buffered pointers
-      map(consolidateEventPointers),
-    ),
+    // buffer requests by time or size
+    bufferTime(opts?.bufferTime ?? 1000, undefined, opts?.bufferSize ?? 200),
     // Create a loader for batching
     eventLoadingSequence(
       // Step 1. load from cache if available
-      cacheRequest ? cacheEventsLoader(cacheRequest) : undefined,
+      opts?.cacheRequest ? cacheEventsLoader(opts.cacheRequest) : undefined,
       // Step 2. load from relay hints on pointers
       opts?.followRelayHints !== false ? relayHintsEventsLoader(request) : undefined,
       // Step 3. load from extra relays

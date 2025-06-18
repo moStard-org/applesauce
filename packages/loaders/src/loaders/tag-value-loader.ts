@@ -1,13 +1,12 @@
 import { IEventStore, mapEventsToStore } from "applesauce-core";
 import { mergeRelaySets } from "applesauce-core/helpers";
 import { Filter, NostrEvent } from "nostr-tools";
-import { bufferTime, filter, merge, Observable, pipe } from "rxjs";
+import { bufferTime, EMPTY, merge, Observable } from "rxjs";
 
 import { unique } from "../helpers/array.js";
-import { makeCacheRequest, wrapCacheRequest } from "../helpers/cache.js";
+import { makeCacheRequest } from "../helpers/cache.js";
 import { batchLoader, unwrap } from "../helpers/loaders.js";
 import { wrapUpstreamPool } from "../helpers/upstream.js";
-import { distinctRelaysBatch } from "../operators/distinct-relays.js";
 import { CacheRequest, NostrRequest, UpstreamPool } from "../types.js";
 
 export type TagValuePointer = {
@@ -103,26 +102,23 @@ export function createTagValueLoader(
   opts?: TagValueLoaderOptions,
 ): TagValueLoader {
   const request = wrapUpstreamPool(pool);
-  const cacheRequest = opts?.cacheRequest ? wrapCacheRequest(opts.cacheRequest) : undefined;
 
   return batchLoader(
-    // Create batching sequence
-    pipe(
-      // buffer requests by time or size
-      bufferTime(opts?.bufferTime ?? 1000, undefined, opts?.bufferSize ?? 200),
-      // Ignore empty buffers
-      filter((b) => b.length > 0),
-      // Only request from each relay once
-      distinctRelaysBatch((m) => m.value),
-    ),
+    // buffer requests by time or size
+    bufferTime(opts?.bufferTime ?? 1000, undefined, opts?.bufferSize ?? 200),
     // Create a loader for batching
-    (pointers) =>
-      merge(
-        // Step 1. load from cache if available
-        cacheRequest ? cacheTagValueLoader(cacheRequest, tagName, opts)(pointers) : [],
-        // Step 2. load from relays
+    (pointers) => {
+      // Skip if there are no pointers
+      if (pointers.length === 0) return EMPTY;
+
+      // Load from cache and relays in parallel
+      return merge(
+        // load from cache if available
+        opts?.cacheRequest ? cacheTagValueLoader(opts.cacheRequest, tagName, opts)(pointers) : [],
+        // load from relays
         relaysTagValueLoader(request, tagName, opts)(pointers),
-      ),
+      );
+    },
     // Filter results based on requests
     (pointer, event) => event.tags.some((tag) => tag[0] === tagName && tag[1] === pointer.value),
     // Pass all events through the store if defined

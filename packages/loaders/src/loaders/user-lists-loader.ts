@@ -4,7 +4,7 @@ import { Filter, kinds, NostrEvent } from "nostr-tools";
 import { ProfilePointer } from "nostr-tools/nip19";
 import { EMPTY, identity, merge, Observable } from "rxjs";
 
-import { makeCacheRequest, wrapCacheRequest } from "../helpers/cache.js";
+import { makeCacheRequest } from "../helpers/cache.js";
 import { unwrap } from "../helpers/loaders.js";
 import { wrapUpstreamPool } from "../helpers/upstream.js";
 import { CacheRequest, UpstreamPool } from "../types.js";
@@ -35,7 +35,6 @@ export type UserListsLoaderOptions = Partial<{
  */
 export function createUserListsLoader(pool: UpstreamPool, opts?: UserListsLoaderOptions): UserListsLoader {
   const request = wrapUpstreamPool(pool);
-  const cacheRequest = opts?.cacheRequest ? wrapCacheRequest(opts.cacheRequest) : undefined;
 
   return (user: ProfilePointer) =>
     unwrap(opts?.extraRelays, (extraRelays) => {
@@ -49,7 +48,7 @@ export function createUserListsLoader(pool: UpstreamPool, opts?: UserListsLoader
 
       return merge(
         // Load from cache
-        cacheRequest ? makeCacheRequest(cacheRequest, [filter]) : EMPTY,
+        opts?.cacheRequest ? makeCacheRequest(opts.cacheRequest, [filter]) : EMPTY,
         // Load from relays
         relays ? request(relays, [filter]) : EMPTY,
       ).pipe(
