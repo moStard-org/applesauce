@@ -21,7 +21,6 @@ describe("exports", () => {
         "normalizeIdentityJson",
         "unwrap",
         "unwrapCacheRequest",
-        "wrapCacheRequest",
         "wrapUpstreamPool",
       ]
     `);
