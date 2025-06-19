@@ -1,5 +1,18 @@
 # applesauce-loaders
 
+## 2.1.0
+
+### Minor Changes
+
+- b652776: Update all loaders to accept observables for `extraRelays` option
+- 230e6d2: Add `cache` option to address and event loader
+
+### Patch Changes
+
+- 937e23e: Fix loaders missing requests in FireFox
+- Updated dependencies
+  - applesauce-core@2.1.0
+
 ## 2.0.0
 
 ### Major Changes

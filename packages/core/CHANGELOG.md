@@ -1,5 +1,16 @@
 # applesauce-core
 
+## 2.1.0
+
+### Minor Changes
+
+- c58facb: Fix `EventSet.getReplaceable` using wrong replaceable address
+- b1841ee: Add `isEventInList` helper
+
+### Patch Changes
+
+- d8ed6ec: Fix typo in name `getArticlePublishd` -> `getArticlePublished`
+
 ## 2.0.0
 
 ### Major Changes

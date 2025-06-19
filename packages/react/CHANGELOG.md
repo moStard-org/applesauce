@@ -1,5 +1,15 @@
 # applesauce-react
 
+## 2.1.0
+
+### Patch Changes
+
+- 230e6d2: Fix `useObservableEagerMemo` not returning undefined when return value was undefined
+- 230e6d2: Fix `useEventModel` recreating the model every render
+- Updated dependencies
+  - applesauce-actions@2.1.0
+  - applesauce-core@2.1.0
+
 ## 2.0.0
 
 ### Major Changes
