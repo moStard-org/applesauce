@@ -1,5 +1,5 @@
 {
-  "relays": ["wss://nostrue.com", "wss://relay.damus.io", "wss://relay.primal.net"],
+  "relays": ["wss://relay.nsite.lol", "wss://nostrue.com", "wss://relay.damus.io", "wss://relay.primal.net"],
   "servers": ["https://nostr.download", "https://cdn.hzrd149.com"],
   "profile": {
     "name": "AppleSauce",
