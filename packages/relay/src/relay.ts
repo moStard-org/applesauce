@@ -35,6 +35,7 @@ import {
 } from "rxjs";
 import { webSocket, WebSocketSubject, WebSocketSubjectConfig } from "rxjs/webSocket";
 
+import { ensureHttpURL } from "applesauce-core/helpers";
 import { RelayInformation } from "nostr-tools/nip11";
 import { completeOnEose } from "./operators/complete-on-eose.js";
 import { markFromRelay } from "./operators/mark-from-relay.js";
@@ -470,7 +471,9 @@ export class Relay implements IRelay {
 
   /** Static method to fetch the NIP-11 information document for a relay */
   static fetchInformationDocument(url: string): Observable<RelayInformation | null> {
-    return from(fetch(url, { headers: { Accept: "application/nostr+json" } }).then((res) => res.json())).pipe(
+    return from(
+      fetch(ensureHttpURL(url), { headers: { Accept: "application/nostr+json" } }).then((res) => res.json()),
+    ).pipe(
       // if the fetch fails, return null
       catchError(() => of(null)),
       // timeout after 10s

@@ -54,12 +54,24 @@ export function ensureProtocol(url: string, protocol = "https:"): string {
   return protocol + "//" + url;
 }
 
-/** Converts a URL to a WebSocket URL */
+/** Converts a domain or HTTP URL to a WebSocket URL */
 export function ensureWebSocketURL<T extends string | URL>(url: T): T {
   const p = typeof url === "string" ? new URL(ensureProtocol(url, "wss:")) : new URL(url);
   if (p.protocol === "http:") p.protocol = "ws:";
   else if (p.protocol === "https:") p.protocol = "wss:";
   else p.protocol = "wss:";
+
+  // return a string if a string was passed in
+  // @ts-expect-error
+  return typeof url === "string" ? p.toString() : p;
+}
+
+/** Converts a domain or WS URL to a HTTP URL */
+export function ensureHttpURL<T extends string | URL>(url: T): T {
+  const p = typeof url === "string" ? new URL(ensureProtocol(url, "http:")) : new URL(url);
+  if (p.protocol === "ws:") p.protocol = "http:";
+  else if (p.protocol === "wss:") p.protocol = "https:";
+  else p.protocol = "https:";
 
   // return a string if a string was passed in
   // @ts-expect-error
