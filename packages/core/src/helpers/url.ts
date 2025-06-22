@@ -5,7 +5,7 @@ export const getURLFilename = (url: URL) =>
 export const IMAGE_EXT = [".svg", ".gif", ".png", ".jpg", ".jpeg", ".webp", ".avif"];
 export const VIDEO_EXT = [".mp4", ".mkv", ".webm", ".mov"];
 export const STREAM_EXT = [".m3u8"];
-export const AUDIO_EXT = [".mp3", ".wav", ".ogg", ".aac"];
+export const AUDIO_EXT = [".mp3", ".wav", ".ogg", ".aac", ".m4a"];
 
 /** Checks if a url is a image URL */
 export function isImageURL(url: string | URL) {
