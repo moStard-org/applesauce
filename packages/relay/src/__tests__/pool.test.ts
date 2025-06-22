@@ -1,9 +1,11 @@
-import { expect, beforeEach, afterEach, describe, it } from "vitest";
 import { subscribeSpyTo } from "@hirez_io/observer-spy";
-import { WS } from "vitest-websocket-mock";
 import { Filter, NostrEvent } from "nostr-tools";
+import { of } from "rxjs";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { WS } from "vitest-websocket-mock";
 
 import { RelayPool } from "../pool.js";
+import { Relay } from "../relay";
 
 let pool: RelayPool;
 let mockServer1: WS;
@@ -12,6 +14,9 @@ let mockServer2: WS;
 let mockEvent: NostrEvent;
 
 beforeEach(async () => {
+  // Mock empty information document
+  vi.spyOn(Relay, "fetchInformationDocument").mockImplementation(() => of(null));
+
   // Create mock WebSocket servers
   mockServer1 = new WS("wss://relay1.example.com");
   mockServer2 = new WS("wss://relay2.example.com");

@@ -82,6 +82,7 @@ describe("exports", () => {
         "decodeLNURL",
         "encodeDecodeResult",
         "encodeGroupPointer",
+        "ensureHttpURL",
         "ensureProtocol",
         "ensureWebSocketURL",
         "fakeVerifyEvent",
