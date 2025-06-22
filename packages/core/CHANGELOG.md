@@ -1,5 +1,11 @@
 # applesauce-core
 
+## 2.1.1
+
+### Patch Changes
+
+- 39dce6c: Add m4a file extension to `AUDIO_EXT`
+
 ## 2.1.0
 
 ### Minor Changes
