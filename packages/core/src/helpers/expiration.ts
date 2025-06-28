@@ -1,7 +1,7 @@
 import { NostrEvent } from "nostr-tools";
-import { getTagValue } from "./event.js";
 import { getOrComputeCachedValue } from "./cache.js";
 import { unixNow } from "./time.js";
+import { getTagValue } from "./event-tags.js";
 
 export const ExpirationTimestampSymbol = Symbol("expiration-timestamp");
 

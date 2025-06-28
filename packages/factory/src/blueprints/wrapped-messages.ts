@@ -54,6 +54,9 @@ export function WrappedMessageReplyBlueprint(
   opts?: WrappedMessageBlueprintOptions,
 ): EventBlueprint<Rumor> {
   return async (context) => {
+    if (typeof parent !== "string" && parent.kind !== kinds.PrivateDirectMessage)
+      throw new Error("Parent must be a private direct message event");
+
     if (!context.signer) throw new Error("Missing signer");
     const self = await context.signer.getPublicKey();
 

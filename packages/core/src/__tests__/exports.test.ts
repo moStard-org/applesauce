@@ -7,7 +7,6 @@ describe("exports", () => {
       [
         "EventSet",
         "EventStore",
-        "EventStoreSymbol",
         "Helpers",
         "Models",
         "TimeoutError",

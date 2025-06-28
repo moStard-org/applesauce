@@ -1,13 +1,14 @@
 import { Filter, kinds, NostrEvent } from "nostr-tools";
-import { AddressPointer, EventPointer } from "nostr-tools/nip19";
 import { isAddressableKind } from "nostr-tools/kinds";
+import { AddressPointer, EventPointer } from "nostr-tools/nip19";
 import { map } from "rxjs/operators";
 
-import { getNip10References, interpretThreadTags, ThreadReferences } from "../helpers/threading.js";
-import { getCoordinateFromAddressPointer, isAddressPointer, isEventPointer } from "../helpers/pointers.js";
-import { getEventUID, createReplaceableAddress, getTagValue, isEvent } from "../helpers/event.js";
-import { COMMENT_KIND } from "../helpers/comment.js";
 import { Model } from "../event-store/interface.js";
+import { COMMENT_KIND } from "../helpers/comment.js";
+import { getTagValue } from "../helpers/event-tags.js";
+import { createReplaceableAddress, getEventUID, isEvent } from "../helpers/event.js";
+import { getCoordinateFromAddressPointer, isAddressPointer, isEventPointer } from "../helpers/pointers.js";
+import { getNip10References, interpretThreadTags, ThreadReferences } from "../helpers/threading.js";
 
 export type Thread = {
   root?: ThreadItem;

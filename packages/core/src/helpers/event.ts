@@ -1,20 +1,18 @@
 import { NostrEvent, VerifiedEvent, verifiedSymbol } from "nostr-tools";
 import { isAddressableKind, isReplaceableKind } from "nostr-tools/kinds";
-import { INDEXABLE_TAGS } from "../event-store/common.js";
-import { EventStoreSymbol } from "../event-store/event-store.js";
 import { IEventStore } from "../event-store/interface.js";
 import { getOrComputeCachedValue } from "./cache.js";
-import { getHiddenTags } from "./hidden-tags.js";
 
+/** A symbol on an event that marks which event store its part of */
+export const EventStoreSymbol = Symbol.for("event-store");
 export const EventUIDSymbol = Symbol.for("event-uid");
 export const ReplaceableAddressSymbol = Symbol.for("replaceable-address");
-export const EventIndexableTagsSymbol = Symbol.for("indexable-tags");
 export const FromCacheSymbol = Symbol.for("from-cache");
 export const ReplaceableIdentifierSymbol = Symbol.for("replaceable-identifier");
 
 /**
  * Checks if an object is a nostr event
- * NOTE: does not validation the signature on the event
+ * NOTE: does not validate the signature on the event
  */
 export function isEvent(event: any): event is NostrEvent {
   if (event === undefined || event === null) return false;
@@ -75,40 +73,6 @@ export function createReplaceableAddress(kind: number, pubkey: string, identifie
 /** @deprecated use createReplaceableAddress instead */
 export const getReplaceableUID = createReplaceableAddress;
 
-/** Returns a Set of tag names and values that are indexable */
-export function getIndexableTags(event: NostrEvent): Set<string> {
-  let indexable = Reflect.get(event, EventIndexableTagsSymbol) as Set<string> | undefined;
-  if (!indexable) {
-    const tags = new Set<string>();
-
-    for (const tag of event.tags) {
-      if (tag.length >= 2 && tag[0].length === 1 && INDEXABLE_TAGS.has(tag[0])) {
-        tags.add(tag[0] + ":" + tag[1]);
-      }
-    }
-
-    indexable = tags;
-    Reflect.set(event, EventIndexableTagsSymbol, tags);
-  }
-
-  return indexable;
-}
-
-/**
- * Returns the second index ( tag[1] ) of the first tag that matches the name
- * If the event has any hidden tags they will be searched first
- */
-export function getTagValue<T extends { kind: number; tags: string[][]; content: string }>(
-  event: T,
-  name: string,
-): string | undefined {
-  const hidden = getHiddenTags(event);
-
-  const hiddenValue = hidden?.find((t) => t[0] === name)?.[1];
-  if (hiddenValue) return hiddenValue;
-  return event.tags.find((t) => t[0] === name)?.[1];
-}
-
 /** Sets events verified flag without checking anything */
 export function fakeVerifyEvent(event: NostrEvent): event is VerifiedEvent {
   event[verifiedSymbol] = true;
@@ -144,7 +108,7 @@ export function getReplaceableIdentifier(event: NostrEvent): string {
   if (!isAddressableKind(event.kind)) throw new Error("Event is not addressable");
 
   return getOrComputeCachedValue(event, ReplaceableIdentifierSymbol, () => {
-    const d = getTagValue(event, "d");
+    const d = event.tags.find((t) => t[0] === "d")?.[1];
     if (d === undefined) throw new Error("Event missing identifier");
     return d;
   });

@@ -1,5 +1,5 @@
 import { NostrEvent } from "nostr-tools";
-import { getTagValue } from "./event.js";
+import { getTagValue } from "./event-tags.js";
 
 /** Returns an articles title, if it exists */
 export function getArticleTitle(article: NostrEvent): string | undefined {

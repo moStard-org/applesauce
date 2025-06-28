@@ -1,6 +1,6 @@
 import type { NostrEvent } from "nostr-tools";
 import { processTags } from "applesauce-core/helpers/tags";
-import { getTagValue } from "applesauce-core/helpers/event";
+import { getTagValue } from "applesauce-core/helpers/event-tags";
 import { mergeRelaySets } from "applesauce-core/helpers/relays";
 
 // input types

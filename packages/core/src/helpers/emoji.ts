@@ -1,5 +1,5 @@
 import { NostrEvent } from "nostr-tools";
-import { getTagValue } from "./event.js";
+import { getTagValue } from "./event-tags.js";
 
 /** Gets an "emoji" tag that matches an emoji code */
 export function getEmojiTag(

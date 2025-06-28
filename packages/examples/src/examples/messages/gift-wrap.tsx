@@ -14,7 +14,7 @@ import {
   unixNow,
   unlockGiftWrap,
 } from "applesauce-core/helpers";
-import { GiftWrapsModel, WrappedMessagesConversation, WrappedMessagesModel } from "applesauce-core/models";
+import { GiftWrapsModel, WrappedMessagesGroup, WrappedMessagesModel } from "applesauce-core/models";
 import { EventFactory } from "applesauce-factory";
 import { CacheRequest } from "applesauce-loaders";
 import { createTimelineLoader } from "applesauce-loaders/loaders";
@@ -170,7 +170,7 @@ function MessageGroup({ messages, pubkey }: { messages: Rumor[]; pubkey: string 
 function ConversationView({ pubkey, conversation, relay }: { pubkey: string; conversation: string; relay: string }) {
   // Get all messages for this conversation
   const messages = useObservableMemo(
-    () => eventStore.model(WrappedMessagesConversation, pubkey, conversation).pipe(map((t) => [...t])),
+    () => eventStore.model(WrappedMessagesGroup, pubkey, conversation).pipe(map((t) => [...t])),
     [pubkey, conversation],
   );
 

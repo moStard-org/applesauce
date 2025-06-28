@@ -1,10 +1,10 @@
 import { kinds, nip57, NostrEvent } from "nostr-tools";
-import { getOrComputeCachedValue } from "./cache.js";
-import { getTagValue } from "./event.js";
-import { isATag, isETag } from "./tags.js";
-import { getAddressPointerFromATag, getEventPointerFromETag } from "./pointers.js";
-import { parseBolt11, ParsedInvoice } from "./bolt11.js";
 import { AddressPointer, EventPointer } from "nostr-tools/nip19";
+import { parseBolt11, ParsedInvoice } from "./bolt11.js";
+import { getOrComputeCachedValue } from "./cache.js";
+import { getTagValue } from "./event-tags.js";
+import { getAddressPointerFromATag, getEventPointerFromETag } from "./pointers.js";
+import { isATag, isETag } from "./tags.js";
 
 export const ZapRequestSymbol = Symbol.for("zap-request");
 export const ZapSenderSymbol = Symbol.for("zap-sender");

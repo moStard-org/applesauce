@@ -1,6 +1,6 @@
-import { Filter, NostrEvent } from "nostr-tools";
-import { getIndexableTags } from "./event.js";
 import equal from "fast-deep-equal";
+import { Filter, NostrEvent } from "nostr-tools";
+import { getIndexableTags } from "./event-tags.js";
 
 /**
  * Copied from nostr-tools and modified to use getIndexableTags

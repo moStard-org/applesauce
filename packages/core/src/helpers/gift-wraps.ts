@@ -62,6 +62,22 @@ export function getGiftWrapRumor(gift: NostrEvent): Rumor | undefined {
   return getOrComputeCachedValue(gift, GiftWrapRumorSymbol, () => getSealRumor(seal)!);
 }
 
+/** Checks if an event is a rumor (normal event with "id" and no "sig") */
+export function isRumor(event: any): event is Rumor {
+  if (event === undefined || event === null) return false;
+
+  return (
+    event.id?.length === 64 &&
+    !("sig" in event) &&
+    typeof event.pubkey === "string" &&
+    event.pubkey.length === 64 &&
+    typeof event.content === "string" &&
+    Array.isArray(event.tags) &&
+    typeof event.created_at === "number" &&
+    event.created_at > 0
+  );
+}
+
 /** Returns if a gift-wrap event or gift-wrap seal is locked */
 export function isGiftWrapLocked(gift: NostrEvent): boolean {
   if (isEncryptedContentLocked(gift)) return true;

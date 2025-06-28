@@ -31,6 +31,7 @@ export function setEncryptedContentEncryptionMethod(kind: number, method: "nip04
 /** Returns either nip04 or nip44 encryption methods depending on event kind */
 export function getEncryptedContentEncryptionMethods(kind: number, signer: EncryptedContentSigner) {
   const method = EventContentEncryptionMethod[kind];
+  if (!method) throw new Error(`Event kind ${kind} does not support encrypted content`);
   const encryption = signer[method];
   if (!encryption) throw new Error(`Signer does not support ${method} encryption`);
 

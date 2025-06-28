@@ -24,7 +24,8 @@ describe("exports", () => {
         "HiddenMuteModel",
         "LegacyMessageReplies",
         "LegacyMessageThreads",
-        "LegacyMessagesConversation",
+        "LegacyMessagesGroup",
+        "LegacyMessagesGroups",
         "MailboxesModel",
         "MuteModel",
         "ProfileModel",
@@ -46,7 +47,8 @@ describe("exports", () => {
         "UserPublicBookmarkModel",
         "WrappedMessageReplies",
         "WrappedMessageThreads",
-        "WrappedMessagesConversation",
+        "WrappedMessagesGroup",
+        "WrappedMessagesGroups",
         "WrappedMessagesModel",
       ]
     `);

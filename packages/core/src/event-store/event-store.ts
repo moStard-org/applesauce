@@ -4,7 +4,7 @@ import { EMPTY, filter, finalize, from, merge, mergeMap, Observable, ReplaySubje
 
 import hash_sum from "hash-sum";
 import { getDeleteCoordinates, getDeleteIds } from "../helpers/delete.js";
-import { FromCacheSymbol, getReplaceableAddress, getTagValue, isReplaceable } from "../helpers/event.js";
+import { EventStoreSymbol, FromCacheSymbol, getReplaceableAddress, isReplaceable } from "../helpers/event.js";
 import { matchFilters } from "../helpers/filter.js";
 import { parseCoordinate } from "../helpers/pointers.js";
 import { addSeenRelay, getSeenRelays } from "../helpers/relays.js";
@@ -19,9 +19,6 @@ import { MailboxesModel } from "../models/mailboxes.js";
 import { UserBlossomServersModel } from "../models/blossom.js";
 import { CommentsModel, ThreadModel } from "../models/index.js";
 import { AddressPointer, EventPointer } from "nostr-tools/nip19";
-
-/** A symbol on an event that marks which event store its part of */
-export const EventStoreSymbol = Symbol.for("event-store");
 
 export class EventStore implements IEventStore {
   database: EventSet;
@@ -136,7 +133,7 @@ export class EventStore implements IEventStore {
     if (this.checkDeleted(event)) return event;
 
     // Get the replaceable identifier
-    const d = isReplaceable(event.kind) ? getTagValue(event, "d") : undefined;
+    const d = isReplaceable(event.kind) ? event.tags.find((t) => t[0] === "d")?.[1] : undefined;
 
     // Don't insert the event if there is already a newer version
     if (!this.keepOldVersions && isReplaceable(event.kind)) {

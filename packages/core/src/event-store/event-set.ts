@@ -2,10 +2,10 @@ import { Filter, NostrEvent } from "nostr-tools";
 import { binarySearch, insertEventIntoDescendingList } from "nostr-tools/utils";
 import { Subject } from "rxjs";
 
-import { createReplaceableAddress, getIndexableTags, getReplaceableAddress, isReplaceable } from "../helpers/event.js";
+import { getIndexableTags, INDEXABLE_TAGS } from "../helpers/event-tags.js";
+import { createReplaceableAddress, getReplaceableAddress, isReplaceable } from "../helpers/event.js";
 import { LRU } from "../helpers/lru.js";
 import { logger } from "../logger.js";
-import { INDEXABLE_TAGS } from "./common.js";
 import { IEventSet } from "./interface.js";
 
 /**

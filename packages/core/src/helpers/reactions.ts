@@ -1,7 +1,7 @@
 import { NostrEvent } from "nostr-tools";
 import { AddressPointer, EventPointer } from "nostr-tools/nip19";
 import { getOrComputeCachedValue } from "./cache.js";
-import { getTagValue } from "./event.js";
+import { getTagValue } from "./event-tags.js";
 import { getAddressPointerFromATag, getEventPointerFromETag, getProfilePointerFromPTag } from "./pointers.js";
 import { mergeRelaySets } from "./relays.js";
 import { isATag, isETag, isPTag } from "./tags.js";

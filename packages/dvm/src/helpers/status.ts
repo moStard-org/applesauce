@@ -1,4 +1,4 @@
-import { getTagValue } from "applesauce-core/helpers/event";
+import { getTagValue } from "applesauce-core/helpers";
 import { NostrEvent } from "nostr-tools";
 
 export enum JobStatus {
