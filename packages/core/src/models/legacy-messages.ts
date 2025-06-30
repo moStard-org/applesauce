@@ -29,11 +29,18 @@ export function LegacyMessagesGroups(
 /** Returns all legacy direct messages in a group */
 export function LegacyMessagesGroup(self: string, corraspondant: string): Model<NostrEvent[]> {
   return (store) =>
-    store.timeline({
-      kinds: [kinds.EncryptedDirectMessage],
-      "#p": [self, corraspondant],
-      authors: [self, corraspondant],
-    });
+    store.timeline([
+      {
+        kinds: [kinds.EncryptedDirectMessage],
+        "#p": [self],
+        authors: [corraspondant],
+      },
+      {
+        kinds: [kinds.EncryptedDirectMessage],
+        "#p": [corraspondant],
+        authors: [self],
+      },
+    ]);
 }
 
 /** Returns an array of legacy messages that have replies */
@@ -57,10 +64,18 @@ export function LegacyMessageReplies(self: string, message: NostrEvent): Model<N
   const corraspondant = getLegacyMessageCorraspondant(message, self);
 
   return (store) =>
-    store.timeline({
-      kinds: [kinds.EncryptedDirectMessage],
-      "#p": [self, corraspondant],
-      authors: [self, corraspondant],
-      "#e": [message.id],
-    });
+    store.timeline([
+      {
+        kinds: [kinds.EncryptedDirectMessage],
+        "#p": [self],
+        authors: [corraspondant],
+        "#e": [message.id],
+      },
+      {
+        kinds: [kinds.EncryptedDirectMessage],
+        "#p": [corraspondant],
+        authors: [self],
+        "#e": [message.id],
+      },
+    ]);
 }
