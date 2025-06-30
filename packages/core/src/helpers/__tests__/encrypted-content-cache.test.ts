@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { FakeUser } from "../../__tests__/fixtures.js";
 import { EventStore } from "../../event-store/event-store.js";
-import { EncryptedContentSymbol, unlockEncryptedContent } from "../encrypted-content.js";
+import { EncryptedContentSymbol, setEncryptedContentCache, unlockEncryptedContent } from "../encrypted-content.js";
 import { EncryptedContentFromCacheSymbol, persistEncryptedContent } from "../encrypted-content-cache.js";
 
 const mockStorage = {
@@ -26,6 +26,9 @@ describe("persistEncryptedContent", () => {
 
     const dispose = persistEncryptedContent(eventStore, mockStorage);
     eventStore.add(event);
+
+    // Wait two ticks
+    await Promise.resolve();
     await Promise.resolve();
 
     expect(mockStorage.getItem).toHaveBeenCalledWith(event.id);
@@ -41,6 +44,9 @@ describe("persistEncryptedContent", () => {
 
     const dispose = persistEncryptedContent(eventStore, mockStorage);
     eventStore.add(event);
+
+    // Wait two ticks
+    await Promise.resolve();
     await Promise.resolve();
 
     expect(mockStorage.getItem).toHaveBeenCalledWith(event.id);
@@ -73,12 +79,34 @@ describe("persistEncryptedContent", () => {
 
     const dispose = persistEncryptedContent(eventStore, mockStorage);
     eventStore.add(event);
+
+    // Wait two ticks
+    await Promise.resolve();
     await Promise.resolve();
 
     // Event should be updated in the store
     const storedEvent = eventStore.getEvent(event.id);
     expect(Reflect.get(storedEvent!, EncryptedContentSymbol)).toBe("decrypted content");
     expect(Reflect.has(storedEvent!, EncryptedContentFromCacheSymbol)).toBe(true);
+
+    dispose();
+  });
+
+  it("should call fallback method when plaintext is not in cache", async () => {
+    const event = user.event({ kind: kinds.EncryptedDirectMessage, content: "encrypted" });
+    const fallbackMock = vi.fn().mockImplementation((e) => setEncryptedContentCache(e, "fallback content"));
+
+    // Mock storage to return null (cache miss)
+    mockStorage.getItem.mockResolvedValue(null);
+
+    const dispose = persistEncryptedContent(eventStore, mockStorage, fallbackMock);
+    eventStore.add(event);
+    await Promise.resolve();
+
+    expect(mockStorage.getItem).toHaveBeenCalledWith(event.id);
+    expect(fallbackMock).toHaveBeenCalledWith(event);
+    expect(Reflect.get(event, EncryptedContentSymbol)).toBe("fallback content");
+    expect(Reflect.has(event, EncryptedContentFromCacheSymbol)).toBe(false);
 
     dispose();
   });

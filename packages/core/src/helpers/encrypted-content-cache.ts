@@ -1,4 +1,4 @@
-import { kinds } from "nostr-tools";
+import { kinds, NostrEvent } from "nostr-tools";
 import {
   catchError,
   combineLatest,
@@ -45,12 +45,24 @@ export function isEncryptedContentFromCache<T extends object>(event: T): boolean
 
 const log = logger.extend("EncryptedContentCache");
 
-/** Starts a process that persists and restores all encrypted content */
+/**
+ * Starts a process that persists and restores all encrypted content
+ * @param eventStore - The event store to listen to
+ * @param storage - The storage to use
+ * @param fallback - A function that will be called when the encrypted content is not found in storage
+ * @returns A function that can be used to stop the process
+ */
 export function persistEncryptedContent(
   eventStore: IEventStoreStreams,
   storage: EncryptedContentCache | Observable<EncryptedContentCache>,
+  fallback?: (event: NostrEvent) => any | Promise<any>,
 ): () => void {
   const storage$ = isObservable(storage) ? storage : of(storage);
+
+  // Get the encrypted content from storage or call the fallback
+  const getItem = async (storage: EncryptedContentCache, event: NostrEvent) => {
+    return (await storage.getItem(event.id)) || (fallback ? await fallback(event) : null);
+  };
 
   // Restore encrypted content when it is inserted
   const restore = eventStore.insert$
@@ -61,7 +73,7 @@ export function persistEncryptedContent(
       mergeMap((event) =>
         // Wait for storage to be available
         storage$.pipe(
-          switchMap((storage) => combineLatest([of(event), storage.getItem(event.id)])),
+          switchMap((storage) => combineLatest([of(event), getItem(storage, event)])),
           catchError((error) => {
             log(`Failed to restore encrypted content for ${event.id}`, error);
             return EMPTY;
@@ -94,7 +106,7 @@ export function persistEncryptedContent(
       mergeMap(([gift, seal]) =>
         // Wait for storage to be available
         storage$.pipe(
-          switchMap((storage) => combineLatest([of(gift), of(seal), storage.getItem(seal!.id)])),
+          switchMap((storage) => combineLatest([of(gift), of(seal), getItem(storage, seal!)])),
           catchError((error) => {
             log(`Failed to restore encrypted content for ${seal!.id}`, error);
             return EMPTY;

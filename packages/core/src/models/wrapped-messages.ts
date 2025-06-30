@@ -25,6 +25,7 @@ export function WrappedMessagesModel(self: string): Model<Rumor[]> {
         rumors
           .map((gift) => getGiftWrapRumor(gift))
           .filter((e) => !!e)
+          .filter((e) => e.kind === kinds.PrivateDirectMessage)
           .sort((a, b) => b.created_at - a.created_at),
       ),
     );
