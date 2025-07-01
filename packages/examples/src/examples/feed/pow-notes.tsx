@@ -1,16 +1,15 @@
-import { EventStore, mapEventsToStore, mapEventsToTimeline, Model } from "applesauce-core";
+import { EventStore, Model } from "applesauce-core";
 import {
   getDisplayName,
+  getOrComputeCachedValue,
   getProfilePicture,
   getSeenRelays,
   mergeRelaySets,
   ProfileContent,
-  getOrComputeCachedValue,
-  getTagValue,
 } from "applesauce-core/helpers";
 import { createAddressLoader, createTimelineLoader } from "applesauce-loaders/loaders";
 import { useObservableMemo } from "applesauce-react/hooks";
-import { onlyEvents, RelayPool } from "applesauce-relay";
+import { RelayPool } from "applesauce-relay";
 import { kinds, NostrEvent } from "nostr-tools";
 import { ProfilePointer } from "nostr-tools/nip19";
 import { useCallback, useEffect, useMemo, useState } from "react";
