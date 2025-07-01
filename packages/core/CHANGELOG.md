@@ -1,5 +1,15 @@
 # applesauce-core
 
+## 2.2.0
+
+### Minor Changes
+
+- 5183c3a: Make `getEncryptedContentEncryptionMethods` throw more describe error when event kind does not support encryption
+- 5183c3a: Add `LegacyMessagesGroups` model
+- b03e947: Add `fallback` method to `persistEncryptedContent`
+- 5183c3a: Add `WrappedMessagesGroups` model
+- 5183c3a: Add `isRumor` helper method for gift wraps
+
 ## 2.1.1
 
 ### Patch Changes
