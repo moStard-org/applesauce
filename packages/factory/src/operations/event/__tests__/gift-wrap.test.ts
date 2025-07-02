@@ -1,4 +1,12 @@
-import { getGiftWrapRumor, getGiftWrapSeal, unixNow } from "applesauce-core/helpers";
+import {
+  getGiftWrapRumor,
+  getGiftWrapSeal,
+  getRumorGiftWraps,
+  getRumorSeals,
+  getSealGiftWrap,
+  getSealRumor,
+  unixNow,
+} from "applesauce-core/helpers";
 import { kinds } from "nostr-tools";
 import { describe, expect, it } from "vitest";
 
@@ -60,6 +68,12 @@ describe("sealRumor", () => {
     expect(await other.nip44.decrypt(seal.pubkey, seal.content)).toEqual(JSON.stringify(event));
   });
 
+  it("should add the seal refeerence to the rumor", async () => {
+    const rumor = user.event({ kind: kinds.PrivateDirectMessage, content: "test" });
+    const seal = await sealRumor(other.pubkey)(rumor, { signer: user });
+    expect(getRumorSeals(rumor)).toContain(seal);
+  });
+
   it("should throw if no signer is provided", async () => {
     const event = user.event({ kind: kinds.PrivateDirectMessage, content: "test" });
     await expect(sealRumor(other.pubkey)(event, {})).rejects.toThrow("A signer is required to create a seal");
@@ -87,6 +101,12 @@ describe("wrapSeal", () => {
     });
   });
 
+  it("should set the upstream reference on the seal", async () => {
+    const seal = user.event({ kind: kinds.Seal, content: "test" });
+    const giftWrap = await wrapSeal(other.pubkey)(seal, {});
+    expect(getSealGiftWrap(seal)).toBe(giftWrap);
+  });
+
   it("should sign with a random key", async () => {
     const seal = user.event({ kind: kinds.Seal, content: "test" });
     const giftWrap = await wrapSeal(other.pubkey)(seal, {});
@@ -97,15 +117,17 @@ describe("wrapSeal", () => {
 });
 
 describe("giftWrap", () => {
-  it("should preserve the unencrypted rumor", async () => {
-    const rumor = await modify(
-      user.event({ kind: kinds.PrivateDirectMessage, content: "test" }),
-      { signer: user },
-      toRumor(),
-    );
-    const gift = await giftWrap(other.pubkey)(rumor, { signer: user });
+  it("should preserve upstream and downstream references", async () => {
+    const event = user.event({ kind: kinds.PrivateDirectMessage, content: "test" });
 
-    expect(getGiftWrapSeal(gift)).toBeDefined();
-    expect(getGiftWrapRumor(gift)).toEqual(rumor);
+    const gift = await giftWrap(other.pubkey)(event, { signer: user });
+    const seal = getGiftWrapSeal(gift);
+    const rumor = getGiftWrapRumor(gift);
+
+    expect(seal).toBeDefined();
+    expect(rumor).toBeDefined();
+    expect(getRumorSeals(rumor!)).toContain(seal!);
+    expect(getSealGiftWrap(seal!)).toBe(gift);
+    expect(getRumorGiftWraps(rumor!)).toContain(gift);
   });
 });

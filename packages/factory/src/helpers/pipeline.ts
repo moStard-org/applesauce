@@ -1,6 +1,6 @@
 // Copied from rxjs pipe() method and modified to support context
 
-import { EncryptedContentSymbol } from "applesauce-core/helpers";
+import { EncryptedContentSymbol, GiftWrapSymbol, RumorSymbol, SealSymbol } from "applesauce-core/helpers";
 import { EventFactoryContext, EventOperation, Operation, TagOperation } from "../types.js";
 
 export function identity<T>(x: T): T {
@@ -11,7 +11,8 @@ export function identity<T>(x: T): T {
 export function eventPipe(...operations: (EventOperation | undefined)[]): EventOperation {
   return pipeFromAsyncArray(
     operations.filter((o) => !!o),
-    [EncryptedContentSymbol],
+    // Preserve the encrypted content, gift wrap symbols
+    [EncryptedContentSymbol, GiftWrapSymbol, RumorSymbol, SealSymbol],
   );
 }
 

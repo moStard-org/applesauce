@@ -1,10 +1,10 @@
 import {
   EncryptedContentSymbol,
-  getGiftWrapRumor,
-  GiftWrapRumorSymbol,
-  GiftWrapSealSymbol,
+  GiftWrapSymbol,
   Rumor,
-  unixNow,
+  RumorSymbol,
+  SealSymbol,
+  unixNow
 } from "applesauce-core/helpers";
 import {
   EventTemplate,
@@ -68,13 +68,17 @@ export function sealRumor(pubkey: string): EventOperation<Rumor, NostrEvent> {
       stamp(),
     );
 
-    const signed = await ctx.signer.signEvent(unsigned);
+    const seal = await ctx.signer.signEvent(unsigned);
 
-    // Include the rumor in the seal
-    Reflect.set(signed, EncryptedContentSymbol, plaintext);
-    Reflect.set(signed, GiftWrapRumorSymbol, rumor);
+    // Set the downstream reference on the seal
+    Reflect.set(seal, RumorSymbol, rumor);
 
-    return signed;
+    // Add the upstream reference to the rumor
+    const seals = Reflect.get(rumor, SealSymbol);
+    if (seals) seals.add(seal);
+    else Reflect.set(rumor, SealSymbol, new Set([seal]));
+
+    return seal;
   };
 }
 
@@ -93,7 +97,7 @@ export function wrapSeal(pubkey: string, opts?: GiftWrapOptions): EventOperation
         content: nip44.encrypt(plaintext, nip44.getConversationKey(key, pubkey)),
         tags: [["p", pubkey]],
       },
-      // Pass an empty context here so here is no change to use the users pubkey
+      // Pass an empty context here so here there is no chance to use the users pubkey
       {},
       // Set meta tags on the gift wrap
       setMetaTags(opts),
@@ -101,12 +105,14 @@ export function wrapSeal(pubkey: string, opts?: GiftWrapOptions): EventOperation
 
     const gift = finalizeEvent(draft, key);
 
-    // Include unencrypted content cache
-    Reflect.set(gift, GiftWrapSealSymbol, seal);
-    Reflect.set(gift, EncryptedContentSymbol, plaintext);
+    // Set the upstream references on the seal
+    Reflect.set(seal, GiftWrapSymbol, gift);
 
-    // Parse the seal event and rumor
-    getGiftWrapRumor(gift);
+    // Set the downstream reference on the gift wrap
+    Reflect.set(gift, SealSymbol, seal);
+
+    // Set the encrypted content on the gift wrap
+    Reflect.set(gift, EncryptedContentSymbol, plaintext);
 
     return gift;
   };

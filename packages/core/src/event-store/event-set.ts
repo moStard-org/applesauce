@@ -394,4 +394,15 @@ export class EventSet implements IEventSet {
 
     return removed;
   }
+
+  /** Resets the event set */
+  reset(): void {
+    this.events.clear();
+    this.kinds.clear();
+    this.authors.clear();
+    this.tags.clear();
+    this.created_at = [];
+    this.replaceable.clear();
+    this.claims = new WeakMap();
+  }
 }

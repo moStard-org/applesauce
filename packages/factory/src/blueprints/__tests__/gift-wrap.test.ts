@@ -11,11 +11,7 @@ const factory = new EventFactory({ signer: user });
 
 describe("GiftWrapBlueprint", () => {
   it("should create a gift wrap event", async () => {
-    const giftwrap = (await factory.create(
-      GiftWrapBlueprint,
-      other.pubkey,
-      NoteBlueprint("hello world"),
-    )) as NostrEvent;
+    const giftwrap = await factory.create(GiftWrapBlueprint, other.pubkey, NoteBlueprint("hello world"));
 
     expect(giftwrap.pubkey).not.toBe(user.pubkey);
     const seal = JSON.parse(await other.nip44.decrypt(giftwrap.pubkey, giftwrap.content)) as NostrEvent;

@@ -22,7 +22,7 @@ import {
   setEncryptedContentCache,
 } from "./encrypted-content.js";
 import { notifyEventUpdate } from "./event.js";
-import { getGiftWrapSeal } from "./gift-wraps.js";
+import { getGiftWrapSeal, getSealGiftWrap, getSealRumor } from "./gift-wraps.js";
 
 /** A symbol that is used to mark encrypted content as being from a cache */
 export const EncryptedContentFromCacheSymbol = Symbol.for("encrypted-content-from-cache");
@@ -97,16 +97,16 @@ export function persistEncryptedContent(
       // Look for gift wraps that are unlocked
       filter((e) => e.kind === kinds.GiftWrap && !isEncryptedContentLocked(e)),
       // Get the seal event
-      map((gift) => [gift, getGiftWrapSeal(gift)] as const),
+      map((gift) => getGiftWrapSeal(gift)),
       // Look for gift wraps with locked seals
-      filter(([_gift, seal]) => seal !== undefined && isEncryptedContentLocked(seal)),
+      filter((seal) => seal !== undefined && isEncryptedContentLocked(seal)),
       // Only attempt to unlock seals once
-      distinct(([_gift, seal]) => seal!.id),
+      distinct((seal) => seal!.id),
       // Get encrypted content from storage
-      mergeMap(([gift, seal]) =>
+      mergeMap((seal) =>
         // Wait for storage to be available
         storage$.pipe(
-          switchMap((storage) => combineLatest([of(gift), of(seal), getItem(storage, seal!)])),
+          switchMap((storage) => combineLatest([of(seal), getItem(storage, seal!)])),
           catchError((error) => {
             log(`Failed to restore encrypted content for ${seal!.id}`, error);
             return EMPTY;
@@ -114,14 +114,18 @@ export function persistEncryptedContent(
         ),
       ),
     )
-    .subscribe(async ([gift, seal, content]) => {
+    .subscribe(async ([seal, content]) => {
       if (!seal || !content) return;
 
       markEncryptedContentFromCache(seal);
       setEncryptedContentCache(seal, content);
 
+      // Parse the rumor event
+      getSealRumor(seal);
+
       // Trigger an update to the gift wrap event
-      notifyEventUpdate(gift);
+      const gift = getSealGiftWrap(seal);
+      if (gift) notifyEventUpdate(gift);
 
       log(`Restored encrypted content for ${seal.id}`);
     });
@@ -159,15 +163,15 @@ export function persistEncryptedContent(
       // Look for gift wraps that are unlocked
       filter(([event]) => event.kind === kinds.GiftWrap && !isEncryptedContentLocked(event)),
       // Get the seal event
-      map(([gift, storage]) => [gift, getGiftWrapSeal(gift), storage] as const),
+      map(([gift, storage]) => [getGiftWrapSeal(gift), storage] as const),
       // Make sure the seal is defined
-      filter(([_gift, seal]) => seal !== undefined),
+      filter(([seal]) => seal !== undefined),
       // Make sure seal is unlocked and not from cache
-      filter(([_gift, seal]) => !isEncryptedContentLocked(seal!) && !isEncryptedContentFromCache(seal!)),
+      filter(([seal]) => !isEncryptedContentLocked(seal!) && !isEncryptedContentFromCache(seal!)),
       // Only persist the seal once
       distinct(([seal]) => seal!.id),
     )
-    .subscribe(async ([_gift, seal, storage]) => {
+    .subscribe(async ([seal, storage]) => {
       if (!seal) return;
       try {
         const content = getEncryptedContent(seal!);

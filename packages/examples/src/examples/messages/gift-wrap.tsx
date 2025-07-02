@@ -89,7 +89,7 @@ function MessageForm({ conversation, relay }: { conversation: string; relay: str
 
       // Create and send gift wrapped message to all participants
       await actions
-        .exec(SendWrappedMessage, conversation, message.trim(), {
+        .exec(SendWrappedMessage, getConversationParticipants(conversation), message.trim(), {
           expiration: expiration ? unixNow() + EXPIRATIONS[expiration] : undefined,
         })
         .forEach((gift) => lastValueFrom(pool.publish([relay], gift)));
@@ -170,7 +170,10 @@ function MessageGroup({ messages, pubkey }: { messages: Rumor[]; pubkey: string 
 function ConversationView({ pubkey, conversation, relay }: { pubkey: string; conversation: string; relay: string }) {
   // Get all messages for this conversation
   const messages = useObservableMemo(
-    () => eventStore.model(WrappedMessagesGroup, pubkey, conversation).pipe(map((t) => [...t])),
+    () =>
+      eventStore
+        .model(WrappedMessagesGroup, pubkey, getConversationParticipants(conversation))
+        .pipe(map((t) => [...t])),
     [pubkey, conversation],
   );
 
