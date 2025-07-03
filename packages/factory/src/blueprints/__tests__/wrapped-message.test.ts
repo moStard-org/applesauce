@@ -100,6 +100,25 @@ describe("WrappedMessageBlueprint", () => {
     expect(Reflect.get(rumor, "sig")).toBeUndefined();
     expect(rumor.id).toBeDefined();
   });
+
+  it('should not include "p" tags for mentioned pubkeys', async () => {
+    const message = "Hello @npub1qz4fuw033m6hnwfl0gjq5awalx8v46zc94fx52jry59x6yp4yu0s4c59cf!";
+    const rumor = await factory.create(WrappedMessageBlueprint, bob.pubkey, message);
+
+    expect(
+      rumor.tags.some(
+        (t) => t[0] === "p" && t[1] === "00aa9e39f18ef579b93f7a240a75ddf98ecae8582d526a2a43250a6d1035271f",
+      ),
+    ).toBe(false);
+  });
+
+  it("should throw error when no signer is provided", async () => {
+    const factoryWithoutSigner = new EventFactory();
+
+    await expect(factoryWithoutSigner.create(WrappedMessageBlueprint, bob.pubkey, "test message")).rejects.toThrow(
+      "Missing signer",
+    );
+  });
 });
 
 describe("WrappedMessageReplyBlueprint", () => {
@@ -166,22 +185,12 @@ describe("WrappedMessageReplyBlueprint", () => {
       ]),
     );
   });
-});
-
-describe("Error handling", () => {
-  it("should throw error when no signer is provided", async () => {
-    const factoryWithoutSigner = new EventFactory();
-
-    await expect(factoryWithoutSigner.create(WrappedMessageBlueprint, bob.pubkey, "test message")).rejects.toThrow(
-      "Missing signer",
-    );
-  });
 
   it("should throw error when replying to non-private message", async () => {
     const invalidParent = alice.note("Not a private message");
 
     await expect(factory.create(WrappedMessageReplyBlueprint, invalidParent as any, "reply")).rejects.toThrow(
-      "Parent must be a private direct message event",
+      "Parent must be a wrapped message event (kind 14)",
     );
   });
 });

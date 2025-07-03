@@ -21,6 +21,8 @@ export function LegacyMessageBlueprint(recipient: string, message: string, opts?
 
 /** Creates a reply to a legacy message */
 export function LegacyMessageReplyBlueprint(parent: NostrEvent, message: string, opts?: LegacyMessageBlueprintOptions) {
+  if (parent.kind !== kinds.EncryptedDirectMessage) throw new Error("Parent message must be a legacy message (kind 4)");
+
   return blueprint(
     kinds.EncryptedDirectMessage,
     // Encrypt the contents of the message to the recipient

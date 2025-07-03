@@ -21,11 +21,13 @@ export function SendWrappedMessage(
   message: string,
   opts?: WrappedMessageBlueprintOptions & GiftWrapOptions,
 ): Action {
-  return async function* ({ factory }) {
+  return async function* ({ factory, self }) {
     const rumor = await factory.create(WrappedMessageBlueprint, participants, message, opts);
 
-    // Get the pubkeys to send this message to (will include the sender)
-    const pubkeys = getConversationParticipants(rumor);
+    // Get the pubkeys to send this message to and ensure the sender is included
+    const pubkeys = new Set(getConversationParticipants(rumor));
+    pubkeys.add(self);
+
     for (const pubkey of pubkeys) {
       yield await factory.create(GiftWrapBlueprint, pubkey, rumor, opts);
     }
