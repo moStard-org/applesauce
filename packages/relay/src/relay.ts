@@ -123,13 +123,13 @@ export class Relay implements IRelay {
   /** How long to keep the connection alive after nothing is subscribed */
   keepAlive = 30_000;
 
-  // subjects that track if an "auth-required" message has been received for REQ or EVENT
+  // Subjects that track if an "auth-required" message has been received for REQ or EVENT
   protected receivedAuthRequiredForReq = new BehaviorSubject(false);
   protected receivedAuthRequiredForEvent = new BehaviorSubject(false);
 
   // Computed observables that track if auth is required for REQ or EVENT
-  protected authRequiredForReq: Observable<boolean>;
-  protected authRequiredForEvent: Observable<boolean>;
+  authRequiredForRead$: Observable<boolean>;
+  authRequiredForPublish$: Observable<boolean>;
 
   protected resetState() {
     // NOTE: only update the values if they need to be changed, otherwise this will cause an infinite loop
@@ -193,12 +193,12 @@ export class Relay implements IRelay {
     this.limitations$ = this.information$.pipe(map((info) => info?.limitation));
 
     // Create observables that track if auth is required for REQ or EVENT
-    this.authRequiredForReq = combineLatest([this.receivedAuthRequiredForReq, this.limitations$]).pipe(
+    this.authRequiredForRead$ = combineLatest([this.receivedAuthRequiredForReq, this.limitations$]).pipe(
       map(([received, limitations]) => received || limitations?.auth_required === true),
       tap((required) => required && this.log("Auth required for REQ")),
       shareReplay(1),
     );
-    this.authRequiredForEvent = combineLatest([this.receivedAuthRequiredForEvent, this.limitations$]).pipe(
+    this.authRequiredForPublish$ = combineLatest([this.receivedAuthRequiredForEvent, this.limitations$]).pipe(
       map(([received, limitations]) => received || limitations?.auth_required === true),
       tap((required) => required && this.log("Auth required for EVENT")),
       shareReplay(1),
@@ -377,7 +377,7 @@ export class Relay implements IRelay {
     );
 
     // Wait for auth if required and make sure to start the watch tower
-    return this.waitForReady(this.waitForAuth(this.authRequiredForReq, observable));
+    return this.waitForReady(this.waitForAuth(this.authRequiredForRead$, observable));
   }
 
   /** Send an EVENT or AUTH message and return an observable of PublishResponse that completes or errors */
@@ -415,7 +415,7 @@ export class Relay implements IRelay {
 
     // skip wait for auth if verb is AUTH
     if (verb === "AUTH") return this.waitForReady(observable);
-    else return this.waitForReady(this.waitForAuth(this.authRequiredForEvent, observable));
+    else return this.waitForReady(this.waitForAuth(this.authRequiredForPublish$, observable));
   }
 
   /** send and AUTH message */
