@@ -184,7 +184,7 @@ describe("req", () => {
     expect(server).not.toHaveReceivedMessages(["REQ", "sub2", { kinds: [1] }]);
 
     // Simulate successful authentication
-    relay.authenticated$.next(true);
+    relay.authenticationResponse$.next({ ok: true });
 
     // Now the REQ should be sent
     await expect(server).toReceiveMessage(["REQ", "sub2", { kinds: [1] }]);
@@ -197,60 +197,61 @@ describe("req", () => {
     expect(secondSub.getValues()).toEqual([expect.objectContaining(mockEvent), "EOSE"]);
   });
 
-  it("should open connection and wait for authentication if relay info document has limitations.auth_required = true", async () => {
-    // Mock the fetchInformationDocument method to return a document with auth_required = true
-    vi.spyOn(Relay, "fetchInformationDocument").mockImplementation(() =>
-      of({
-        name: "Auth Required Relay",
-        description: "A relay that requires authentication",
-        pubkey: "",
-        contact: "",
-        supported_nips: [1, 2, 4],
-        software: "",
-        version: "",
-        limitation: {
-          auth_required: true,
-        },
-      } satisfies RelayInformation),
-    );
+  // Skipped test because it no longer waits for NIP-11 information document
+  // it("should open connection and wait for authentication if relay info document has limitations.auth_required = true", async () => {
+  //   // Mock the fetchInformationDocument method to return a document with auth_required = true
+  //   vi.spyOn(Relay, "fetchInformationDocument").mockImplementation(() =>
+  //     of({
+  //       name: "Auth Required Relay",
+  //       description: "A relay that requires authentication",
+  //       pubkey: "",
+  //       contact: "",
+  //       supported_nips: [1, 2, 4],
+  //       software: "",
+  //       version: "",
+  //       limitation: {
+  //         auth_required: true,
+  //       },
+  //     } satisfies RelayInformation),
+  //   );
 
-    // Create a subscription that should wait for auth
-    const sub = subscribeSpyTo(relay.req([{ kinds: [1] }], "sub1"));
+  //   // Create a subscription that should wait for auth
+  //   const sub = subscribeSpyTo(relay.req([{ kinds: [1] }], "sub1"));
 
-    // Wait 10ms to ensure the information document is fetched
-    await new Promise((resolve) => setTimeout(resolve, 10));
+  //   // Wait 10ms to ensure the information document is fetched
+  //   await new Promise((resolve) => setTimeout(resolve, 10));
 
-    // Wait for connection
-    await server.connected;
+  //   // Wait for connection
+  //   await server.connected;
 
-    // Verify no REQ message was sent yet (waiting for auth)
-    expect(server).not.toHaveReceivedMessages(["REQ", "sub1", { kinds: [1] }]);
+  //   // Verify no REQ message was sent yet (waiting for auth)
+  //   expect(server).not.toHaveReceivedMessages(["REQ", "sub1", { kinds: [1] }]);
 
-    // Send AUTH challenge
-    server.send(["AUTH", "challenge"]);
+  //   // Send AUTH challenge
+  //   server.send(["AUTH", "challenge"]);
 
-    // Send auth response
-    subscribeSpyTo(relay.auth(mockEvent));
+  //   // Send auth response
+  //   subscribeSpyTo(relay.auth(mockEvent));
 
-    // Verify the auth event was sent
-    await expect(server.nextMessage).resolves.toEqual(["AUTH", mockEvent]);
+  //   // Verify the auth event was sent
+  //   await expect(server.nextMessage).resolves.toEqual(["AUTH", mockEvent]);
 
-    // Accept auth
-    server.send(["OK", mockEvent.id, true, ""]);
+  //   // Accept auth
+  //   server.send(["OK", mockEvent.id, true, ""]);
 
-    // Simulate successful authentication
-    expect(relay.authenticated).toBe(true);
+  //   // Simulate successful authentication
+  //   expect(relay.authenticated).toBe(true);
 
-    // Now the REQ should be sent
-    await expect(server).toReceiveMessage(["REQ", "sub1", { kinds: [1] }]);
+  //   // Now the REQ should be sent
+  //   await expect(server).toReceiveMessage(["REQ", "sub1", { kinds: [1] }]);
 
-    // Send EVENT and EOSE to complete the subscription
-    server.send(["EVENT", "sub1", mockEvent]);
-    server.send(["EOSE", "sub1"]);
+  //   // Send EVENT and EOSE to complete the subscription
+  //   server.send(["EVENT", "sub1", mockEvent]);
+  //   server.send(["EOSE", "sub1"]);
 
-    // Verify the subscription received the event and EOSE
-    expect(sub.getValues()).toEqual([expect.objectContaining(mockEvent), "EOSE"]);
-  });
+  //   // Verify the subscription received the event and EOSE
+  //   expect(sub.getValues()).toEqual([expect.objectContaining(mockEvent), "EOSE"]);
+  // });
 
   it("should throw error if relay closes connection with error", async () => {
     const spy = subscribeSpyTo(relay.req([{ kinds: [1] }], "sub1"), { expectErrors: true });
@@ -367,7 +368,7 @@ describe("event", () => {
     expect(server).not.toHaveReceivedMessages(["EVENT", mockEvent]);
 
     // Simulate successful authentication
-    relay.authenticated$.next(true);
+    relay.authenticationResponse$.next({ ok: true });
 
     // Now the EVENT should be sent
     await expect(server).toReceiveMessage(["EVENT", mockEvent]);
@@ -380,45 +381,46 @@ describe("event", () => {
     expect(secondSpy.receivedComplete()).toBe(true);
   });
 
-  it("should wait for authentication if relay info document has limitations.auth_required = true", async () => {
-    // Mock the fetchInformationDocument method to return a document with auth_required = true
-    vi.spyOn(Relay, "fetchInformationDocument").mockImplementation(() =>
-      of({
-        name: "Auth Required Relay",
-        description: "A relay that requires authentication",
-        pubkey: "",
-        contact: "",
-        supported_nips: [1, 2, 4],
-        software: "",
-        version: "",
-        limitation: {
-          auth_required: true,
-        },
-      } satisfies RelayInformation),
-    );
+  // Skipped test because it no longer waits for NIP-11 information document
+  // it("should wait for authentication if relay info document has limitations.auth_required = true", async () => {
+  //   // Mock the fetchInformationDocument method to return a document with auth_required = true
+  //   vi.spyOn(Relay, "fetchInformationDocument").mockImplementation(() =>
+  //     of({
+  //       name: "Auth Required Relay",
+  //       description: "A relay that requires authentication",
+  //       pubkey: "",
+  //       contact: "",
+  //       supported_nips: [1, 2, 4],
+  //       software: "",
+  //       version: "",
+  //       limitation: {
+  //         auth_required: true,
+  //       },
+  //     } satisfies RelayInformation),
+  //   );
 
-    // Create a subscription that should wait for auth
-    const sub = subscribeSpyTo(relay.event(mockEvent));
+  //   // Create a subscription that should wait for auth
+  //   const sub = subscribeSpyTo(relay.event(mockEvent));
 
-    // Wait 10ms to ensure the information document is fetched
-    await new Promise((resolve) => setTimeout(resolve, 10));
+  //   // Wait 10ms to ensure the information document is fetched
+  //   await new Promise((resolve) => setTimeout(resolve, 10));
 
-    // Verify no REQ message was sent yet (waiting for auth)
-    expect(server).not.toHaveReceivedMessages(["EVENT", mockEvent]);
+  //   // Verify no REQ message was sent yet (waiting for auth)
+  //   expect(server).not.toHaveReceivedMessages(["EVENT", mockEvent]);
 
-    // Simulate successful authentication
-    relay.authenticated$.next(true);
+  //   // Simulate successful authentication
+  //   relay.authenticated$.next(true);
 
-    // Now the REQ should be sent
-    await expect(server).toReceiveMessage(["EVENT", mockEvent]);
+  //   // Now the REQ should be sent
+  //   await expect(server).toReceiveMessage(["EVENT", mockEvent]);
 
-    // Send EVENT and EOSE to complete the subscription
-    server.send(["OK", mockEvent.id, true, ""]);
+  //   // Send EVENT and EOSE to complete the subscription
+  //   server.send(["OK", mockEvent.id, true, ""]);
 
-    // Verify the subscription completed
-    await sub.onComplete();
-    expect(sub.receivedComplete()).toBe(true);
-  });
+  //   // Verify the subscription completed
+  //   await sub.onComplete();
+  //   expect(sub.receivedComplete()).toBe(true);
+  // });
 
   it("should trigger connection to relay", async () => {
     subscribeSpyTo(relay.event(mockEvent));

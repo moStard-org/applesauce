@@ -73,8 +73,10 @@ export class Relay implements IRelay {
   connected$ = new BehaviorSubject(false);
   /** The authentication challenge string from the relay */
   challenge$ = new BehaviorSubject<string | null>(null);
-  /** Whether the client is authenticated with the relay */
-  authenticated$ = new BehaviorSubject(false);
+  /** Boolean authentication state (will be false if auth failed) */
+  authenticated$: Observable<boolean>;
+  /** The response to the last AUTH message sent to the relay */
+  authenticationResponse$ = new BehaviorSubject<PublishResponse | null>(null);
   /** The notices from the relay */
   notices$ = new BehaviorSubject<string[]>([]);
   /** The last connection error */
@@ -109,7 +111,10 @@ export class Relay implements IRelay {
     return this.notices$.value;
   }
   get authenticated() {
-    return this.authenticated$.value;
+    return this.authenticationResponse?.ok === true;
+  }
+  get authenticationResponse() {
+    return this.authenticationResponse$.value;
   }
   get information() {
     return this._nip11;
@@ -134,7 +139,7 @@ export class Relay implements IRelay {
   protected resetState() {
     // NOTE: only update the values if they need to be changed, otherwise this will cause an infinite loop
     if (this.challenge$.value !== null) this.challenge$.next(null);
-    if (this.authenticated$.value) this.authenticated$.next(false);
+    if (this.authenticationResponse$.value) this.authenticationResponse$.next(null);
     if (this.notices$.value.length > 0) this.notices$.next([]);
 
     if (this.receivedAuthRequiredForReq.value) this.receivedAuthRequiredForReq.next(false);
@@ -149,6 +154,9 @@ export class Relay implements IRelay {
     opts?: RelayOptions,
   ) {
     this.log = this.log.extend(url);
+
+    // Create an observable that tracks boolean authentication state
+    this.authenticated$ = this.authenticationResponse$.pipe(map((response) => response?.ok === true));
 
     /** Use the static method to create a new reconnect method for this relay */
     this.reconnectTimer = Relay.createReconnectTimer(url);
@@ -193,13 +201,11 @@ export class Relay implements IRelay {
     this.limitations$ = this.information$.pipe(map((info) => info?.limitation));
 
     // Create observables that track if auth is required for REQ or EVENT
-    this.authRequiredForRead$ = combineLatest([this.receivedAuthRequiredForReq, this.limitations$]).pipe(
-      map(([received, limitations]) => received || limitations?.auth_required === true),
+    this.authRequiredForRead$ = this.receivedAuthRequiredForReq.pipe(
       tap((required) => required && this.log("Auth required for REQ")),
       shareReplay(1),
     );
-    this.authRequiredForPublish$ = combineLatest([this.receivedAuthRequiredForEvent, this.limitations$]).pipe(
-      map(([received, limitations]) => received || limitations?.auth_required === true),
+    this.authRequiredForPublish$ = this.receivedAuthRequiredForEvent.pipe(
       tap((required) => required && this.log("Auth required for EVENT")),
       shareReplay(1),
     );
@@ -422,7 +428,7 @@ export class Relay implements IRelay {
   auth(event: NostrEvent): Observable<PublishResponse> {
     return this.event(event, "AUTH").pipe(
       // update authenticated
-      tap((result) => this.authenticated$.next(result.ok)),
+      tap((result) => this.authenticationResponse$.next(result)),
     );
   }
 
