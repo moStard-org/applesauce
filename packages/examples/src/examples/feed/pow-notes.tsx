@@ -181,10 +181,7 @@ export default function PoWNotes() {
   const [loading, setLoading] = useState(false);
 
   // Create a timeline loader
-  const timelineLoader = useMemo(
-    () => createTimelineLoader(pool, [relay], { kinds: [1] }, { eventStore, limit: 50 }),
-    [relay],
-  );
+  const timelineLoader = useMemo(() => createTimelineLoader(pool, [relay], { kinds: [1] }, { eventStore }), [relay]);
 
   // Load initial events on mount
   useEffect(() => {
