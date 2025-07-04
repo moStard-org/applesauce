@@ -19,11 +19,12 @@ beforeEach(() => {
 });
 
 describe("FollowUser", () => {
-  it("should throw an error if contacts does not exist", async () => {
+  it("should create a new contacts event if one does not exist", async () => {
     // don't add any events to the store
-    await expect(hub.run(FollowUser, user.pubkey)).rejects.toThrow();
+    await hub.run(FollowUser, user.pubkey);
 
-    expect(publish).not.toHaveBeenCalled();
+    expect(publish).toHaveBeenCalled();
+    expect(publish).toHaveBeenCalledWith(expect.objectContaining({ kind: 3, tags: [["p", user.pubkey]] }));
   });
 
   it('should publish an event with a new "p" tag', async () => {
@@ -38,11 +39,11 @@ describe("FollowUser", () => {
 });
 
 describe("UnfollowUser", () => {
-  it("should throw an error if contacts does not exist", async () => {
+  it("should yield nothing if contacts does not exist", async () => {
     // don't add any events to the store
-    await expect(hub.run(UnfollowUser, user.pubkey)).rejects.toThrow();
+    await hub.run(UnfollowUser, user.pubkey);
 
-    expect(publish).not.toHaveBeenCalled();
+    expect(publish).not.toBeCalled();
   });
 
   it('should publish an event with a new "p" tag', async () => {

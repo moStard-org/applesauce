@@ -32,10 +32,11 @@ export class FakeUser extends SimpleSigner {
   }
 
   list(tags: string[][] = [], extra?: Partial<NostrEvent>) {
+    if (tags.some((t) => t[0] === "d") === false) tags = [["d", nanoid()], ...tags];
     return this.event({
       kind: kinds.Bookmarksets,
       content: "",
-      tags: [["d", nanoid()], ...tags],
+      tags,
       ...extra,
     });
   }
