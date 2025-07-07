@@ -6,7 +6,7 @@ export const Expressions = {
     return /https?:\/\/([a-zA-Z0-9\.\-]+\.[a-zA-Z]+(?::\d+)?)([\/\?#][\p{L}\p{N}\p{M}&\.-\/\?=#\-@%\+_,:!~*]*)?/gu;
   },
   get cashu() {
-    return /(?:cashu:\/{0,2})?(cashu(?:A|B)[A-Za-z0-9_-]{100,10000}={0,3})/gi;
+    return /(?:cashu:\/{0,2})?(cashu(?:A|B)[A-Za-z0-9_-]{100,}={0,3})/gi;
   },
   get nostrLink() {
     return /(?:nostr:)?((npub|note|nprofile|nevent|naddr)1[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{58,})/gi;
