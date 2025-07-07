@@ -1,5 +1,13 @@
 # applesauce-content
 
+## 2.3.0
+
+### Patch Changes
+
+- 24e5130: Fix matching 10k+ long cashu strings
+- Updated dependencies
+  - applesauce-core@2.3.0
+
 ## 2.0.0
 
 ### Minor Changes
