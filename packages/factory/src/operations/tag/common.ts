@@ -60,7 +60,7 @@ export function removeEventTag(id: string | EventPointer): TagOperation {
 }
 
 /** Adds a single "a" tag based on an AddressPointer */
-export function addCoordinateTag(cord: string | AddressPointer, replace = true): TagOperation {
+export function addAddressTag(cord: string | AddressPointer, replace = true): TagOperation {
   return async (tags, { getPubkeyRelayHint }) => {
     // convert the string into an address pointer object
     const pointer = typeof cord === "string" ? parseCoordinate(cord, true, false) : cord;
@@ -80,12 +80,18 @@ export function addCoordinateTag(cord: string | AddressPointer, replace = true):
   };
 }
 
+/** @deprecated use addAddressTag instead */
+export const addCoordinateTag = addAddressTag;
+
 /** Removes all "a" tags for address pointer */
-export function removeCoordinateTag(cord: string | AddressPointer): TagOperation {
+export function removeAddressTag(cord: string | AddressPointer): TagOperation {
   cord = typeof cord !== "string" ? getCoordinateFromAddressPointer(cord) : cord;
 
   return (tags) => tags.filter((t) => !(t[0] === "a" && t[1] === cord));
 }
+
+/** @deprecated use removeAddressTag instead */
+export const removeCoordinateTag = removeAddressTag;
 
 /** Adds a name / value tag */
 export function addNameValueTag(

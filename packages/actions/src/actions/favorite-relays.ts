@@ -2,7 +2,7 @@ import { IEventStoreRead } from "applesauce-core/event-store";
 import { FAVORITE_RELAYS_KIND } from "applesauce-core/helpers/lists";
 import { TagOperation } from "applesauce-factory";
 import { modifyHiddenTags, modifyPublicTags } from "applesauce-factory/operations/event";
-import { addCoordinateTag, addRelayTag, removeCoordinateTag, removeRelayTag } from "applesauce-factory/operations/tag";
+import { addAddressTag, addRelayTag, removeAddressTag, removeRelayTag } from "applesauce-factory/operations/tag";
 import { AddressPointer } from "nostr-tools/nip19";
 
 import { Action } from "../action-hub.js";
@@ -40,7 +40,7 @@ export function AddFavoriteRelaySet(addr: AddressPointer[] | AddressPointer, hid
   return async function* ({ events, factory, self }) {
     const favorites = getFavoriteRelaysEvent(events, self);
 
-    const operation = Array.isArray(addr) ? addr.map((a) => addCoordinateTag(a)) : addCoordinateTag(addr);
+    const operation = Array.isArray(addr) ? addr.map((a) => addAddressTag(a)) : addAddressTag(addr);
     const draft = await factory.modifyTags(favorites, hidden ? { hidden: operation } : operation);
     yield await factory.sign(draft);
   };
@@ -51,7 +51,7 @@ export function RemoveFavoriteRelaySet(addr: AddressPointer[] | AddressPointer, 
   return async function* ({ events, factory, self }) {
     const favorites = getFavoriteRelaysEvent(events, self);
 
-    const operation = Array.isArray(addr) ? addr.map((a) => removeCoordinateTag(a)) : removeCoordinateTag(addr);
+    const operation = Array.isArray(addr) ? addr.map((a) => removeAddressTag(a)) : removeAddressTag(addr);
     const draft = await factory.modifyTags(favorites, hidden ? { hidden: operation } : operation);
     yield await factory.sign(draft);
   };
@@ -76,10 +76,10 @@ export function NewFavoriteRelays(
     }
 
     if (Array.isArray(sets)) {
-      publicOperations.push(...sets.map((s) => addCoordinateTag(s)));
+      publicOperations.push(...sets.map((s) => addAddressTag(s)));
     } else {
-      if (sets?.public) publicOperations.push(...(sets?.public ?? []).map((s) => addCoordinateTag(s)));
-      if (sets?.hidden) hiddenOperations.push(...(sets?.hidden ?? []).map((s) => addCoordinateTag(s)));
+      if (sets?.public) publicOperations.push(...(sets?.public ?? []).map((s) => addAddressTag(s)));
+      if (sets?.hidden) hiddenOperations.push(...(sets?.hidden ?? []).map((s) => addAddressTag(s)));
     }
 
     const draft = await factory.build(
