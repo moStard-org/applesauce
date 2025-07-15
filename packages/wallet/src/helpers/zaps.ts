@@ -1,6 +1,13 @@
 import { Proof } from "@cashu/cashu-ts";
-import { getOrComputeCachedValue, processTags, safeParse } from "applesauce-core/helpers";
+import {
+  getAddressPointerFromATag,
+  getEventPointerFromETag,
+  getOrComputeCachedValue,
+  processTags,
+  safeParse,
+} from "applesauce-core/helpers";
 import { NostrEvent } from "nostr-tools";
+import { AddressPointer, EventPointer } from "nostr-tools/nip19";
 import { getHistoryRedeemed } from "./history.js";
 
 export const NUTZAP_KIND = 9321;
@@ -27,8 +34,22 @@ export function getNutzapRecipient(event: NostrEvent): string | undefined {
 }
 
 /** Returns the event ID being nutzapped from a kind:9321 nutzap event */
-export function getNutzapEventId(event: NostrEvent): string | undefined {
-  return event.tags.find((t) => t[0] === "e")?.[1];
+export function getNutzapEventPointer(event: NostrEvent): EventPointer | undefined {
+  const tag = event.tags.find((t) => t[0] === "e");
+  if (!tag) return;
+  return getEventPointerFromETag(tag);
+}
+
+/** Returns the event ID being nutzapped from a kind:9321 nutzap event */
+export function getNutzapAddressPointer(event: NostrEvent): AddressPointer | undefined {
+  const tag = event.tags.find((t) => t[0] === "a");
+  if (!tag) return;
+  return getAddressPointerFromATag(tag);
+}
+
+/** Returns the EventPointer or AddressPointer from a kind:9321 nutzap event */
+export function getNutzapPointer(event: NostrEvent): EventPointer | AddressPointer | undefined {
+  return getNutzapEventPointer(event) ?? getNutzapAddressPointer(event);
 }
 
 /** Returns the comment from a kind:9321 nutzap event */
@@ -40,7 +61,7 @@ export function getNutzapComment(event: NostrEvent): string | undefined {
 export function getNutzapAmount(event: NostrEvent): number {
   return getOrComputeCachedValue(event, NutzapAmountSymbol, () => {
     const proofs = getNutzapProofs(event);
-    return proofs.reduce((total, proof) => total + proof.amount, 0);
+    return proofs.reduce((total, proof) => total + (proof.amount || 0), 0);
   });
 }
 

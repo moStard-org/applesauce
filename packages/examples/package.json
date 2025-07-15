@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@cashu/cashu-ts": "2.0.0-rc1",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@fontsource/roboto": "^5.1.1",
@@ -20,6 +21,7 @@
     "applesauce-core": "^2.3.0",
     "applesauce-factory": "^2.3.0",
     "applesauce-loaders": "^2.1.0",
+    "applesauce-wallet": "^2.0.0",
     "applesauce-react": "^2.1.0",
     "applesauce-relay": "^2.3.0",
     "applesauce-signers": "^2.0.0",

@@ -35,12 +35,14 @@ export function verifyProofsLocked(proofs: Proof[], info: NostrEvent) {
   const pubkey = getNutzapInfoPubkey(info);
   if (!pubkey) throw new Error("Nutzap info must have a pubkey");
 
+  const fullPubkey = pubkey.length === 64 ? `02${pubkey}` : pubkey;
+
   for (const proof of proofs) {
     const secret = safeParse(proof.secret);
     if (!secret) throw new Error(`Cashu token must have a spending condition`);
     if (!Array.isArray(secret)) throw new Error("Invalid spending condition");
     if (secret[0] !== "P2PK") throw new Error("Token proofs must be P2PK locked");
-    if (secret[1] !== "02" + pubkey)
+    if (secret[1].data !== fullPubkey)
       throw new Error("Token proofs must be P2PK locked to the recipient's nutzap pubkey");
   }
 }
