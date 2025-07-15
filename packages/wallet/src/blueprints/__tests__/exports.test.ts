@@ -5,8 +5,11 @@ describe("exports", () => {
   it("should export the expected functions", () => {
     expect(Object.keys(exports).sort()).toMatchInlineSnapshot(`
       [
+        "NutzapBlueprint",
+        "ProfileNutzapBlueprint",
         "WalletBackupBlueprint",
         "WalletBlueprint",
+        "WalletHistoryBlueprint",
         "WalletTokenBlueprint",
       ]
     `);

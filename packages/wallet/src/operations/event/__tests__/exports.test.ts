@@ -7,6 +7,14 @@ describe("exports", () => {
       [
         "setHistoryContent",
         "setHistoryRedeemed",
+        "setNutzapComment",
+        "setNutzapEvent",
+        "setNutzapInfoMints",
+        "setNutzapInfoPubkey",
+        "setNutzapInfoRelays",
+        "setNutzapMint",
+        "setNutzapProofs",
+        "setNutzapRecipient",
         "setTokenContent",
         "setWalletBackupContent",
       ]
