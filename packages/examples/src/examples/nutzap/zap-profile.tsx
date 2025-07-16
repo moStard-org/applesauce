@@ -64,7 +64,7 @@ const addressLoader = createAddressLoader(pool, {
 function ProfileQuery(user: ProfilePointer): Model<ProfileContent | undefined> {
   return (events) =>
     iif(
-      () => events.hasReplaceable(kinds.Metadata, user.pubkey),
+      () => !events.hasReplaceable(kinds.Metadata, user.pubkey),
       addressLoader({ kind: kinds.Metadata, ...user }),
       EMPTY,
     ).pipe(ignoreElements(), mergeWith(events.profile(user.pubkey)));
