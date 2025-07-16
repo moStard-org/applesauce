@@ -18,7 +18,7 @@ import { ExtensionSigner } from "applesauce-signers";
 import { kinds, NostrEvent } from "nostr-tools";
 import { ProfilePointer } from "nostr-tools/nip19";
 import { useCallback, useEffect, useState } from "react";
-import { defer, EMPTY, ignoreElements, lastValueFrom, map, merge, startWith } from "rxjs";
+import { defer, EMPTY, ignoreElements, map, merge, startWith } from "rxjs";
 
 import GroupPicker from "../../components/group-picker";
 
@@ -130,7 +130,7 @@ function SendMessageForm({ pointer }: { pointer: GroupPointer }) {
       // Sign the draft
       const signed = await factory.sign(draft);
       // Publish the message to the relay
-      const response = await lastValueFrom(pool.relay(pointer.relay).publish(signed));
+      const response = await pool.relay(pointer.relay).publish(signed);
       // Throw an error if the message was rejected
       if (!response.ok) throw new Error(response.message);
       // Clear the form

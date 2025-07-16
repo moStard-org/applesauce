@@ -48,7 +48,7 @@ relay
 Send events to the relay using the `event` or `publish` methods.
 
 :::info
-The `publish` method is a wrapper around the `event` method that automatically handles reconnecting and retrying.
+The `publish` method is a wrapper around the `event` method that returns a `Promise` and automatically handles reconnecting and retrying.
 :::
 
 ```typescript
@@ -68,9 +68,14 @@ const event = {
 event.id = getEventHash(event);
 event.sig = signEvent(event, sk);
 
+// Use the observable method
 relay.event(event).subscribe((response) => {
   console.log(`Published: ${response.ok}`, response.message);
 });
+
+// Or use the publish method with await
+const response = await relay.publish(event);
+console.log(`Published: ${response.ok}`, response.message);
 ```
 
 ## Making One-time Requests
@@ -101,24 +106,48 @@ The `Relay` class supports [NIP-42](https://github.com/nostr-protocol/nips/blob/
 
 - `challenge$` - An observable that tracks the authentication challenge from the relay.
 - `authenticated$` - An observable that tracks the authentication state of the relay.
-- `authenticate` - A method that can be used to authenticate the relay.
+- `authenticate` - An async method that can be used to authenticate the relay.
 
 More information about authentication can be found in the [typedocs](https://hzrd149.github.io/applesauce/typedoc/classes/applesauce-relay.Relay).
 
 ```typescript
-import { nip42 } from "nostr-tools";
+// Listen for authentication challenges
+relay.challenge$.subscribe((challenge) => {
+  if (!challenge) return;
+
+  // Using browser extension as signer
+  relay
+    .authenticate(window.nostr)
+    .then(() => {
+      console.log("Authentication successful");
+    })
+    .catch((err) => {
+      console.error("Authentication failed:", err);
+    });
+});
+```
+
+If you want to manually build the authentication event you can use the `auth` method to send the event to the relay.
+
+```typescript
+import { makeAuthEvent } from "nostr-tools/nip42";
 
 // Listen for authentication challenges
 relay.challenge$.subscribe(async (challenge) => {
   if (!challenge) return;
 
-  // Using browser extension as signer
-  try {
-    await lastValueFrom(relay.authenticate(window.nostr));
-    console.log("Authentication successful");
-  } catch (e) {
-    console.error("Authentication failed:", e);
-  }
+  // Create a new auth event and sign it
+  const auth = await window.nostr.signEvent(makeAuthEvent(relay.url, challenge));
+
+  // Send it to the relay and wait for the response
+  relay.auth(auth).subscribe({
+    next: (response) => {
+      console.log("Authentication response:", response);
+    },
+    error: (err) => {
+      console.error("Authentication failed:", err);
+    },
+  });
 });
 ```
 
@@ -147,7 +176,7 @@ subscription.unsubscribe();
 The `req`, and `subscription` methods can accept an observable for the filters. this allows for you to set the filters later or update them dynamically.
 
 :::warning
-Make sure to use a `ReplaySubject`, `BehaviorSubject`, or the `shareReplay` operator to keep the last filters in case the relay disconnects and needs to resubscribe.
+Make sure to use a `ReplaySubject`, `BehaviorSubject`, or the `shareReplay(1)` operator to keep the last filters in case the relay disconnects and needs to resubscribe.
 :::
 
 ```typescript

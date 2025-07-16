@@ -20,7 +20,7 @@ import { ExtensionSigner } from "applesauce-signers";
 import { kinds, NostrEvent } from "nostr-tools";
 import { ProfilePointer } from "nostr-tools/nip19";
 import { useCallback, useRef, useState } from "react";
-import { defer, EMPTY, ignoreElements, lastValueFrom, map, merge, startWith } from "rxjs";
+import { defer, EMPTY, ignoreElements, map, merge, startWith } from "rxjs";
 
 import GroupPicker from "../../components/group-picker";
 
@@ -137,7 +137,7 @@ function ReplyForm({ event, pointer }: { event: NostrEvent; pointer: GroupPointe
       // Sign the event
       const signed = await factory.sign(draft);
       // Publish the event
-      await lastValueFrom(pool.publish([pointer.relay], signed));
+      await pool.publish([pointer.relay], signed);
       // Add to the event store for the app
       eventStore.add(signed);
       setContent("");
@@ -221,7 +221,7 @@ function NewThreadForm({
       // Add to the event store for the app
       eventStore.add(signed);
       // Publish the event
-      await lastValueFrom(pool.publish([pointer.relay], signed));
+      await pool.publish([pointer.relay], signed);
       // Add to the event store for the app
       eventStore.add(signed);
 

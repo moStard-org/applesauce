@@ -109,13 +109,11 @@ export default function AlgorithmicRelayFeed() {
 
       // Instead of storing the relay, get it from the pool when needed
       // This is a better pattern for real applications
-      pool
+      await pool
         .relay(relay)
         .authenticate(signer)
-        .subscribe({
-          next: (response) => console.log("Authentication response:", response),
-          error: (error) => console.error("Authentication error:", error),
-        });
+        .then((response) => console.log("Authentication response:", response))
+        .catch((error) => console.error("Authentication error:", error));
     } catch (error) {
       console.error("Authentication failed:", error);
     }

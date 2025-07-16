@@ -23,7 +23,7 @@ import {
 import { kinds, NostrEvent } from "nostr-tools";
 import { npubEncode, ProfilePointer } from "nostr-tools/nip19";
 import { useState } from "react";
-import { EMPTY, ignoreElements, iif, lastValueFrom } from "rxjs";
+import { EMPTY, ignoreElements, iif } from "rxjs";
 import { mergeWith, startWith } from "rxjs/operators";
 
 // Preset list of npubs that can be zapped
@@ -219,7 +219,7 @@ function ZapModal({ nutzapInfo, onZapSent }: { nutzapInfo: NostrEvent; onZapSent
             await actionHub.exec(NutzapProfile, nutzapInfo.pubkey, tokens, comment).forEach(async (event) => {
               // Publish to nutzap relays
               try {
-                await lastValueFrom(pool.publish(nutzapRelays, event));
+                await pool.publish(nutzapRelays, event);
               } catch (error) {
                 console.error("Failed to publish", error);
               }
