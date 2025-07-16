@@ -1,4 +1,4 @@
-import { CashuMint, CashuWallet } from "@cashu/cashu-ts";
+import { CashuMint, CashuWallet, MintQuoteResponse } from "@cashu/cashu-ts";
 import { ActionHub } from "applesauce-actions";
 import { EventStore, Model } from "applesauce-core";
 import {
@@ -10,7 +10,7 @@ import {
 } from "applesauce-core/helpers";
 import { EventFactory } from "applesauce-factory";
 import { createAddressLoader } from "applesauce-loaders/loaders";
-import { useObservableMemo } from "applesauce-react/hooks";
+import { useObservableEagerMemo, useObservableMemo } from "applesauce-react/hooks";
 import { RelayPool } from "applesauce-relay";
 import { ExtensionSigner } from "applesauce-signers";
 import { NutzapProfile } from "applesauce-wallet/actions";
@@ -22,9 +22,9 @@ import {
 } from "applesauce-wallet/helpers";
 import { kinds, NostrEvent } from "nostr-tools";
 import { npubEncode, ProfilePointer } from "nostr-tools/nip19";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { EMPTY, ignoreElements, iif, lastValueFrom } from "rxjs";
-import { mergeWith } from "rxjs/operators";
+import { mergeWith, startWith } from "rxjs/operators";
 
 // Preset list of npubs that can be zapped
 const PRESET_NPUBS = [
@@ -70,27 +70,24 @@ function ProfileQuery(user: ProfilePointer): Model<ProfileContent | undefined> {
     ).pipe(ignoreElements(), mergeWith(events.profile(user.pubkey)));
 }
 
-/** Create a hook for loading a users profile */
-function useProfile(user: ProfilePointer): ProfileContent | undefined {
-  return useObservableMemo(() => eventStore.model(ProfileQuery, user), [user.pubkey, user.relays?.join("|")]);
-}
-
 // Profile card component
-function ProfileCard({ nutzapInfo, onZap }: { nutzapInfo: NostrEvent; onZap: () => void }) {
+function ProfileCard({ nutzapInfo }: { nutzapInfo: NostrEvent }) {
   const mints = getNutzapInfoMints(nutzapInfo);
   const relays = getNutzapInfoRelays(nutzapInfo);
   const nutzapPubkey = getNutzapInfoPubkey(nutzapInfo);
 
   // Load the actual profile data
-  const profile = useProfile(
-    useMemo(() => ({ pubkey: nutzapInfo.pubkey, relays: mergeRelaySets(getSeenRelays(nutzapInfo)) }), [nutzapInfo]),
+  const profile = useObservableEagerMemo(
+    () =>
+      eventStore.model(ProfileQuery, { pubkey: nutzapInfo.pubkey, relays: mergeRelaySets(getSeenRelays(nutzapInfo)) }),
+    [nutzapInfo],
   );
 
   const displayName = getDisplayName(profile) || npubEncode(nutzapInfo.pubkey);
   const picture = getProfilePicture(profile, `https://robohash.org/${nutzapInfo.pubkey}.png`);
 
   return (
-    <div className="card bg-base-100 shadow-xl max-w-lg mx-auto">
+    <div className="card bg-base-100 shadow-md max-w-xl mx-auto">
       <div className="card-body">
         <div className="flex items-center gap-4 mb-4">
           <div className="avatar">
@@ -137,7 +134,11 @@ function ProfileCard({ nutzapInfo, onZap }: { nutzapInfo: NostrEvent; onZap: () 
         </div>
 
         <div className="card-actions justify-end">
-          <button className="btn btn-primary btn-lg" onClick={onZap} disabled={!nutzapPubkey || mints.length === 0}>
+          <button
+            className="btn btn-primary btn-lg"
+            onClick={() => (document.getElementById("zap_modal") as HTMLDialogElement)?.showModal()}
+            disabled={!nutzapPubkey || mints.length === 0}
+          >
             ⚡ Zap Profile
           </button>
         </div>
@@ -165,18 +166,10 @@ function QRCode({ value }: { value: string }) {
 }
 
 // Zap modal component
-function ZapModal({
-  nutzapInfo,
-  onClose,
-  onZapSent,
-}: {
-  nutzapInfo: NostrEvent;
-  onClose: () => void;
-  onZapSent: () => void;
-}) {
+function ZapModal({ nutzapInfo, onZapSent }: { nutzapInfo: NostrEvent; onZapSent?: () => void }) {
   const [amount, setAmount] = useState(21);
   const [comment, setComment] = useState("");
-  const [invoice, setInvoice] = useState<string | null>(null);
+  const [quote, setQuote] = useState<MintQuoteResponse | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [status, setStatus] = useState<"input" | "invoice" | "paid">("input");
 
@@ -187,9 +180,9 @@ function ZapModal({
 
   // Ensure pubkey is properly prefixed with "02" for NIP-61 compliance
   const nutzapPubkey = rawNutzapPubkey
-    ? rawNutzapPubkey.startsWith("02")
-      ? rawNutzapPubkey
-      : `02${rawNutzapPubkey}`
+    ? rawNutzapPubkey.length === 64
+      ? `02${rawNutzapPubkey}`
+      : rawNutzapPubkey
     : null;
 
   const handleZap = async () => {
@@ -206,7 +199,7 @@ function ZapModal({
 
       // Request a quote for minting
       const quote = await wallet.createMintQuote(amount);
-      setInvoice(quote.request);
+      setQuote(quote);
       setStatus("invoice");
 
       // Start checking payment status
@@ -233,7 +226,7 @@ function ZapModal({
             });
 
             setStatus("paid");
-            onZapSent();
+            onZapSent?.();
           }
         } catch (error) {
           console.error("Payment check failed:", error);
@@ -253,56 +246,14 @@ function ZapModal({
     }
   };
 
-  const handleManualCheck = async () => {
-    if (!firstMint || !invoice) return;
-
-    setIsProcessing(true);
-    try {
-      const mint = new CashuMint(firstMint);
-      const wallet = new CashuWallet(mint);
-
-      // Get quote ID from invoice (simplified)
-      const quoteId = invoice.split("=")[1] || invoice;
-
-      const quoteStatus = await wallet.checkMintQuote(quoteId);
-      if (quoteStatus.state === "PAID") {
-        const result = await wallet.mintProofs(amount, quoteId, {
-          pubkey: nutzapPubkey!,
-        });
-
-        const tokens = { mint: firstMint, proofs: result.proofs, unit: "sat" };
-
-        await actionHub.exec(NutzapProfile, nutzapInfo.pubkey, tokens, comment).forEach(async (event) => {
-          for (const relay of nutzapRelays) {
-            try {
-              await pool.relay(relay).publish(event);
-            } catch (error) {
-              console.error("Failed to publish to relay:", relay, error);
-            }
-          }
-        });
-
-        setStatus("paid");
-        onZapSent();
-      } else {
-        alert("Payment not confirmed yet");
-      }
-    } catch (error) {
-      console.error("Manual check failed:", error);
-      alert("Failed to check payment: " + error);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-base-100 rounded-lg p-6 max-w-lg w-full mx-4">
+    <dialog id="zap_modal" className="modal">
+      <div className="modal-box">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">Zap Profile</h2>
-          <button onClick={onClose} className="btn btn-sm btn-circle btn-ghost">
-            ✕
-          </button>
+          <form method="dialog">
+            <button className="btn btn-sm btn-circle btn-ghost">✕</button>
+          </form>
         </div>
 
         {status === "input" && (
@@ -328,10 +279,10 @@ function ZapModal({
               />
             </div>
 
-            <div className="flex justify-end space-x-2">
-              <button onClick={onClose} className="btn btn-ghost">
-                Cancel
-              </button>
+            <div className="modal-action">
+              <form method="dialog">
+                <button className="btn btn-ghost">Cancel</button>
+              </form>
               <button onClick={handleZap} className="btn btn-primary" disabled={isProcessing}>
                 {isProcessing ? "Processing..." : "Create Zap"}
               </button>
@@ -339,22 +290,19 @@ function ZapModal({
           </div>
         )}
 
-        {status === "invoice" && invoice && (
+        {status === "invoice" && quote && (
           <div className="space-y-4">
             <div className="text-center">
               <h3 className="text-lg font-semibold mb-2">Pay Invoice</h3>
               <p className="text-sm opacity-70 mb-4">Scan the QR code or copy the invoice to pay {amount} sats</p>
             </div>
 
-            <QRCode value={invoice} />
+            <QRCode value={quote.request} />
 
-            <div className="flex justify-center space-x-2">
-              <button onClick={handleManualCheck} className="btn btn-primary" disabled={isProcessing}>
-                {isProcessing ? "Checking..." : "Check Payment"}
-              </button>
-              <button onClick={onClose} className="btn btn-ghost">
-                Cancel
-              </button>
+            <div className="modal-action">
+              <form method="dialog">
+                <button className="btn btn-ghost">Cancel</button>
+              </form>
             </div>
           </div>
         )}
@@ -364,20 +312,20 @@ function ZapModal({
             <div className="text-green-500 text-4xl">✅</div>
             <h3 className="text-lg font-semibold">Zap Sent!</h3>
             <p className="text-sm opacity-70">Your nutzap has been successfully sent to the profile</p>
-            <button onClick={onClose} className="btn btn-primary">
-              Done
-            </button>
+            <div className="modal-action">
+              <form method="dialog">
+                <button className="btn btn-primary">Done</button>
+              </form>
+            </div>
           </div>
         )}
       </div>
-    </div>
+    </dialog>
   );
 }
 
 export default function ZapProfile() {
   const [selected, setSelected] = useState<string>("");
-  const [selectedProfile, setSelectedProfile] = useState<NostrEvent | null>(null);
-  const [showZapModal, setShowZapModal] = useState(false);
 
   // Load nutzap info for selected npub using address loader
   const nutzapInfo = useObservableMemo(() => {
@@ -387,22 +335,8 @@ export default function ZapProfile() {
       kind: NUTZAP_INFO_KIND,
       pubkey: selected,
       relays: PRESET_NPUBS.find((p) => p.pubkey === selected)?.relays,
-    });
+    }).pipe(startWith(undefined));
   }, [selected]);
-
-  // Update selected profile when nutzap info changes
-  useEffect(() => {
-    if (nutzapInfo) {
-      setSelectedProfile(nutzapInfo);
-    } else {
-      setSelectedProfile(null);
-    }
-  }, [nutzapInfo]);
-
-  const handleZapSent = () => {
-    setShowZapModal(false);
-    alert("Nutzap sent successfully!");
-  };
 
   return (
     <div className="container mx-auto my-8 p-4">
@@ -411,8 +345,6 @@ export default function ZapProfile() {
       </div>
 
       <div className="text-center mb-6">
-        <p className="text-lg mb-4">Select a profile to zap with nutzaps!</p>
-
         <div className="mb-4">
           <label className="block text-sm font-medium mb-2">Choose a profile:</label>
           <select
@@ -430,15 +362,15 @@ export default function ZapProfile() {
         </div>
       </div>
 
-      {selected && !selectedProfile && (
+      {selected && !nutzapInfo && (
         <div className="text-center">
           <span className="loading loading-spinner loading-lg"></span>
           <p className="mt-4">Loading nutzap info...</p>
         </div>
       )}
 
-      {selectedProfile ? (
-        <ProfileCard nutzapInfo={selectedProfile} onZap={() => setShowZapModal(true)} />
+      {nutzapInfo ? (
+        <ProfileCard nutzapInfo={nutzapInfo} />
       ) : selected ? (
         <div className="text-center">
           <div className="alert alert-warning max-w-md mx-auto">
@@ -447,9 +379,7 @@ export default function ZapProfile() {
         </div>
       ) : null}
 
-      {showZapModal && selectedProfile && (
-        <ZapModal nutzapInfo={selectedProfile} onClose={() => setShowZapModal(false)} onZapSent={handleZapSent} />
-      )}
+      {nutzapInfo && <ZapModal nutzapInfo={nutzapInfo} />}
     </div>
   );
 }
