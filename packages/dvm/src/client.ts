@@ -1,5 +1,5 @@
 import { EventFactory } from "applesauce-factory";
-import { from, ignoreElements, merge, Observable, switchMap } from "rxjs";
+import { defer, from, ignoreElements, merge, Observable, switchMap } from "rxjs";
 import { Filter, NostrEvent } from "nostr-tools";
 
 import { MachineRequestBlueprint } from "./blueprints/machine-request.js";
@@ -55,7 +55,7 @@ export class DVMClient {
 
         return merge(
           // Publish the request event to the relays
-          from(this.publish(relays, request)).pipe(ignoreElements()),
+          defer(() => this.publish(relays, request)).pipe(ignoreElements()),
           // Subscribe for responses
           this.subscribe(relays, [{ kinds: [request.kind + 1000, DVM_STATUS_KIND], "#e": [request.id] }]),
         );

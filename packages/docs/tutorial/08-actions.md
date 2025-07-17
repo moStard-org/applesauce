@@ -45,12 +45,7 @@ const defaultRelays = ["wss://relay.damus.io", "wss://nos.lol", "wss://relay.nos
 
 // Create a custom publish function
 function publish(event: NostrEvent) {
-  return new Promise((resolve, reject) => {
-    pool.publish(event, defaultRelays).subscribe({
-      next: (response) => resolve(response),
-      error: (error) => reject(error),
-    });
-  });
+  return pool.publish(event, defaultRelays);
 }
 
 // Create ActionHub with automatic publishing
