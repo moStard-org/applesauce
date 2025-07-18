@@ -1,4 +1,4 @@
-import { normalizeToPubkey } from "applesauce-core/helpers/nip-19";
+import { normalizeToPubkey } from "applesauce-core/helpers/pointers";
 import { ReadonlySigner } from "applesauce-signers/signers/readonly-signer";
 import { BaseAccount } from "../account.js";
 import { SerializedAccount } from "../types.js";

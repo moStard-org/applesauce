@@ -49,7 +49,7 @@ importers:
         specifier: ^1.7.1
         version: 1.8.0
       applesauce-core:
-        specifier: ^2.0.0
+        specifier: ^2.3.0
         version: link:../core
       applesauce-signers:
         specifier: ^2.0.0
