@@ -6,7 +6,7 @@ import { logger } from "applesauce-core";
 import { createDefer, Deferred } from "applesauce-core/promise";
 import { EventTemplate, getEventHash, NostrEvent, verifyEvent } from "nostr-tools";
 
-import { Nip07Interface } from "../nip-07.js";
+import { ISigner } from "../interface.js";
 
 type Callback = () => void;
 type DeviceOpts = {
@@ -26,7 +26,7 @@ const utf8Decoder = new TextDecoder("utf-8");
 const utf8Encoder = new TextEncoder();
 
 /** A signer that works with [nostr-signing-device](https://github.com/lnbits/nostr-signing-device) */
-export class SerialPortSigner implements Nip07Interface {
+export class SerialPortSigner implements ISigner {
   protected log = logger.extend("SerialPortSigner");
   protected writer: WritableStreamDefaultWriter<string> | null = null;
   pubkey?: string;
@@ -37,8 +37,8 @@ export class SerialPortSigner implements Nip07Interface {
 
   verifyEvent: typeof verifyEvent = verifyEvent;
   nip04: {
-    encrypt: (pubkey: string, plaintext: string) => Promise<string> | string;
-    decrypt: (pubkey: string, ciphertext: string) => Promise<string> | string;
+    encrypt: (pubkey: string, plaintext: string) => Promise<string>;
+    decrypt: (pubkey: string, ciphertext: string) => Promise<string>;
   };
 
   constructor() {

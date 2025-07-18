@@ -60,10 +60,8 @@ describe("signer", () => {
     expect(await manager.signer.getPublicKey()).toBe(getPublicKey(account.signer.key));
   });
 
-  it("should throw if there is no active account", () => {
-    expect(() => {
-      manager.signer.getPublicKey();
-    }).toThrow("No active account");
+  it("should throw if there is no active account", async () => {
+    await expect(manager.signer.getPublicKey()).rejects.toThrow("No active account");
   });
 });
 

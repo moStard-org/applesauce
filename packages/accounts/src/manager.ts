@@ -1,4 +1,4 @@
-import { Nip07Interface } from "applesauce-signers";
+import { ISigner } from "applesauce-signers";
 import { BehaviorSubject } from "rxjs";
 
 import { IAccount, IAccountConstructor, SerializedAccount } from "./types.js";
@@ -18,7 +18,7 @@ export class AccountManager<Metadata extends unknown = any> {
   }
 
   /** Proxy signer for currently active account */
-  signer: Nip07Interface;
+  signer: ISigner;
 
   /** Disable request queueing for any accounts added to this manager */
   disableQueue?: boolean;
@@ -30,7 +30,7 @@ export class AccountManager<Metadata extends unknown = any> {
   // Account type CRUD
 
   /** Add account type class */
-  registerType<S extends Nip07Interface>(accountType: IAccountConstructor<S, any, Metadata>) {
+  registerType<S extends ISigner>(accountType: IAccountConstructor<S, any, Metadata>) {
     if (!accountType.type) throw new Error(`Account class missing static "type" field`);
     if (this.types.has(accountType.type)) throw new Error(`An account type of ${accountType.type} already exists`);
     this.types.set(accountType.type, accountType);
@@ -44,7 +44,7 @@ export class AccountManager<Metadata extends unknown = any> {
   // Accounts CRUD
 
   /** gets an account in the manager */
-  getAccount<Signer extends Nip07Interface>(
+  getAccount<Signer extends ISigner>(
     id: string | IAccount<Signer, any, Metadata>,
   ): IAccount<Signer, any, Metadata> | undefined {
     if (typeof id === "string") return this.accounts$.value.find((a) => a.id === id);

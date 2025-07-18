@@ -25,6 +25,8 @@ describe("BaseAccount", () => {
       expect(account.signEvent({ kind: 1, content: "first", created_at: 0, tags: [] })).toEqual(expect.any(Promise));
       expect(account.signEvent({ kind: 1, content: "second", created_at: 0, tags: [] })).toEqual(expect.any(Promise));
 
+      await Promise.resolve();
+
       expect(signer.signEvent).toHaveBeenCalledOnce();
       expect(signer.signEvent).toHaveBeenCalledWith(expect.objectContaining({ content: "first" }));
 
@@ -64,6 +66,9 @@ describe("BaseAccount", () => {
       account.signEvent({ kind: 1, content: "first", created_at: 0, tags: [] });
       account.signEvent({ kind: 1, content: "second", created_at: 0, tags: [] });
 
+      // Wait for next tick
+      await Promise.resolve();
+
       expect(Reflect.get(account, "lock")).toBeNull();
       expect(signer.signEvent).toHaveBeenCalledTimes(2);
       expect(signer.signEvent).toHaveBeenCalledWith(expect.objectContaining({ content: "first" }));
@@ -86,8 +91,16 @@ describe("BaseAccount", () => {
   describe("nip04 and nip44", () => {
     it("should return undefined when signer does not support nip04/nip44", () => {
       const signer: Nip07Interface = {
-        getPublicKey: () => "test-pubkey",
-        signEvent: () => ({ id: "", pubkey: "test-pubkey", created_at: 0, kind: 1, tags: [], content: "", sig: "" }),
+        getPublicKey: async () => "test-pubkey",
+        signEvent: async () => ({
+          id: "",
+          pubkey: "test-pubkey",
+          created_at: 0,
+          kind: 1,
+          tags: [],
+          content: "",
+          sig: "",
+        }),
       };
 
       const account = new BaseAccount("test-pubkey", signer);
@@ -98,8 +111,16 @@ describe("BaseAccount", () => {
 
     it("should return nip04/nip44 interface when signer supports them", async () => {
       const signer: Nip07Interface = {
-        getPublicKey: () => "test-pubkey",
-        signEvent: () => ({ id: "", pubkey: "test-pubkey", created_at: 0, kind: 1, tags: [], content: "", sig: "" }),
+        getPublicKey: async () => "test-pubkey",
+        signEvent: async () => ({
+          id: "",
+          pubkey: "test-pubkey",
+          created_at: 0,
+          kind: 1,
+          tags: [],
+          content: "",
+          sig: "",
+        }),
         nip04: {
           encrypt: async () => "encrypted",
           decrypt: async () => "decrypted",
@@ -124,8 +145,16 @@ describe("BaseAccount", () => {
 
     it("should reflect changes in signer nip04/nip44 support", () => {
       const signer: Nip07Interface = {
-        getPublicKey: () => "test-pubkey",
-        signEvent: () => ({ id: "", pubkey: "test-pubkey", created_at: 0, kind: 1, tags: [], content: "", sig: "" }),
+        getPublicKey: async () => "test-pubkey",
+        signEvent: async () => ({
+          id: "",
+          pubkey: "test-pubkey",
+          created_at: 0,
+          kind: 1,
+          tags: [],
+          content: "",
+          sig: "",
+        }),
       };
 
       const account = new BaseAccount("test-pubkey", signer);

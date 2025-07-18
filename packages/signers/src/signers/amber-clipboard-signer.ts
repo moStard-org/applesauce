@@ -2,13 +2,13 @@ import { EventTemplate, NostrEvent, VerifiedEvent, getEventHash, nip19, verifyEv
 import { getPubkeyFromDecodeResult, isHexKey, isHex } from "applesauce-core/helpers";
 import { createDefer, Deferred } from "applesauce-core/promise";
 
-import { Nip07Interface } from "../nip-07.js";
+import { ISigner } from "../interface.js";
 
 /**
  * A Signer for [amber](https://github.com/greenart7c3/Amber) clipboard API
  * @see https://github.com/greenart7c3/Amber/blob/master/docs/web-apps.md
  */
-export class AmberClipboardSigner implements Nip07Interface {
+export class AmberClipboardSigner implements ISigner {
   /** If the signer is supported on this platform */
   static SUPPORTED =
     `navigator` in globalThis &&
@@ -22,12 +22,12 @@ export class AmberClipboardSigner implements Nip07Interface {
   verifyEvent: typeof verifyEvent = verifyEvent;
 
   nip04: {
-    encrypt: (pubkey: string, plaintext: string) => Promise<string> | string;
-    decrypt: (pubkey: string, ciphertext: string) => Promise<string> | string;
+    encrypt: (pubkey: string, plaintext: string) => Promise<string>;
+    decrypt: (pubkey: string, ciphertext: string) => Promise<string>;
   };
   nip44: {
-    encrypt: (pubkey: string, plaintext: string) => Promise<string> | string;
-    decrypt: (pubkey: string, ciphertext: string) => Promise<string> | string;
+    encrypt: (pubkey: string, plaintext: string) => Promise<string>;
+    decrypt: (pubkey: string, ciphertext: string) => Promise<string>;
   };
 
   constructor() {

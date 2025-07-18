@@ -1,4 +1,4 @@
-import { Nip07Interface } from "applesauce-signers";
+import { ISigner } from "applesauce-signers";
 import { nanoid } from "nanoid";
 import { BehaviorSubject } from "rxjs";
 import { NostrEvent } from "nostr-tools";
@@ -34,7 +34,7 @@ function wrapInSignal<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
 export class SignerMismatchError extends Error {}
 
 /** A base class for all accounts */
-export class BaseAccount<Signer extends Nip07Interface, SignerData, Metadata extends unknown>
+export class BaseAccount<Signer extends ISigner, SignerData, Metadata extends unknown>
   implements IAccount<Signer, SignerData, Metadata>
 {
   id = nanoid(8);
@@ -55,27 +55,19 @@ export class BaseAccount<Signer extends Nip07Interface, SignerData, Metadata ext
     this.metadata$.next(metadata);
   }
 
-  get nip04(): Nip07Interface["nip04"] | undefined {
+  get nip04(): ISigner["nip04"] | undefined {
     if (!this.signer.nip04) return undefined;
     return {
-      encrypt: (pubkey, plaintext) => {
-        return this.waitForLock(() => this.signer.nip04!.encrypt(pubkey, plaintext));
-      },
-      decrypt: (pubkey, plaintext) => {
-        return this.waitForLock(() => this.signer.nip04!.decrypt(pubkey, plaintext));
-      },
+      encrypt: async (pubkey, plaintext) => this.operation(() => this.signer.nip04!.encrypt(pubkey, plaintext)),
+      decrypt: async (pubkey, plaintext) => this.operation(() => this.signer.nip04!.decrypt(pubkey, plaintext)),
     };
   }
 
-  get nip44(): Nip07Interface["nip44"] | undefined {
+  get nip44(): ISigner["nip44"] | undefined {
     if (!this.signer.nip44) return undefined;
     return {
-      encrypt: (pubkey, plaintext) => {
-        return this.waitForLock(() => this.signer.nip44!.encrypt(pubkey, plaintext));
-      },
-      decrypt: (pubkey, plaintext) => {
-        return this.waitForLock(() => this.signer.nip44!.decrypt(pubkey, plaintext));
-      },
+      encrypt: async (pubkey, plaintext) => this.operation(() => this.signer.nip44!.encrypt(pubkey, plaintext)),
+      decrypt: async (pubkey, plaintext) => this.operation(() => this.signer.nip44!.decrypt(pubkey, plaintext)),
     };
   }
 
@@ -87,6 +79,12 @@ export class BaseAccount<Signer extends Nip07Interface, SignerData, Metadata ext
   // This should be overwritten by a sub class
   toJSON(): SerializedAccount<SignerData, Metadata> {
     throw new Error("Not implemented");
+  }
+
+  /** A method that wraps any signer interaction, this allows the account to wait for unlock or queue requests */
+  protected operation<T extends unknown>(operation: () => Promise<T>): Promise<T> {
+    // If the queue is enabled, wait our turn in the queue
+    return this.waitForQueue(operation);
   }
 
   /** Adds the common fields to the serialized output of a toJSON method */
@@ -104,37 +102,22 @@ export class BaseAccount<Signer extends Nip07Interface, SignerData, Metadata ext
   }
 
   /** Gets the pubkey from the signer */
-  getPublicKey(): string | Promise<string> {
-    const result = this.signer.getPublicKey();
-
-    if (result instanceof Promise)
-      return result.then((pubkey) => {
-        if (this.pubkey !== pubkey) throw new SignerMismatchError("Account signer mismatch");
-        return pubkey;
-      });
-    else {
+  getPublicKey(): Promise<string> {
+    return this.operation(async () => {
+      const result = await this.signer.getPublicKey();
       if (this.pubkey !== result) throw new SignerMismatchError("Account signer mismatch");
       return result;
-    }
+    });
   }
 
   /** sign the event and make sure its signed with the correct pubkey */
-  signEvent(template: EventTemplate): Promise<NostrEvent> | NostrEvent {
+  signEvent(template: EventTemplate): Promise<NostrEvent> {
     if (!Reflect.has(template, "pubkey")) Reflect.set(template, "pubkey", this.pubkey);
 
-    return this.waitForLock(() => {
-      const result = this.signer.signEvent(template);
-
-      if (result instanceof Promise)
-        return result.then((signed) => {
-          if (signed.pubkey !== this.pubkey) throw new SignerMismatchError("Signer signed with wrong pubkey");
-          return signed;
-        });
-      else {
-        if (result.pubkey !== this.pubkey) throw new SignerMismatchError("Signer signed with wrong pubkey");
-
-        return result;
-      }
+    return this.operation(async () => {
+      const result = await this.signer.signEvent(template);
+      if (result.pubkey !== this.pubkey) throw new SignerMismatchError("Signer signed with wrong pubkey");
+      return result;
     });
   }
 
@@ -157,8 +140,8 @@ export class BaseAccount<Signer extends Nip07Interface, SignerData, Metadata ext
       this.abort = null;
     }
   }
-  protected waitForLock<T>(fn: () => Promise<T> | T): Promise<T> | T {
-    if (this.disableQueue) return fn();
+  protected waitForQueue<T extends unknown>(operation: () => Promise<T>): Promise<T> {
+    if (this.disableQueue) return operation();
 
     // if there is already a pending request, wait for it
     if (this.lock && this.abort) {
@@ -168,7 +151,7 @@ export class BaseAccount<Signer extends Nip07Interface, SignerData, Metadata ext
           // if the abort signal is triggered, don't call the signer
           this.abort?.signal.throwIfAborted();
 
-          return fn();
+          return operation();
         }),
         this.abort.signal,
       );
@@ -179,7 +162,7 @@ export class BaseAccount<Signer extends Nip07Interface, SignerData, Metadata ext
 
       return p;
     } else {
-      const result = fn();
+      const result = operation();
 
       // if the result is async, set the new lock
       if (result instanceof Promise) {

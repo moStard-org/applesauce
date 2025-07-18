@@ -6,7 +6,7 @@ export type PasswordAccountSignerData = {
   ncryptsec: string;
 };
 
-export class PasswordAccount<Metadata extends unknown> extends BaseAccount<
+export class PasswordAccount<Metadata extends unknown = unknown> extends BaseAccount<
   PasswordSigner,
   PasswordAccountSignerData,
   Metadata
@@ -18,19 +18,32 @@ export class PasswordAccount<Metadata extends unknown> extends BaseAccount<
   }
 
   /** called when PasswordAccount.unlock is called without a password */
-  static async requestUnlockPassword(_account: PasswordAccount<any>): Promise<string> {
-    throw new Error(
-      "Cant unlock PasswordAccount without a password. either pass one in or set PasswordAccount.requestUnlockPassword",
-    );
-  }
+  static requestUnlockPassword?: (account: PasswordAccount<any>) => Promise<string>;
 
   /**
    * Attempt to unlock the signer with a password
    * @throws
    */
   async unlock(password?: string) {
-    password = password || (await PasswordAccount.requestUnlockPassword(this));
+    if (!password) {
+      if (!PasswordAccount.requestUnlockPassword)
+        throw new Error(
+          "Cant unlock PasswordAccount without a password. either pass one in or set PasswordAccount.requestUnlockPassword",
+        );
+
+      password = await PasswordAccount.requestUnlockPassword(this);
+    }
     await this.signer.unlock(password);
+  }
+
+  protected override operation<T extends unknown>(operation: () => Promise<T>): Promise<T> {
+    // If the account is not unlocked, wait for the unlock password to be provided
+    if (!this.unlocked) {
+      if (!PasswordAccount.requestUnlockPassword)
+        throw new Error("Account is locked and there is no requestUnlockPassword method");
+
+      return this.unlock().then(() => super.operation(operation));
+    } else return super.operation(operation);
   }
 
   toJSON(): SerializedAccount<PasswordAccountSignerData, Metadata> {

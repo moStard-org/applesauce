@@ -1,11 +1,11 @@
-import { EventTemplate } from "nostr-tools";
-import { Nip07Interface } from "../nip-07.js";
+import { EventTemplate, VerifiedEvent, verifyEvent } from "nostr-tools";
+import { ISigner } from "../interface.js";
 
 /** AN error that is throw when the window.nostr extension is missing */
 export class ExtensionMissingError extends Error {}
 
 /** A signer that is a proxy for window.nostr */
-export class ExtensionSigner implements Nip07Interface {
+export class ExtensionSigner implements ISigner {
   get nip04() {
     return window.nostr?.nip04;
   }
@@ -15,30 +15,18 @@ export class ExtensionSigner implements Nip07Interface {
 
   protected pubkey: string | undefined = undefined;
 
-  getPublicKey() {
+  async getPublicKey() {
     if (!window.nostr) throw new ExtensionMissingError("Signer extension missing");
     if (this.pubkey) return this.pubkey;
 
-    const p = window.nostr.getPublicKey();
-
-    if (p instanceof Promise)
-      return p.then((pubkey) => {
-        this.pubkey = pubkey;
-        return pubkey;
-      });
-    else {
-      this.pubkey = p;
-      return p;
-    }
-  }
-  getRelays() {
-    if (!window.nostr) throw new ExtensionMissingError("Signer extension missing");
-    if (!window.nostr.getRelays) return {};
-    return window.nostr.getRelays();
+    this.pubkey = await window.nostr.getPublicKey();
+    return this.pubkey;
   }
 
-  signEvent(template: EventTemplate) {
+  async signEvent(template: EventTemplate): Promise<VerifiedEvent> {
     if (!window.nostr) throw new ExtensionMissingError("Signer extension missing");
-    return window.nostr.signEvent(template);
+    const event = await window.nostr.signEvent(template);
+    if (!verifyEvent(event)) throw new Error("Extension returned an invalid event");
+    return event;
   }
 }

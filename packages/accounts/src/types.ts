@@ -1,4 +1,4 @@
-import { Nip07Interface } from "applesauce-signers";
+import { ISigner } from "applesauce-signers";
 import { NostrEvent } from "nostr-tools";
 
 export type EventTemplate = {
@@ -23,11 +23,8 @@ export type SerializedAccount<SignerData, Metadata extends unknown> = {
 };
 
 /** An interface for an account */
-export interface IAccount<
-  Signer extends Nip07Interface = Nip07Interface,
-  SignerData = any,
-  Metadata extends unknown = any,
-> extends Nip07Interface {
+export interface IAccount<Signer extends ISigner = ISigner, SignerData = any, Metadata extends unknown = any>
+  extends ISigner {
   id: string;
   name?: string;
   pubkey: string;
@@ -42,7 +39,7 @@ export interface IAccount<
 }
 
 /** A constructor for an account */
-export interface IAccountConstructor<Signer extends Nip07Interface, SignerData, Metadata extends unknown> {
+export interface IAccountConstructor<Signer extends ISigner, SignerData, Metadata extends unknown> {
   readonly type: string;
   new (pubkey: string, signer: Signer): IAccount<Signer, SignerData, Metadata>;
   fromJSON(json: SerializedAccount<SignerData, Metadata>): IAccount<Signer, SignerData, Metadata>;

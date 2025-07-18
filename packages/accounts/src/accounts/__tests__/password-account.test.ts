@@ -52,15 +52,6 @@ describe("unlocked getter", () => {
 });
 
 describe("requestUnlockPassword", () => {
-  it("should throw an error by default", async () => {
-    const signer = new PasswordSigner();
-    const account = new PasswordAccount(testPubkey, signer);
-
-    await expect(PasswordAccount.requestUnlockPassword(account)).rejects.toThrow(
-      "Cant unlock PasswordAccount without a password. either pass one in or set PasswordAccount.requestUnlockPassword",
-    );
-  });
-
   it("should be customizable", async () => {
     const originalMethod = PasswordAccount.requestUnlockPassword;
     const mockPassword = "custom-password";
@@ -76,6 +67,16 @@ describe("requestUnlockPassword", () => {
 
     // Restore original method
     PasswordAccount.requestUnlockPassword = originalMethod;
+  });
+
+  it("should request password when account is locked", async () => {
+    PasswordAccount.requestUnlockPassword = vi.fn().mockResolvedValue(testPassword);
+
+    const account = PasswordAccount.fromNcryptsec(testPubkey, testNcryptsec);
+
+    await account.getPublicKey();
+    expect(PasswordAccount.requestUnlockPassword).toHaveBeenCalledWith(account);
+    expect(account.unlocked).toBe(true);
   });
 });
 

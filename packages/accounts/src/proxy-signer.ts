@@ -1,9 +1,9 @@
-import { Nip07Interface } from "applesauce-signers";
+import { ISigner } from "applesauce-signers";
 import { EventTemplate, NostrEvent } from "nostr-tools";
 import { Observable } from "rxjs";
 
 /** A signer class that proxies requests to another signer that isn't created yet */
-export class ProxySigner<T extends Nip07Interface> implements Nip07Interface {
+export class ProxySigner<T extends ISigner> implements ISigner {
   private _signer: T | undefined;
   protected get signer(): T {
     if (!this._signer) throw new Error(this.error || "Missing signer");
@@ -27,10 +27,10 @@ export class ProxySigner<T extends Nip07Interface> implements Nip07Interface {
     this.upstream.subscribe((signer) => (this._signer = signer));
   }
 
-  signEvent(template: EventTemplate): Promise<NostrEvent> | NostrEvent {
+  async signEvent(template: EventTemplate): Promise<NostrEvent> {
     return this.signer.signEvent(template);
   }
-  getPublicKey(): Promise<string> | string {
+  async getPublicKey(): Promise<string> {
     return this.signer.getPublicKey();
   }
 }
