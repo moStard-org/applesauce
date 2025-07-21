@@ -213,7 +213,7 @@ export function addRelayHintsToPointer<T extends { relays?: string[] }>(pointer:
 
 /** Gets the hex pubkey from any nip-19 encoded string */
 export function normalizeToPubkey(str: string): string {
-  if (isHexKey(str)) return str;
+  if (isHexKey(str)) return str.toLowerCase();
   else {
     const decode = nip19.decode(str);
     const pubkey = getPubkeyFromDecodeResult(decode);

@@ -11,10 +11,16 @@
 		"test": "vitest run --passWithNoTests",
 		"watch:test": "vitest"
 	},
-	"keywords": ["nostr", "applesauce"],
+	"keywords": [
+		"nostr",
+		"applesauce"
+	],
 	"author": "hzrd149",
 	"license": "MIT",
-	"files": ["dist", "applesauce"],
+	"files": [
+		"dist",
+		"applesauce"
+	],
 	"exports": {
 		".": {
 			"import": "./dist/index.js",
@@ -56,7 +62,7 @@
 		"@noble/hashes": "^1.7.1",
 		"applesauce-core": "link:../core",
 		"nanoid": "^5.0.9",
-		"nostr-tools": "^2.13",
+		"nostr-tools": "~2.15.1",
 		"rxjs": "^7.8.1"
 	},
 	"devDependencies": {

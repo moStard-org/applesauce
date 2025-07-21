@@ -22,4 +22,14 @@ export class ExtensionAccount<Metadata extends unknown> extends BaseAccount<Exte
     const account = new ExtensionAccount<Metadata>(json.pubkey, new ExtensionSigner());
     return super.loadCommonFields(account, json);
   }
+
+  /**
+   * Creates a new account from the NIP-07 extension
+   * @throws {ExtensionMissingError} if the extension is not installed
+   */
+  static async fromExtension() {
+    const signer = new ExtensionSigner();
+    const pubkey = await signer.getPublicKey();
+    return new ExtensionAccount<void>(pubkey, signer);
+  }
 }

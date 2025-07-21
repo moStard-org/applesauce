@@ -22,20 +22,20 @@ const event: NostrEvent = {
   // ...signed nostr event
 };
 
-pool
-  .relay("wss://relay.damus.io")
-  .publish(event)
-  .subscribe((response) => {
-    if (response.ok) {
-      console.log(`Event published successfully to ${response.from}`);
-    } else {
-      console.log(`Failed to publish event to ${response.from}: ${response.reason}`);
-    }
-  });
+try {
+  const response = await pool.relay("wss://relay.damus.io").publish(event);
+  if (response.ok) {
+    console.log(`Event published successfully to ${response.from}`);
+  } else {
+    console.log(`Failed to publish event to ${response.from}: ${response.message}`);
+  }
+} catch (error) {
+  console.error("Error publishing event:", error);
+}
 ```
 
-:::warning
-Since the `publish` method returns an `Observable`, you must subscribe to it for the relay connection to be established and the event to be published.
+:::info
+The `publish` method now returns a `Promise<PublishResponse>` directly, so you can use `await` or `.then()` instead of subscribing to an Observable.
 :::
 
 ## Publishing to Multiple Relays
@@ -48,18 +48,18 @@ const event: NostrEvent = {
   // ...signed nostr event
 };
 
-pool.publish(relays, event).subscribe({
-  next: (response) => {
+try {
+  const responses = await pool.publish(relays, event);
+  responses.forEach((response) => {
     if (response.ok) {
       console.log(`Event published successfully to ${response.from}`);
     } else {
-      console.log(`Failed to publish event to ${response.from}: ${response.reason}`);
+      console.log(`Failed to publish event to ${response.from}: ${response.message}`);
     }
-  },
-  complete: () => {
-    console.log("Finished publishing to all relays");
-  },
-});
+  });
+} catch (error) {
+  console.error("Error publishing to relays:", error);
+}
 ```
 
 ## Adding Events to the EventStore
@@ -67,13 +67,34 @@ pool.publish(relays, event).subscribe({
 Once the event is published to relays, its good to add it to the event store so your UI can see it without needing to load it from the relay again.
 
 ```typescript
+try {
+  const response = await pool.relay("wss://relay.damus.io").publish(event);
+  if (response.ok) {
+    eventStore.add(event);
+  }
+} catch (error) {
+  console.error("Error publishing event:", error);
+}
+```
+
+## Using with .then() instead of async/await
+
+If you prefer using `.then()` instead of async/await:
+
+```typescript
 pool
   .relay("wss://relay.damus.io")
   .publish(event)
-  .subscribe({
-    complete: () => {
+  .then((response) => {
+    if (response.ok) {
+      console.log(`Event published successfully to ${response.from}`);
       eventStore.add(event);
-    },
+    } else {
+      console.log(`Failed to publish event to ${response.from}: ${response.message}`);
+    }
+  })
+  .catch((error) => {
+    console.error("Error publishing event:", error);
   });
 ```
 
@@ -84,13 +105,13 @@ pool
 - **Publish to multiple relays** for better reach and redundancy
 - **Add published events to EventStore** to see them in your UI
 - **Provide user feedback** about publishing status
-- **Handle errors gracefully** with retry logic
+- **Handle errors gracefully** with try/catch or .catch()
 
 ## Best Practices
 
 1. **Always publish to multiple relays** for redundancy
 2. **Handle rate limiting** with delays and retries
 3. **Provide clear user feedback** about publishing status
-4. **Add published events to EventStore** immediately
+4. **Add published events to EventStore** after successful publish
 5. **Don't spam relays** - use reasonable delays between publishes
-6. **Cache failed publishes** and retry later if needed
+6. **Use try/catch blocks** to handle errors gracefully

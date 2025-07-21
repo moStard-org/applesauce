@@ -9,7 +9,7 @@ import { SocialGraph } from "nostr-social-graph";
 import { Filter, kinds } from "nostr-tools";
 import { ProfilePointer } from "nostr-tools/nip19";
 import { useMemo, useState } from "react";
-import { bufferTime, defer, EMPTY, filter, ignoreElements, map, merge, startWith, tap } from "rxjs";
+import { bufferTime, EMPTY, filter, ignoreElements, iif, map, mergeWith, startWith, tap } from "rxjs";
 import RelayPicker from "../../components/relay-picker";
 
 const eventStore = new EventStore();
@@ -73,13 +73,12 @@ function FollowDistanceModel(root: string, distance: number): Model<Set<string>>
 
 function ProfileQuery(user: ProfilePointer): Model<ProfileContent | undefined> {
   return (events) =>
-    merge(
-      defer(() => {
-        if (events.hasReplaceable(kinds.Metadata, user.pubkey)) return EMPTY;
-        else return addressLoader({ kind: kinds.Metadata, ...user }).pipe(ignoreElements());
-      }),
-      events.profile(user.pubkey),
-    );
+    iif(
+      // If the profile is not found in the event store, request it
+      () => !events.hasReplaceable(kinds.Metadata, user.pubkey),
+      addressLoader({ kind: kinds.Metadata, ...user }),
+      EMPTY,
+    ).pipe(ignoreElements(), mergeWith(events.profile(user.pubkey)));
 }
 
 function useProfile(pubkey: string, relays?: string[]): ProfileContent | undefined {

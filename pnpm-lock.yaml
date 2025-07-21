@@ -48,6 +48,9 @@ importers:
       '@noble/hashes':
         specifier: ^1.7.1
         version: 1.8.0
+      applesauce-core:
+        specifier: link:../core
+        version: link:../core
       applesauce-signers:
         specifier: link:../signers
         version: link:../signers
@@ -55,8 +58,8 @@ importers:
         specifier: ^5.1.5
         version: 5.1.5
       nostr-tools:
-        specifier: ^2.13
-        version: 2.15.0(typescript@5.8.3)
+        specifier: ~2.15.1
+        version: 2.15.1(typescript@5.8.3)
       rxjs:
         specifier: ^7.8.1
         version: 7.8.2
@@ -77,8 +80,8 @@ importers:
         specifier: link:../factory
         version: link:../factory
       nostr-tools:
-        specifier: ^2.13
-        version: 2.15.0(typescript@5.8.3)
+        specifier: ~2.15.1
+        version: 2.15.1(typescript@5.8.3)
       rxjs:
         specifier: ^7.8.1
         version: 7.8.2
@@ -120,8 +123,8 @@ importers:
         specifier: ^3.0.2
         version: 3.0.2
       nostr-tools:
-        specifier: ^2.13
-        version: 2.15.0(typescript@5.8.3)
+        specifier: ~2.15.1
+        version: 2.15.1(typescript@5.8.3)
       remark:
         specifier: ^15.0.1
         version: 15.0.1
@@ -166,8 +169,8 @@ importers:
         specifier: ^5.0.9
         version: 5.1.5
       nostr-tools:
-        specifier: ^2.13
-        version: 2.15.0(typescript@5.8.3)
+        specifier: ~2.15.1
+        version: 2.15.1(typescript@5.8.3)
       rxjs:
         specifier: ^7.8.1
         version: 7.8.2
@@ -210,8 +213,8 @@ importers:
         specifier: link:../factory
         version: link:../factory
       nostr-tools:
-        specifier: ^2.13
-        version: 2.15.0(typescript@5.8.3)
+        specifier: ~2.15.1
+        version: 2.15.1(typescript@5.8.3)
       rxjs:
         specifier: ^7.8.1
         version: 7.8.2
@@ -301,8 +304,8 @@ importers:
         specifier: ^1.0.17
         version: 1.0.25
       nostr-tools:
-        specifier: ^2.13
-        version: 2.15.0(typescript@5.6.3)
+        specifier: ~2.15.1
+        version: 2.15.1(typescript@5.6.3)
       prismjs:
         specifier: ^1.30.0
         version: 1.30.0
@@ -365,8 +368,8 @@ importers:
         specifier: ^5.0.9
         version: 5.1.5
       nostr-tools:
-        specifier: ^2.13
-        version: 2.15.0(typescript@5.8.3)
+        specifier: ~2.15.1
+        version: 2.15.1(typescript@5.8.3)
     devDependencies:
       '@types/jest':
         specifier: ^29.5.14
@@ -396,8 +399,8 @@ importers:
         specifier: ^5.0.9
         version: 5.1.5
       nostr-tools:
-        specifier: ^2.13
-        version: 2.15.0(typescript@5.8.3)
+        specifier: ~2.15.1
+        version: 2.15.1(typescript@5.8.3)
       rxjs:
         specifier: ^7.8.1
         version: 7.8.2
@@ -442,8 +445,8 @@ importers:
         specifier: ^2.0.0
         version: 2.0.0
       nostr-tools:
-        specifier: ^2.13
-        version: 2.15.0(typescript@5.8.3)
+        specifier: ~2.15.1
+        version: 2.15.1(typescript@5.8.3)
       observable-hooks:
         specifier: ^4.2.4
         version: 4.2.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rxjs@7.8.2)
@@ -479,8 +482,8 @@ importers:
         specifier: ^5.0.9
         version: 5.1.5
       nostr-tools:
-        specifier: ^2.13
-        version: 2.15.0(typescript@5.8.3)
+        specifier: ~2.15.1
+        version: 2.15.1(typescript@5.8.3)
       rxjs:
         specifier: ^7.8.1
         version: 7.8.2
@@ -525,8 +528,8 @@ importers:
         specifier: ^5.0.9
         version: 5.1.5
       nostr-tools:
-        specifier: ^2.13
-        version: 2.15.0(typescript@5.8.3)
+        specifier: ~2.15.1
+        version: 2.15.1(typescript@5.8.3)
     devDependencies:
       '@types/debug':
         specifier: ^4.1.12
@@ -2797,8 +2800,8 @@ packages:
       typescript:
         optional: true
 
-  nostr-tools@2.15.0:
-    resolution: {integrity: sha512-Jj/+UFbu3JbTAWP4ipPFNuyD4W5eVRBNAP+kmnoRCYp3bLmTrlQ0Qhs5O1xSQJTFpjdZqoS0zZOUKdxUdjc+pw==}
+  nostr-tools@2.15.1:
+    resolution: {integrity: sha512-LpetHDR9ltnkpJDkva/SONgyKBbsoV+5yLB8DWc0/U3lCWGtoWJw6Nbc2vR2Ai67RIQYrBQeZLyMlhwVZRK/9A==}
     peerDependencies:
       typescript: '>=5.0.0'
     peerDependenciesMeta:
@@ -6099,7 +6102,7 @@ snapshots:
     optionalDependencies:
       typescript: 5.6.3
 
-  nostr-tools@2.15.0(typescript@5.6.3):
+  nostr-tools@2.15.1(typescript@5.6.3):
     dependencies:
       '@noble/ciphers': 0.5.3
       '@noble/curves': 1.2.0
@@ -6111,7 +6114,7 @@ snapshots:
     optionalDependencies:
       typescript: 5.6.3
 
-  nostr-tools@2.15.0(typescript@5.8.3):
+  nostr-tools@2.15.1(typescript@5.8.3):
     dependencies:
       '@noble/ciphers': 0.5.3
       '@noble/curves': 1.2.0

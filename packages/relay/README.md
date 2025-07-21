@@ -56,9 +56,8 @@ const event = {
   // ... other required fields
 };
 
-relay.event(event).subscribe((response) => {
-  console.log(`Published:`, response.ok);
-});
+const response = await relay.publish(event);
+console.log(`Published:`, response.ok);
 ```
 
 ### Relay Pool
@@ -85,7 +84,8 @@ pool
   });
 
 // Publish to multiple relays
-pool.event(relays, event).subscribe((response) => {
+const responses = await pool.publish(relays, event);
+responses.forEach((response) => {
   console.log(`Published to ${response.from}:`, response.ok);
 });
 ```
@@ -112,7 +112,8 @@ group
   });
 
 // Publish to all relays in group
-group.event(event).subscribe((response) => {
+const responses = await group.publish(event);
+responses.forEach((response) => {
   console.log(`Published to ${response.from}:`, response.ok);
 });
 ```

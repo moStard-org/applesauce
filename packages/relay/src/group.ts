@@ -5,14 +5,14 @@ import { catchError, EMPTY, endWith, ignoreElements, merge, Observable, of } fro
 import { completeOnEose } from "./operators/complete-on-eose.js";
 import { onlyEvents } from "./operators/only-events.js";
 import {
+  FilterInput,
   IGroup,
   IRelay,
-  PublishResponse,
-  SubscriptionResponse,
   PublishOptions,
+  PublishResponse,
   RequestOptions,
   SubscriptionOptions,
-  FilterInput,
+  SubscriptionResponse,
 } from "./types.js";
 
 export class RelayGroup implements IGroup {
@@ -63,14 +63,12 @@ export class RelayGroup implements IGroup {
   }
 
   /** Publish an event to all relays with retries ( default 3 retries ) */
-  publish(event: NostrEvent, opts?: PublishOptions): Observable<PublishResponse> {
-    return merge(
-      ...this.relays.map((relay) =>
-        relay.publish(event, opts).pipe(
+  publish(event: NostrEvent, opts?: PublishOptions): Promise<PublishResponse[]> {
+    return Promise.all(
+      this.relays.map((relay) =>
+        relay.publish(event, opts).catch(
           // Catch error and return as PublishResponse
-          catchError((err) =>
-            of({ ok: false, from: relay.url, message: err?.message || "Unknown error" } satisfies PublishResponse),
-          ),
+          (err) => ({ ok: false, from: relay.url, message: err?.message || "Unknown error" }) satisfies PublishResponse,
         ),
       ),
     );

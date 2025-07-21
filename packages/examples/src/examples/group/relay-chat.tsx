@@ -18,7 +18,7 @@ import { ExtensionSigner } from "applesauce-signers";
 import { kinds, NostrEvent } from "nostr-tools";
 import { ProfilePointer } from "nostr-tools/nip19";
 import { useCallback, useEffect, useState } from "react";
-import { defer, EMPTY, ignoreElements, lastValueFrom, map, merge, startWith } from "rxjs";
+import { EMPTY, ignoreElements, iif, map, mergeWith, startWith } from "rxjs";
 
 import GroupPicker from "../../components/group-picker";
 
@@ -38,15 +38,12 @@ const addressLoader = createAddressLoader(pool, {
 /** A model that loads the profile if its not found in the event store */
 function ProfileQuery(user: ProfilePointer): Model<ProfileContent | undefined> {
   return (events) =>
-    merge(
-      // Load the profile if its not found in the event store
-      defer(() => {
-        if (events.hasReplaceable(kinds.Metadata, user.pubkey)) return EMPTY;
-        else return addressLoader({ kind: kinds.Metadata, ...user }).pipe(ignoreElements());
-      }),
-      // Subscribe to the profile content
-      events.profile(user.pubkey),
-    );
+    iif(
+      // If the profile is not found in the event store, request it
+      () => !events.hasReplaceable(kinds.Metadata, user.pubkey),
+      addressLoader({ kind: kinds.Metadata, ...user }),
+      EMPTY,
+    ).pipe(ignoreElements(), mergeWith(events.profile(user.pubkey)));
 }
 
 /** Create a hook for loading a users profile */
@@ -130,7 +127,7 @@ function SendMessageForm({ pointer }: { pointer: GroupPointer }) {
       // Sign the draft
       const signed = await factory.sign(draft);
       // Publish the message to the relay
-      const response = await lastValueFrom(pool.relay(pointer.relay).publish(signed));
+      const response = await pool.relay(pointer.relay).publish(signed);
       // Throw an error if the message was rejected
       if (!response.ok) throw new Error(response.message);
       // Clear the form

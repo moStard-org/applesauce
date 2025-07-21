@@ -1,3 +1,4 @@
+import { normalizeToPubkey } from "applesauce-core/helpers/pointers";
 import { ReadonlySigner } from "applesauce-signers/signers/readonly-signer";
 import { BaseAccount } from "../account.js";
 import { SerializedAccount } from "../types.js";
@@ -20,6 +21,6 @@ export class ReadonlyAccount<Metadata extends unknown> extends BaseAccount<Reado
   /** Creates a ReadonlyAccount from a hex public key or NIP-19 npub */
   static fromPubkey(pubkey: string) {
     const signer = ReadonlySigner.fromPubkey(pubkey);
-    return new ReadonlyAccount(signer.getPublicKey(), signer);
+    return new ReadonlyAccount(normalizeToPubkey(pubkey), signer);
   }
 }

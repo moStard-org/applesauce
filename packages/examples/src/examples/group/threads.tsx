@@ -20,7 +20,7 @@ import { ExtensionSigner } from "applesauce-signers";
 import { kinds, NostrEvent } from "nostr-tools";
 import { ProfilePointer } from "nostr-tools/nip19";
 import { useCallback, useRef, useState } from "react";
-import { defer, EMPTY, ignoreElements, lastValueFrom, map, merge, startWith } from "rxjs";
+import { EMPTY, ignoreElements, iif, map, mergeWith, startWith } from "rxjs";
 
 import GroupPicker from "../../components/group-picker";
 
@@ -38,15 +38,12 @@ const addressLoader = createAddressLoader(pool, {
 /** A model that loads the profile if its not found in the event store */
 function ProfileQuery(user: ProfilePointer): Model<ProfileContent | undefined> {
   return (events) =>
-    merge(
-      // Load the profile if its not found in the event store
-      defer(() => {
-        if (events.hasReplaceable(kinds.Metadata, user.pubkey)) return EMPTY;
-        else return addressLoader({ kind: kinds.Metadata, ...user }).pipe(ignoreElements());
-      }),
-      // Subscribe to the profile content
-      events.profile(user.pubkey),
-    );
+    iif(
+      // If the profile is not found in the event store, request it
+      () => !events.hasReplaceable(kinds.Metadata, user.pubkey),
+      addressLoader({ kind: kinds.Metadata, ...user }),
+      EMPTY,
+    ).pipe(ignoreElements(), mergeWith(events.profile(user.pubkey)));
 }
 
 /** Create a hook for loading a users profile */
@@ -137,7 +134,7 @@ function ReplyForm({ event, pointer }: { event: NostrEvent; pointer: GroupPointe
       // Sign the event
       const signed = await factory.sign(draft);
       // Publish the event
-      await lastValueFrom(pool.publish([pointer.relay], signed));
+      await pool.publish([pointer.relay], signed);
       // Add to the event store for the app
       eventStore.add(signed);
       setContent("");
@@ -221,7 +218,7 @@ function NewThreadForm({
       // Add to the event store for the app
       eventStore.add(signed);
       // Publish the event
-      await lastValueFrom(pool.publish([pointer.relay], signed));
+      await pool.publish([pointer.relay], signed);
       // Add to the event store for the app
       eventStore.add(signed);
 

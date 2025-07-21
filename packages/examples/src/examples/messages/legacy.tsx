@@ -23,7 +23,7 @@ import { addEvents, getEventsForFilters, openDB } from "nostr-idb";
 import { Filter, kinds, NostrEvent } from "nostr-tools";
 import { npubEncode } from "nostr-tools/nip19";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { BehaviorSubject, bufferTime, filter, lastValueFrom } from "rxjs";
+import { BehaviorSubject, bufferTime, filter } from "rxjs";
 
 // Import helper components
 import LoginView from "../../components/login-view";
@@ -166,7 +166,7 @@ function DirectMessageForm({ corraspondant, relay }: { corraspondant: string; re
         .exec(SendLegacyMessage, corraspondant, message, {
           expiration: expiration ? unixNow() + EXPIRATIONS[expiration] : undefined,
         })
-        .forEach((signed) => lastValueFrom(pool.publish([relay], signed)));
+        .forEach((signed) => pool.publish([relay], signed));
 
       setMessage("");
     } catch (err) {

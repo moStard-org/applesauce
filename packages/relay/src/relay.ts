@@ -13,6 +13,7 @@ import {
   from,
   ignoreElements,
   isObservable,
+  lastValueFrom,
   map,
   merge,
   mergeMap,
@@ -319,7 +320,7 @@ export class Relay implements IRelay {
   }
 
   /** Send a message to the relay */
-  next(message: any) {
+  send(message: any) {
     this.socket.next(message);
   }
 
@@ -425,21 +426,23 @@ export class Relay implements IRelay {
   }
 
   /** send and AUTH message */
-  auth(event: NostrEvent): Observable<PublishResponse> {
-    return this.event(event, "AUTH").pipe(
-      // update authenticated
-      tap((result) => this.authenticationResponse$.next(result)),
+  auth(event: NostrEvent): Promise<PublishResponse> {
+    return lastValueFrom(
+      this.event(event, "AUTH").pipe(
+        // update authenticated
+        tap((result) => this.authenticationResponse$.next(result)),
+      ),
     );
   }
 
   /** Authenticate with the relay using a signer */
-  authenticate(signer: AuthSigner): Observable<PublishResponse> {
+  authenticate(signer: AuthSigner): Promise<PublishResponse> {
     if (!this.challenge) throw new Error("Have not received authentication challenge");
 
     const p = signer.signEvent(nip42.makeAuthEvent(this.url, this.challenge));
     const start = p instanceof Promise ? from(p) : of(p);
 
-    return start.pipe(switchMap((event) => this.auth(event)));
+    return lastValueFrom(start.pipe(switchMap((event) => this.auth(event))));
   }
 
   /** Creates a REQ that retries when relay errors ( default 3 retries ) */
@@ -461,17 +464,19 @@ export class Relay implements IRelay {
   }
 
   /** Publishes an event to the relay and retries when relay errors or responds with auth-required ( default 3 retries ) */
-  publish(event: NostrEvent, opts?: PublishOptions): Observable<PublishResponse> {
-    return this.event(event).pipe(
-      mergeMap((result) => {
-        // If the relay responds with auth-required, throw an error for the retry operator to handle
-        if (result.ok === false && result.message?.startsWith("auth-required:"))
-          return throwError(() => new Error(result.message));
+  publish(event: NostrEvent, opts?: PublishOptions): Promise<PublishResponse> {
+    return lastValueFrom(
+      this.event(event).pipe(
+        mergeMap((result) => {
+          // If the relay responds with auth-required, throw an error for the retry operator to handle
+          if (result.ok === false && result.message?.startsWith("auth-required:"))
+            return throwError(() => new Error(result.message));
 
-        return of(result);
-      }),
-      // Retry the publish until it succeeds or the number of retries is reached
-      retry(opts?.retries ?? 3),
+          return of(result);
+        }),
+        // Retry the publish until it succeeds or the number of retries is reached
+        retry(opts?.retries ?? 3),
+      ),
     );
   }
 

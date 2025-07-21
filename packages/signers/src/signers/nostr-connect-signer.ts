@@ -1,5 +1,5 @@
 import { EventTemplate, Filter, kinds, NostrEvent, verifyEvent } from "nostr-tools";
-import { Nip07Interface, SimpleSigner } from "applesauce-signers";
+import { ISigner, SimpleSigner } from "applesauce-signers";
 import { Deferred, createDefer } from "applesauce-core/promise";
 import { isHexKey, unixNow } from "applesauce-core/helpers";
 import { logger } from "applesauce-core";
@@ -111,7 +111,7 @@ export type NostrConnectAppMetadata = {
   permissions?: string[];
 };
 
-export class NostrConnectSigner implements Nip07Interface {
+export class NostrConnectSigner implements ISigner {
   /** A method that is called when an event needs to be published */
   protected publishMethod: NostrPublishMethod;
 
@@ -150,14 +150,14 @@ export class NostrConnectSigner implements Nip07Interface {
 
   nip04?:
     | {
-        encrypt: (pubkey: string, plaintext: string) => Promise<string> | string;
-        decrypt: (pubkey: string, ciphertext: string) => Promise<string> | string;
+        encrypt: (pubkey: string, plaintext: string) => Promise<string>;
+        decrypt: (pubkey: string, ciphertext: string) => Promise<string>;
       }
     | undefined;
   nip44?:
     | {
-        encrypt: (pubkey: string, plaintext: string) => Promise<string> | string;
-        decrypt: (pubkey: string, ciphertext: string) => Promise<string> | string;
+        encrypt: (pubkey: string, plaintext: string) => Promise<string>;
+        decrypt: (pubkey: string, ciphertext: string) => Promise<string>;
       }
     | undefined;
 

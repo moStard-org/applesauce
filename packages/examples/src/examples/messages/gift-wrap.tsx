@@ -25,7 +25,7 @@ import { addEvents, getEventsForFilters, openDB } from "nostr-idb";
 import { kinds, NostrEvent } from "nostr-tools";
 import { npubEncode } from "nostr-tools/nip19";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BehaviorSubject, bufferTime, filter, lastValueFrom, map } from "rxjs";
+import { BehaviorSubject, bufferTime, filter, map } from "rxjs";
 
 // Import helper components
 import LoginView from "../../components/login-view";
@@ -92,7 +92,7 @@ function MessageForm({ conversation, relay }: { conversation: string; relay: str
         .exec(SendWrappedMessage, getConversationParticipants(conversation), message.trim(), {
           expiration: expiration ? unixNow() + EXPIRATIONS[expiration] : undefined,
         })
-        .forEach((gift) => lastValueFrom(pool.publish([relay], gift)));
+        .forEach((gift) => pool.publish([relay], gift));
 
       setMessage("");
     } catch (err) {

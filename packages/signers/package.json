@@ -11,10 +11,16 @@
 		"test": "vitest run --passWithNoTests",
 		"watch:test": "vitest"
 	},
-	"keywords": ["nostr", "applesauce"],
+	"keywords": [
+		"nostr",
+		"applesauce"
+	],
 	"author": "hzrd149",
 	"license": "MIT",
-	"files": ["dist", "applesauce"],
+	"files": [
+		"dist",
+		"applesauce"
+	],
 	"exports": {
 		".": {
 			"import": "./dist/index.js",
@@ -39,7 +45,7 @@
 		"applesauce-core": "link:../core",
 		"debug": "^4.4.0",
 		"nanoid": "^5.0.9",
-		"nostr-tools": "^2.13"
+		"nostr-tools": "~2.15.1"
 	},
 	"devDependencies": {
 		"@types/debug": "^4.1.12",

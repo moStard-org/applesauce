@@ -1,7 +1,7 @@
-import { Nip07Interface } from "applesauce-signers";
+import { ISigner } from "../interface.ts";
 
 declare global {
   interface Window {
-    nostr?: Nip07Interface;
+    nostr?: ISigner;
   }
 }

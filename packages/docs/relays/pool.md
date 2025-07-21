@@ -51,9 +51,9 @@ pool
   });
 ```
 
-### EVENT Method
+### Event Method
 
-The `event` method publishes an event to multiple relays and returns an observable of the responses from each relay.
+The `event` method sends an `EVENT` message to multiple relays and returns an observable of the responses from each relay.
 
 ```typescript
 const event = {
@@ -64,6 +64,7 @@ const event = {
   // ... other required fields
 };
 
+// Subscribe to a stream of responses
 pool.event(relays, event).subscribe({
   next: (response) => {
     console.log(`Published to ${response.from}:`, response.ok);
@@ -77,18 +78,14 @@ pool.event(relays, event).subscribe({
 
 ### Publish Method
 
-The `publish` method is similar to `event` but includes automatic retries:
+The `publish` method is a wrapper around the `event` method that returns a `Promise` and automatically handles reconnecting and retrying:
 
 ```typescript
 // Publish with retries (defaults to 3 retries)
-pool.publish(relays, event, { retries: 5 }).subscribe({
-  next: (response) => {
-    console.log(`Published to ${response.from}:`, response.ok);
-  },
-  complete: () => {
-    console.log("Publishing complete (with retries)");
-  },
-});
+const responses = await pool.publish(relays, event);
+for (const response of responses) {
+  console.log(`Published to ${response.from}:`, response.ok, response.message);
+}
 ```
 
 ### Request Method

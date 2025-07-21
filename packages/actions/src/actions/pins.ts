@@ -1,16 +1,24 @@
-import { kinds, NostrEvent } from "nostr-tools";
-import { addEventTag, removeEventTag } from "applesauce-factory/operations/tag";
+import { getReplaceableAddress, isReplaceable } from "applesauce-core/helpers";
 import { modifyPublicTags } from "applesauce-factory/operations/event";
+import { addAddressTag, addEventTag, removeAddressTag, removeEventTag } from "applesauce-factory/operations/tag";
+import { kinds, NostrEvent } from "nostr-tools";
 
 import { Action } from "../action-hub.js";
 
+export const ALLOWED_PIN_KINDS = [kinds.ShortTextNote, kinds.LongFormArticle];
+
 /** An action that pins a note to the users pin list */
 export function PinNote(note: NostrEvent): Action {
+  if (!ALLOWED_PIN_KINDS.includes(note.kind)) throw new Error(`Event kind ${note.kind} can not be pinned`);
+
   return async function* ({ events, factory, self }) {
     const pins = events.getReplaceable(kinds.Pinlist, self);
-    if (!pins) throw new Error("Missing pin list");
 
-    const draft = await factory.modifyTags(pins, addEventTag(note.id));
+    const operation = isReplaceable(note.kind) ? addAddressTag(getReplaceableAddress(note)) : addEventTag(note.id);
+    const draft = pins
+      ? await factory.modifyTags(pins, operation)
+      : await factory.build({ kind: kinds.Pinlist }, modifyPublicTags(operation));
+
     yield await factory.sign(draft);
   };
 }
@@ -19,9 +27,13 @@ export function PinNote(note: NostrEvent): Action {
 export function UnpinNote(note: NostrEvent): Action {
   return async function* ({ events, factory, self }) {
     const pins = events.getReplaceable(kinds.Pinlist, self);
-    if (!pins) throw new Error("Missing pin list");
+    if (!pins) return;
 
-    const draft = await factory.modifyTags(pins, removeEventTag(note.id));
+    const operation = isReplaceable(note.kind)
+      ? removeAddressTag(getReplaceableAddress(note))
+      : removeEventTag(note.id);
+    const draft = await factory.modifyTags(pins, operation);
+
     yield await factory.sign(draft);
   };
 }

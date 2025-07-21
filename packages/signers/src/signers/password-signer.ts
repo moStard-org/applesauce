@@ -2,22 +2,22 @@ import { EventTemplate, finalizeEvent, getPublicKey, nip04, nip44 } from "nostr-
 import { encrypt, decrypt } from "nostr-tools/nip49";
 import { createDefer, Deferred } from "applesauce-core/promise";
 
-import { Nip07Interface } from "../nip-07.js";
+import { ISigner } from "../interface.js";
 import { normalizeToSecretKey } from "applesauce-core/helpers";
 
 /** A NIP-49 (Private Key Encryption) signer */
-export class PasswordSigner implements Nip07Interface {
+export class PasswordSigner implements ISigner {
   key: Uint8Array | null = null;
 
   ncryptsec?: string;
 
   nip04: {
-    encrypt: (pubkey: string, plaintext: string) => Promise<string> | string;
-    decrypt: (pubkey: string, ciphertext: string) => Promise<string> | string;
+    encrypt: (pubkey: string, plaintext: string) => Promise<string>;
+    decrypt: (pubkey: string, ciphertext: string) => Promise<string>;
   };
   nip44: {
-    encrypt: (pubkey: string, plaintext: string) => Promise<string> | string;
-    decrypt: (pubkey: string, ciphertext: string) => Promise<string> | string;
+    encrypt: (pubkey: string, plaintext: string) => Promise<string>;
+    decrypt: (pubkey: string, ciphertext: string) => Promise<string>;
   };
 
   get unlocked() {
@@ -64,8 +64,12 @@ export class PasswordSigner implements Nip07Interface {
     if (this.key) return;
 
     if (this.ncryptsec) {
-      this.key = decrypt(this.ncryptsec, password);
-      if (!this.key) throw new Error("Failed to decrypt key");
+      try {
+        this.key = decrypt(this.ncryptsec, password);
+        if (!this.key) throw new Error("Failed to decrypt key");
+      } catch (error) {
+        throw new Error("failed to decrypt key: " + (error instanceof Error ? error.message : String(error)));
+      }
     } else throw new Error("Missing ncryptsec");
   }
 

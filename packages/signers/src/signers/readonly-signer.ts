@@ -1,16 +1,16 @@
-import { VerifiedEvent } from "nostr-tools";
-import { Nip07Interface } from "../nip-07.js";
 import { isHexKey, normalizeToPubkey } from "applesauce-core/helpers";
+import { VerifiedEvent } from "nostr-tools";
+import { ISigner } from "../interface.js";
 
 /** A signer that only implements getPublicKey and throws on ever other method */
-export class ReadonlySigner implements Nip07Interface {
+export class ReadonlySigner implements ISigner {
   nip04: {
-    encrypt: (pubkey: string, plaintext: string) => Promise<string> | string;
-    decrypt: (pubkey: string, ciphertext: string) => Promise<string> | string;
+    encrypt: (pubkey: string, plaintext: string) => Promise<string>;
+    decrypt: (pubkey: string, ciphertext: string) => Promise<string>;
   };
   nip44: {
-    encrypt: (pubkey: string, plaintext: string) => Promise<string> | string;
-    decrypt: (pubkey: string, ciphertext: string) => Promise<string> | string;
+    encrypt: (pubkey: string, plaintext: string) => Promise<string>;
+    decrypt: (pubkey: string, ciphertext: string) => Promise<string>;
   };
 
   constructor(private pubkey: string) {
@@ -26,27 +26,24 @@ export class ReadonlySigner implements Nip07Interface {
     };
   }
 
-  getPublicKey() {
+  async getPublicKey() {
     return this.pubkey;
   }
-  getRelays() {
-    return {};
-  }
 
-  signEvent(): VerifiedEvent {
+  async signEvent(): Promise<VerifiedEvent> {
     throw new Error("Cant sign events with readonly");
   }
 
-  nip04Encrypt(): string {
+  async nip04Encrypt(): Promise<string> {
     throw new Error("Cant encrypt with readonly");
   }
-  nip04Decrypt(): string {
+  async nip04Decrypt(): Promise<string> {
     throw new Error("Cant decrypt with readonly");
   }
-  nip44Encrypt(): string {
+  async nip44Encrypt(): Promise<string> {
     throw new Error("Cant encrypt with readonly");
   }
-  nip44Decrypt(): string {
+  async nip44Decrypt(): Promise<string> {
     throw new Error("Cant decrypt with readonly");
   }
 
