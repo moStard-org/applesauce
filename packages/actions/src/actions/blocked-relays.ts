@@ -1,4 +1,4 @@
-import { ISyncEventStore } from "applesauce-core/event-store";
+import { IEventStoreRead } from "applesauce-core";
 import { TagOperation } from "applesauce-factory";
 import { modifyHiddenTags, modifyPublicTags } from "applesauce-factory/operations/event";
 import { addRelayTag, removeRelayTag } from "applesauce-factory/operations/tag/relay";
@@ -6,7 +6,7 @@ import { kinds } from "nostr-tools";
 
 import { Action } from "../action-hub.js";
 
-function getBlockedRelaysEvent(events: ISyncEventStore, self: string) {
+function getBlockedRelaysEvent(events: IEventStoreRead, self: string) {
   const event = events.getReplaceable(kinds.BlockedRelaysList, self);
   if (!event) throw new Error("Can't find blocked relays event");
   return event;

@@ -1,14 +1,18 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { subscribeSpyTo } from "@hirez_io/observer-spy";
 import { NostrEvent } from "nostr-tools";
 import { WS } from "vitest-websocket-mock";
 
 import { Relay } from "../relay.js";
+import { of } from "rxjs";
 
 let server: WS;
 let relay: Relay;
 
 beforeEach(async () => {
+  // Mock empty information document
+  vi.spyOn(Relay, "fetchInformationDocument").mockImplementation(() => of(null));
+
   server = new WS("wss://test", { jsonProtocol: true });
   relay = new Relay("wss://test");
 

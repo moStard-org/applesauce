@@ -1,5 +1,32 @@
 # applesauce-signer
 
+## 2.0.0
+
+### Minor Changes
+
+- 82c7703: add `SimpleSigner.fromPrivateKey` static method
+- c1f8f28: Allow `NostrConnectSigner.subscriptionMethod` to return `Observable<NostrEvent|string>` for better compatabilitiy with `applesauce-relay`
+- 82c7703: Add `PasswordSigner.fromNcryptsec` static method
+- c1f8f28: Allow `NostrConnectSigner.publishMethod` to return an `Observable<any>` for better compatabilitiy with `applesauce-relay`
+- 82c7703: Add `PasswordSigner.fromPrivateKey` static method
+- 324b960: Bump `nostr-tools` to 2.13
+- c290264: Allow an `AbortSignal` to be passed into `NostrConnectSigner.waitForSigner`
+- 82c7703: Add `ReadonlySigner.fromPubkey` method
+
+### Patch Changes
+
+- 29d5350: Make `NostrConnectSigner.close` cancel `.waitForSigner()` promise
+- Updated dependencies
+  - applesauce-core@2.0.0
+
+## 1.2.0
+
+### Patch Changes
+
+- ed6ad27: Fix nostr-connect signer `publishMethod` expecting `Promise<void>` instead of `Promise<any>`
+- Updated dependencies
+  - applesauce-core@1.2.0
+
 ## 1.0.0
 
 ### Major Changes

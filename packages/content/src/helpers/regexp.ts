@@ -1,4 +1,7 @@
 export const Expressions = {
+  get url() {
+    return /(?:https?|wss?|ircs?|s?ftp):\/\/([a-zA-Z0-9\.\-]+\.[a-zA-Z]+(?::\d+)?)([\/\?#][\p{L}\p{N}\p{M}&\.-\/\?=#\-@%\+_,:!~*]*)?/gu;
+  },
   get link() {
     return /https?:\/\/([a-zA-Z0-9\.\-]+\.[a-zA-Z]+(?::\d+)?)([\/\?#][\p{L}\p{N}\p{M}&\.-\/\?=#\-@%\+_,:!~*]*)?/gu;
   },
@@ -9,14 +12,18 @@ export const Expressions = {
     return /:([a-zA-Z0-9_-]+):/gi;
   },
   get hashtag() {
-    return /(?<=^|[^\p{L}#])#([\p{L}\p{N}\p{M}]+)/gu;
+    // NOTE: cant use \b here because it uses \w which only matches latin letters
+    return /(?<=^|[^\p{L}#\/])#([\p{L}\p{N}\p{M}]+)(?=\p{Z}|$|\s)/gu;
   },
 };
 
 /** A list of Regular Expressions that match tokens surrounded by whitespace to avoid matching in URLs */
 export const Tokens = {
+  get url() {
+    return Expressions.url;
+  },
   get link() {
-    return new RegExp(`(?<=\\s|^)${Expressions.link.source}(?=\\s|$)`, "gu");
+    return Expressions.link;
   },
   get nostrLink() {
     return new RegExp(

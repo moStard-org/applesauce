@@ -5,6 +5,7 @@ import { NostrEvent } from "nostr-tools";
 
 import { EventTemplate, IAccount, IAccountConstructor, SerializedAccount } from "./types.js";
 
+/** Wraps a promise in an abort signal */
 function wrapInSignal<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
   return new Promise((res, rej) => {
     signal.throwIfAborted();
@@ -29,8 +30,10 @@ function wrapInSignal<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
   });
 }
 
+/** An error thrown when a signer is used with the wrong pubkey */
 export class SignerMismatchError extends Error {}
 
+/** A base class for all accounts */
 export class BaseAccount<Signer extends Nip07Interface, SignerData, Metadata extends unknown>
   implements IAccount<Signer, SignerData, Metadata>
 {

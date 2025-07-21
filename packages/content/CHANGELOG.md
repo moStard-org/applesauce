@@ -1,5 +1,35 @@
 # applesauce-content
 
+## 2.3.0
+
+### Patch Changes
+
+- 24e5130: Fix matching 10k+ long cashu strings
+- Updated dependencies
+  - applesauce-core@2.3.0
+
+## 2.0.0
+
+### Minor Changes
+
+- 324b960: Bump `nostr-tools` to 2.13
+
+### Patch Changes
+
+- Updated dependencies
+  - applesauce-core@2.0.0
+
+## 1.2.0
+
+### Minor Changes
+
+- b611352: Add `Token` regular expressions that match things surrounded by whitespace to avoid matching in URLs
+
+### Patch Changes
+
+- Updated dependencies
+  - applesauce-core@1.2.0
+
 ## 1.0.0
 
 ### Patch Changes

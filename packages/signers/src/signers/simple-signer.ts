@@ -1,3 +1,4 @@
+import { normalizeToSecretKey } from "applesauce-core/helpers";
 import { EventTemplate, finalizeEvent, generateSecretKey, getPublicKey, nip04, nip44 } from "nostr-tools";
 
 /** A Simple NIP-07 signer class */
@@ -24,4 +25,9 @@ export class SimpleSigner {
     decrypt: async (pubkey: string, ciphertext: string) =>
       nip44.v2.decrypt(ciphertext, nip44.v2.utils.getConversationKey(this.key, pubkey)),
   };
+
+  /** Creates a SimpleSigner from a hex private key or NIP-19 nsec */
+  static fromKey(privateKey: Uint8Array | string) {
+    return new SimpleSigner(normalizeToSecretKey(privateKey));
+  }
 }

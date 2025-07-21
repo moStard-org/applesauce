@@ -1,7 +1,7 @@
-import { from, isObservable, lastValueFrom, Observable, switchMap, toArray } from "rxjs";
+import { from, isObservable, lastValueFrom, Observable, switchMap, tap, toArray } from "rxjs";
 import { NostrEvent } from "nostr-tools";
-import { ISyncEventStore } from "applesauce-core/event-store";
 import { EventFactory } from "applesauce-factory";
+import { IEventStoreActions, IEventStoreRead } from "applesauce-core";
 
 /**
  * A callback used to tell the upstream app to publish an event
@@ -12,7 +12,7 @@ export type PublishMethod = (event: NostrEvent) => void | Promise<void>;
 /** The context that is passed to actions for them to use to preform actions */
 export type ActionContext = {
   /** The event store to load events from */
-  events: ISyncEventStore;
+  events: IEventStoreRead;
   /** The pubkey of the signer in the event factory */
   self: string;
   /** The event factory used to build and modify events */
@@ -28,8 +28,11 @@ export type ActionConstructor<Args extends Array<any>> = (...args: Args) => Acti
 
 /** The main class that runs actions */
 export class ActionHub {
+  /** Whether to save all events created by actions to the event store */
+  saveToStore = true;
+
   constructor(
-    public events: ISyncEventStore,
+    public events: IEventStoreRead & IEventStoreActions,
     public factory: EventFactory,
     public publish?: PublishMethod,
   ) {}
@@ -71,6 +74,7 @@ export class ActionHub {
         const action = Action(...args);
         return ActionHub.runAction(ctx, action);
       }),
+      tap((event) => this.saveToStore && this.events.add(event)),
     );
   }
 }

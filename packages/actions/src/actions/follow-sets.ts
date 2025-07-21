@@ -1,4 +1,4 @@
-import { ISyncEventStore } from "applesauce-core/event-store";
+import { IEventStoreRead } from "applesauce-core/event-store";
 import {
   modifyHiddenTags,
   modifyPublicTags,
@@ -12,7 +12,7 @@ import { ProfilePointer } from "nostr-tools/nip19";
 
 import { Action } from "../action-hub.js";
 
-function getFollowSetEvent(events: ISyncEventStore, self: string, identifier: NostrEvent | string) {
+function getFollowSetEvent(events: IEventStoreRead, self: string, identifier: NostrEvent | string) {
   const set = typeof identifier === "string" ? events.getReplaceable(kinds.Followsets, self, identifier) : identifier;
   if (!set) throw new Error("Can't find follow set");
   if (set.kind !== kinds.Followsets) throw new Error("Event is not a follow set");
@@ -21,9 +21,6 @@ function getFollowSetEvent(events: ISyncEventStore, self: string, identifier: No
 
 /**
  * An action that creates a new follow set
- * @param identifier the "d" tag of the follow set
- * @param pubkeys the pubkeys to add to the follow set
- * @param hidden set to true to create a hidden follow set
  * @throws if a follow set already exists
  */
 export function CreateFollowSet(

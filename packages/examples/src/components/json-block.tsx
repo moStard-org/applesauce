@@ -1,11 +1,9 @@
-import { Paper } from "@mui/material";
-
 export default function JsonBlock({ value }: { value: any }) {
   return (
-    <Paper sx={{ overflow: "auto", px: 2, py: 0 }}>
+    <div className="card bg-base-200 overflow-auto p-4">
       <pre>
         <code>{JSON.stringify(value, null, 2)}</code>
       </pre>
-    </Paper>
+    </div>
   );
 }

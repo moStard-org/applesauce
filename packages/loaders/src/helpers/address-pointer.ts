@@ -1,20 +1,9 @@
-import { AddressPointerWithoutD, getReplaceableUID, mergeRelaySets } from "applesauce-core/helpers";
+import { AddressPointerWithoutD } from "applesauce-core/helpers";
 import { Filter } from "nostr-tools";
 import { isAddressableKind, isReplaceableKind } from "nostr-tools/kinds";
 
-import { unique } from "./array.js";
 import { AddressPointer } from "nostr-tools/nip19";
-
-export type LoadableAddressPointer = {
-  kind: number;
-  pubkey: string;
-  /** Optional "d" tag for paramaritized replaceable */
-  identifier?: string;
-  /** Relays to load from */
-  relays?: string[];
-  /** Load this address pointer even if it has already been loaded */
-  force?: boolean;
-};
+import { unique } from "./array.js";
 
 /** Converts an array of address pointers to a filter */
 export function createFilterFromAddressPointers(pointers: AddressPointerWithoutD[] | AddressPointer[]): Filter {
@@ -31,8 +20,8 @@ export function createFilterFromAddressPointers(pointers: AddressPointerWithoutD
 /** Takes a set of address pointers, groups them, then returns filters for the groups */
 export function createFiltersFromAddressPointers(pointers: AddressPointerWithoutD[]): Filter[] {
   // split the points in to two groups so they they don't mix in the filters
-  const parameterizedReplaceable = pointers.filter((p) => isAddressableKind(p.kind));
   const replaceable = pointers.filter((p) => isReplaceableKind(p.kind));
+  const addressable = pointers.filter((p) => isAddressableKind(p.kind));
 
   const filters: Filter[] = [];
 
@@ -41,8 +30,8 @@ export function createFiltersFromAddressPointers(pointers: AddressPointerWithout
     filters.push(...Array.from(groups.values()).map(createFilterFromAddressPointers));
   }
 
-  if (parameterizedReplaceable.length > 0) {
-    const groups = groupAddressPointersByPubkeyOrKind(parameterizedReplaceable);
+  if (addressable.length > 0) {
+    const groups = groupAddressPointersByPubkeyOrKind(addressable);
     filters.push(...Array.from(groups.values()).map(createFilterFromAddressPointers));
   }
 
@@ -87,55 +76,4 @@ export function groupAddressPointersByPubkeyOrKind(pointers: AddressPointerWitho
   const pubkeys = new Set(pointers.map((p) => p.pubkey));
 
   return pubkeys.size < kinds.size ? groupAddressPointersByPubkey(pointers) : groupAddressPointersByKind(pointers);
-}
-
-export function getRelaysFromPointers(pointers: AddressPointerWithoutD[]) {
-  const relays = new Set<string>();
-
-  for (const pointer of pointers) {
-    if (!pointer.relays) continue;
-    for (const relay of pointer.relays) {
-      relays.add(relay);
-    }
-  }
-
-  return relays;
-}
-
-export function getAddressPointerId<T extends AddressPointerWithoutD>(pointer: T): string {
-  return getReplaceableUID(pointer.kind, pointer.pubkey, pointer.identifier);
-}
-
-/** deep clone a loadable pointer to ensure its safe to modify */
-function cloneLoadablePointer(pointer: LoadableAddressPointer): LoadableAddressPointer {
-  const clone = { ...pointer };
-  if (pointer.relays) clone.relays = [...pointer.relays];
-  return clone;
-}
-
-/** deduplicates an array of address pointers and merges their relays array */
-export function consolidateAddressPointers(pointers: LoadableAddressPointer[]): LoadableAddressPointer[] {
-  const byId = new Map<string, LoadableAddressPointer>();
-
-  for (const pointer of pointers) {
-    const id = getAddressPointerId(pointer);
-    if (byId.has(id)) {
-      // duplicate, merge pointers
-      const current = byId.get(id)!;
-
-      // merge relays
-      if (pointer.relays) {
-        if (current.relays) current.relays = mergeRelaySets(current.relays, pointer.relays);
-        else current.relays = pointer.relays;
-      }
-
-      // merge force flag
-      if (pointer.force !== undefined) {
-        current.force = current.force || pointer.force;
-      }
-    } else byId.set(id, cloneLoadablePointer(pointer));
-  }
-
-  // return consolidated pointers
-  return Array.from(byId.values());
 }

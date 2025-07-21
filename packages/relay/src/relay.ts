@@ -7,12 +7,16 @@ import {
   catchError,
   combineLatest,
   defer,
+  endWith,
   filter,
+  finalize,
   from,
   ignoreElements,
+  isObservable,
   map,
   merge,
   mergeMap,
+  mergeWith,
   NEVER,
   Observable,
   of,
@@ -23,6 +27,7 @@ import {
   Subject,
   switchMap,
   take,
+  takeUntil,
   tap,
   throwError,
   timeout,
@@ -30,11 +35,13 @@ import {
 } from "rxjs";
 import { webSocket, WebSocketSubject, WebSocketSubjectConfig } from "rxjs/webSocket";
 
+import { ensureHttpURL } from "applesauce-core/helpers";
 import { RelayInformation } from "nostr-tools/nip11";
 import { completeOnEose } from "./operators/complete-on-eose.js";
 import { markFromRelay } from "./operators/mark-from-relay.js";
 import {
   AuthSigner,
+  FilterInput,
   IRelay,
   PublishOptions,
   PublishResponse,
@@ -66,8 +73,10 @@ export class Relay implements IRelay {
   connected$ = new BehaviorSubject(false);
   /** The authentication challenge string from the relay */
   challenge$ = new BehaviorSubject<string | null>(null);
-  /** Whether the client is authenticated with the relay */
-  authenticated$ = new BehaviorSubject(false);
+  /** Boolean authentication state (will be false if auth failed) */
+  authenticated$: Observable<boolean>;
+  /** The response to the last AUTH message sent to the relay */
+  authenticationResponse$ = new BehaviorSubject<PublishResponse | null>(null);
   /** The notices from the relay */
   notices$ = new BehaviorSubject<string[]>([]);
   /** The last connection error */
@@ -102,7 +111,10 @@ export class Relay implements IRelay {
     return this.notices$.value;
   }
   get authenticated() {
-    return this.authenticated$.value;
+    return this.authenticationResponse?.ok === true;
+  }
+  get authenticationResponse() {
+    return this.authenticationResponse$.value;
   }
   get information() {
     return this._nip11;
@@ -116,25 +128,25 @@ export class Relay implements IRelay {
   /** How long to keep the connection alive after nothing is subscribed */
   keepAlive = 30_000;
 
-  // subjects that track if an "auth-required" message has been received for REQ or EVENT
+  // Subjects that track if an "auth-required" message has been received for REQ or EVENT
   protected receivedAuthRequiredForReq = new BehaviorSubject(false);
   protected receivedAuthRequiredForEvent = new BehaviorSubject(false);
 
   // Computed observables that track if auth is required for REQ or EVENT
-  protected authRequiredForReq: Observable<boolean>;
-  protected authRequiredForEvent: Observable<boolean>;
+  authRequiredForRead$: Observable<boolean>;
+  authRequiredForPublish$: Observable<boolean>;
 
   protected resetState() {
     // NOTE: only update the values if they need to be changed, otherwise this will cause an infinite loop
     if (this.challenge$.value !== null) this.challenge$.next(null);
-    if (this.authenticated$.value) this.authenticated$.next(false);
+    if (this.authenticationResponse$.value) this.authenticationResponse$.next(null);
     if (this.notices$.value.length > 0) this.notices$.next([]);
 
     if (this.receivedAuthRequiredForReq.value) this.receivedAuthRequiredForReq.next(false);
     if (this.receivedAuthRequiredForEvent.value) this.receivedAuthRequiredForEvent.next(false);
   }
 
-  /** An internal observable that is responsible for watching all messages and updating state */
+  /** An internal observable that is responsible for watching all messages and updating state, subscribing to it will trigger a connection to the relay */
   protected watchTower: Observable<never>;
 
   constructor(
@@ -142,6 +154,9 @@ export class Relay implements IRelay {
     opts?: RelayOptions,
   ) {
     this.log = this.log.extend(url);
+
+    // Create an observable that tracks boolean authentication state
+    this.authenticated$ = this.authenticationResponse$.pipe(map((response) => response?.ok === true));
 
     /** Use the static method to create a new reconnect method for this relay */
     this.reconnectTimer = Relay.createReconnectTimer(url);
@@ -186,13 +201,11 @@ export class Relay implements IRelay {
     this.limitations$ = this.information$.pipe(map((info) => info?.limitation));
 
     // Create observables that track if auth is required for REQ or EVENT
-    this.authRequiredForReq = combineLatest([this.receivedAuthRequiredForReq, this.limitations$]).pipe(
-      map(([received, limitations]) => received || limitations?.auth_required === true),
+    this.authRequiredForRead$ = this.receivedAuthRequiredForReq.pipe(
       tap((required) => required && this.log("Auth required for REQ")),
       shareReplay(1),
     );
-    this.authRequiredForEvent = combineLatest([this.receivedAuthRequiredForEvent, this.limitations$]).pipe(
-      map(([received, limitations]) => received || limitations?.auth_required === true),
+    this.authRequiredForPublish$ = this.receivedAuthRequiredForEvent.pipe(
       tap((required) => required && this.log("Auth required for EVENT")),
       shareReplay(1),
     );
@@ -268,13 +281,15 @@ export class Relay implements IRelay {
       .subscribe(() => this.ready$.next(true));
   }
 
-  /** Wait for ready and authenticated */
+  /** Wait for authentication state, make connection and then wait for authentication if required */
   protected waitForAuth<T extends unknown = unknown>(
     // NOTE: require BehaviorSubject so it always has a value
     requireAuth: Observable<boolean>,
     observable: Observable<T>,
   ): Observable<T> {
     return combineLatest([requireAuth, this.authenticated$]).pipe(
+      // Once the auth state is known, make a connection and watch for auth challenges
+      mergeWith(this.watchTower),
       // wait for auth not required or authenticated
       filter(([required, authenticated]) => !required || authenticated),
       // complete after the first value so this does not repeat
@@ -309,17 +324,32 @@ export class Relay implements IRelay {
   }
 
   /** Create a REQ observable that emits events or "EOSE" or errors */
-  req(filters: Filter | Filter[], id = nanoid()): Observable<SubscriptionResponse> {
-    const request = this.socket.multiplex(
-      () => (Array.isArray(filters) ? ["REQ", id, ...filters] : ["REQ", id, filters]),
-      () => ["CLOSE", id],
-      (message) => (message[0] === "EVENT" || message[0] === "CLOSED" || message[0] === "EOSE") && message[1] === id,
+  req(filters: FilterInput, id = nanoid()): Observable<SubscriptionResponse> {
+    // Convert filters input into an observable, if its a normal value merge it with NEVER so it never completes
+    const input = isObservable(filters) ? filters : merge(of(filters), NEVER);
+
+    // Create an observable that completes when the upstream observable completes
+    const complete = input.pipe(ignoreElements(), endWith(null));
+
+    // Create an observable that filters responses from the relay to just the ones for this REQ
+    const messages: Observable<any[]> = this.socket.pipe(
+      filter((m) => Array.isArray(m) && (m[0] === "EVENT" || m[0] === "CLOSED" || m[0] === "EOSE") && m[1] === id),
     );
 
-    // Start the watch tower with the observable
-    const withWatchTower = merge(this.watchTower, request);
+    // Create an observable that controls sending the filters and closing the REQ
+    const control = input.pipe(
+      // Send the filters when they change
+      tap((filters) => this.socket.next(Array.isArray(filters) ? ["REQ", id, ...filters] : ["REQ", id, filters])),
+      // Close the req when unsubscribed
+      finalize(() => this.socket.next(["CLOSE", id])),
+      // Once filters have been sent, switch to listening for messages
+      switchMap(() => messages),
+    );
 
-    const observable = withWatchTower.pipe(
+    // Start the watch tower with the observables
+    const observable = merge(this.watchTower, control).pipe(
+      // Complete the subscription when the input is completed
+      takeUntil(complete),
       // Map the messages to events, EOSE, or throw an error
       map<any[], SubscriptionResponse>((message) => {
         if (message[0] === "EOSE") return "EOSE";
@@ -353,7 +383,7 @@ export class Relay implements IRelay {
     );
 
     // Wait for auth if required and make sure to start the watch tower
-    return this.waitForReady(this.waitForAuth(this.authRequiredForReq, observable));
+    return this.waitForReady(this.waitForAuth(this.authRequiredForRead$, observable));
   }
 
   /** Send an EVENT or AUTH message and return an observable of PublishResponse that completes or errors */
@@ -369,11 +399,8 @@ export class Relay implements IRelay {
       );
     });
 
-    // Start the watch tower with the observable
-    const withWatchTower = merge(this.watchTower, base);
-
-    // Add complete operators
-    const observable = withWatchTower.pipe(
+    // Start the watch tower and add complete operators
+    const observable = merge(this.watchTower, base).pipe(
       // complete on first value
       take(1),
       // listen for OK auth-required
@@ -394,14 +421,14 @@ export class Relay implements IRelay {
 
     // skip wait for auth if verb is AUTH
     if (verb === "AUTH") return this.waitForReady(observable);
-    else return this.waitForReady(this.waitForAuth(this.authRequiredForEvent, observable));
+    else return this.waitForReady(this.waitForAuth(this.authRequiredForPublish$, observable));
   }
 
   /** send and AUTH message */
   auth(event: NostrEvent): Observable<PublishResponse> {
     return this.event(event, "AUTH").pipe(
       // update authenticated
-      tap((result) => this.authenticated$.next(result.ok)),
+      tap((result) => this.authenticationResponse$.next(result)),
     );
   }
 
@@ -450,7 +477,9 @@ export class Relay implements IRelay {
 
   /** Static method to fetch the NIP-11 information document for a relay */
   static fetchInformationDocument(url: string): Observable<RelayInformation | null> {
-    return from(fetch(url, { headers: { Accept: "application/nostr+json" } }).then((res) => res.json())).pipe(
+    return from(
+      fetch(ensureHttpURL(url), { headers: { Accept: "application/nostr+json" } }).then((res) => res.json()),
+    ).pipe(
       // if the fetch fails, return null
       catchError(() => of(null)),
       // timeout after 10s

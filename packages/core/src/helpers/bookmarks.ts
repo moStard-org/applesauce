@@ -3,8 +3,13 @@ import { AddressPointer, EventPointer } from "nostr-tools/nip19";
 
 import { getOrComputeCachedValue } from "./cache.js";
 import { getHiddenTags, isHiddenTagsLocked } from "./index.js";
-import { mergeAddressPointers, mergeEventPointers } from "./nip-19.js";
-import { getAddressPointerFromATag, getCoordinateFromAddressPointer, getEventPointerFromETag } from "./pointers.js";
+import {
+  getAddressPointerFromATag,
+  getCoordinateFromAddressPointer,
+  getEventPointerFromETag,
+  mergeAddressPointers,
+  mergeEventPointers,
+} from "./pointers.js";
 
 export const BookmarkPublicSymbol = Symbol.for("bookmark-public");
 export const BookmarkHiddenSymbol = Symbol.for("bookmark-hidden");

@@ -1,17 +1,18 @@
-import { AddressPointer, EventPointer, ProfilePointer } from "nostr-tools/nip19";
-import { isAddressableKind, isReplaceableKind } from "nostr-tools/kinds";
 import { NostrEvent } from "nostr-tools";
+import { isAddressableKind, isReplaceableKind } from "nostr-tools/kinds";
+import { AddressPointer, EventPointer, ProfilePointer } from "nostr-tools/nip19";
 
+import { getReplaceableIdentifier, isReplaceable } from "./event.js";
 import { getHiddenTags } from "./hidden-tags.js";
 import {
+  getAddressPointerForEvent,
   getAddressPointerFromATag,
   getCoordinateFromAddressPointer,
   getEventPointerFromETag,
   getProfilePointerFromPTag,
 } from "./pointers.js";
-import { isATag, isETag, isPTag, processTags } from "./tags.js";
-import { getReplaceableIdentifier } from "./event.js";
 import { mergeRelaySets } from "./relays.js";
+import { isATag, isETag, isPTag, processTags } from "./tags.js";
 
 export const FAVORITE_RELAYS_KIND = 10012;
 
@@ -75,6 +76,13 @@ export function isProfilePointerInList(
   const pubkey = typeof pointer === "string" ? pointer : pointer.pubkey;
   const tags = getListTags(list, type);
   return tags.some((t) => t[0] === "p" && t[1] === pubkey);
+}
+
+/** Returns if an event is in a list */
+export function isEventInList(list: NostrEvent, event: NostrEvent): boolean {
+  return isReplaceable(event.kind)
+    ? isAddressPointerInList(list, getAddressPointerForEvent(event))
+    : isEventPointerInList(list, event);
 }
 
 /**

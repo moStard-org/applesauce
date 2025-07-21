@@ -1,58 +1,53 @@
 {
-  "name": "applesauce-actions",
-  "version": "1.1.0",
-  "description": "A package for performing common nostr actions",
-  "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc",
-    "watch:build": "tsc --watch > /dev/null",
-    "test": "vitest run --passWithNoTests",
-    "watch:test": "vitest"
-  },
-  "keywords": [
-    "nostr",
-    "applesauce"
-  ],
-  "author": "hzrd149",
-  "license": "MIT",
-  "files": [
-    "dist"
-  ],
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    },
-    "./actions": {
-      "import": "./dist/actions/index.js",
-      "require": "./dist/actions/index.js",
-      "types": "./dist/actions/index.d.ts"
-    },
-    "./actions/*": {
-      "import": "./dist/actions/*.js",
-      "require": "./dist/actions/*.js",
-      "types": "./dist/actions/*.d.ts"
-    }
-  },
-  "dependencies": {
-    "applesauce-core": "link:../core",
-    "applesauce-factory": "link:../factory",
-    "nostr-tools": "^2.10.4",
-    "rxjs": "^7.8.1"
-  },
-  "devDependencies": {
-    "@hirez_io/observer-spy": "^2.2.0",
-    "@types/debug": "^4.1.12",
-    "applesauce-signers": "link:../signers",
-    "nanoid": "^5.1.5",
-    "typescript": "^5.8.3",
-    "vitest": "^3.1.1"
-  },
-  "funding": {
-    "type": "lightning",
-    "url": "lightning:nostrudel@geyser.fund"
-  }
+	"name": "applesauce-actions",
+	"version": "2.3.0",
+	"description": "A package for performing common nostr actions",
+	"type": "module",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"build": "tsc",
+		"watch:build": "tsc --watch > /dev/null",
+		"test": "vitest run --passWithNoTests",
+		"watch:test": "vitest"
+	},
+	"keywords": ["nostr", "applesauce"],
+	"author": "hzrd149",
+	"license": "MIT",
+	"files": ["dist"],
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"require": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		},
+		"./actions": {
+			"import": "./dist/actions/index.js",
+			"require": "./dist/actions/index.js",
+			"types": "./dist/actions/index.d.ts"
+		},
+		"./actions/*": {
+			"import": "./dist/actions/*.js",
+			"require": "./dist/actions/*.js",
+			"types": "./dist/actions/*.d.ts"
+		}
+	},
+	"dependencies": {
+		"applesauce-core": "link:../core",
+		"applesauce-factory": "link:../factory",
+		"nostr-tools": "^2.13",
+		"rxjs": "^7.8.1"
+	},
+	"devDependencies": {
+		"@hirez_io/observer-spy": "^2.2.0",
+		"@types/debug": "^4.1.12",
+		"applesauce-signers": "link:../signers",
+		"nanoid": "^5.1.5",
+		"typescript": "^5.8.3",
+		"vitest": "^3.2.3"
+	},
+	"funding": {
+		"type": "lightning",
+		"url": "lightning:nostrudel@geyser.fund"
+	}
 }

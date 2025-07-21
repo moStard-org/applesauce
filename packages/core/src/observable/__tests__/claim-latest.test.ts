@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Database } from "../../event-store/database.js";
+import { EventSet } from "../../event-store/event-set.js";
 import { claimLatest } from "../claim-latest.js";
 
 const event1 = {
@@ -27,11 +27,11 @@ const event2 = {
 
 describe("claimLatest", () => {
   it("it should claim events", () => {
-    const database = new Database();
-    const sub = database.inserted.pipe(claimLatest(database)).subscribe();
-    database.addEvent(event1);
+    const database = new EventSet();
+    const sub = database.insert$.pipe(claimLatest(database)).subscribe();
+    database.add(event1);
     expect(database.isClaimed(event1)).toBe(true);
-    database.addEvent(event2);
+    database.add(event2);
     expect(database.isClaimed(event1)).toBe(false);
     expect(database.isClaimed(event2)).toBe(true);
     sub.unsubscribe();

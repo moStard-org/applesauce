@@ -27,9 +27,10 @@ export function AddInboxRelay(relay: string | string[]): Action {
     if (typeof relay === "string") relay = [relay];
 
     const mailboxes = events.getReplaceable(kinds.RelayList, self);
-    if (!mailboxes) throw new Error("Missing mailboxes event");
+    const draft = mailboxes
+      ? await factory.modifyTags(mailboxes, ...relay.map(addInboxRelay))
+      : await factory.build({ kind: kinds.RelayList }, modifyPublicTags(...relay.map(addInboxRelay)));
 
-    const draft = await factory.modifyTags(mailboxes, ...relay.map(addInboxRelay));
     const signed = await factory.sign(draft);
 
     yield signed;
@@ -42,7 +43,7 @@ export function RemoveInboxRelay(relay: string | string[]): Action {
     if (typeof relay === "string") relay = [relay];
 
     const mailboxes = events.getReplaceable(kinds.RelayList, self);
-    if (!mailboxes) throw new Error("Missing mailboxes event");
+    if (!mailboxes) return;
 
     const draft = await factory.modifyTags(mailboxes, ...relay.map(removeInboxRelay));
     const signed = await factory.sign(draft);
@@ -57,9 +58,9 @@ export function AddOutboxRelay(relay: string | string[]): Action {
     if (typeof relay === "string") relay = [relay];
 
     const mailboxes = events.getReplaceable(kinds.RelayList, self);
-    if (!mailboxes) throw new Error("Missing mailboxes event");
-
-    const draft = await factory.modifyTags(mailboxes, ...relay.map(addOutboxRelay));
+    const draft = mailboxes
+      ? await factory.modifyTags(mailboxes, ...relay.map(addOutboxRelay))
+      : await factory.build({ kind: kinds.RelayList }, modifyPublicTags(...relay.map(addOutboxRelay)));
     const signed = await factory.sign(draft);
 
     yield signed;
@@ -72,7 +73,7 @@ export function RemoveOutboxRelay(relay: string | string[]): Action {
     if (typeof relay === "string") relay = [relay];
 
     const mailboxes = events.getReplaceable(kinds.RelayList, self);
-    if (!mailboxes) throw new Error("Missing mailboxes event");
+    if (!mailboxes) return;
 
     const draft = await factory.modifyTags(mailboxes, ...relay.map(removeOutboxRelay));
     const signed = await factory.sign(draft);

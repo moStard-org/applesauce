@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { EventStore } from "applesauce-core";
 import { EventFactory } from "applesauce-factory";
 import { kinds } from "nostr-tools";
@@ -29,6 +29,8 @@ beforeEach(() => {
     created_at: Math.floor(Date.now() / 1000),
   });
   events.add(muteList);
+
+  vi.useFakeTimers();
 });
 
 describe("MuteThread", () => {
@@ -53,9 +55,14 @@ describe("MuteThread", () => {
 
 describe("UnmuteThread", () => {
   it("should remove an event from public tags in mute list", async () => {
+    vi.setSystemTime(new Date("2025-01-01T00:00:00Z"));
+
     // First add the thread to mute list
     const addSpy = subscribeSpyTo(hub.exec(MuteThread, testEventId), { expectErrors: false });
     await addSpy.onComplete();
+
+    // Wait a second to ensure events have newer created_at
+    await vi.advanceTimersByTime(1000);
 
     // Then unmute it
     const spy = subscribeSpyTo(hub.exec(UnmuteThread, testEventId), { expectErrors: false });
@@ -67,9 +74,14 @@ describe("UnmuteThread", () => {
   });
 
   it("should remove an event from hidden tags in mute list", async () => {
+    vi.setSystemTime(new Date("2025-01-01T00:00:00Z"));
+
     // First add the thread to hidden mute list
     const addSpy = subscribeSpyTo(hub.exec(MuteThread, testEventId, true), { expectErrors: false });
     await addSpy.onComplete();
+
+    // Wait a second to ensure events have newer created_at
+    await vi.advanceTimersByTime(2000);
 
     // Then unmute it
     const spy = subscribeSpyTo(hub.exec(UnmuteThread, testEventId, true), { expectErrors: false });

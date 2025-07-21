@@ -1,4 +1,4 @@
-import { EventTemplate, Filter, NostrEvent } from "nostr-tools";
+import { type EventTemplate, type Filter, type NostrEvent } from "nostr-tools";
 import { Observable } from "rxjs";
 import { WebSocketSubject } from "rxjs/webSocket";
 
@@ -30,11 +30,14 @@ export type AuthSigner = {
   signEvent: (event: EventTemplate) => NostrEvent | Promise<NostrEvent>;
 };
 
+/** The type of input the REQ method accepts */
+export type FilterInput = Filter | Filter[] | Observable<Filter | Filter[]>;
+
 export interface Nip01Actions {
   /** Send an EVENT message */
   event(event: NostrEvent): Observable<PublishResponse>;
   /** Send a REQ message */
-  req(filters: Filter | Filter[], id?: string): Observable<SubscriptionResponse>;
+  req(filters: FilterInput, id?: string): Observable<SubscriptionResponse>;
 }
 
 export interface IRelay extends MultiplexWebSocket, Nip01Actions, IRelayState {
@@ -53,25 +56,25 @@ export interface IRelay extends MultiplexWebSocket, Nip01Actions, IRelayState {
   /** Send an EVENT message with retries */
   publish(event: NostrEvent, opts?: { retries?: number }): Observable<PublishResponse>;
   /** Send a REQ message with retries */
-  request(filters: Filter | Filter[], opts?: { id?: string; retries?: number }): Observable<NostrEvent>;
+  request(filters: FilterInput, opts?: { id?: string; retries?: number }): Observable<NostrEvent>;
   /** Open a subscription with retries */
-  subscription(filters: Filter | Filter[], opts?: { id?: string; retries?: number }): Observable<SubscriptionResponse>;
+  subscription(filters: FilterInput, opts?: { id?: string; retries?: number }): Observable<SubscriptionResponse>;
 }
 
 export interface IGroup extends Nip01Actions {
   /** Send an EVENT message with retries */
   publish(event: NostrEvent, opts?: { retries?: number }): Observable<PublishResponse>;
   /** Send a REQ message with retries */
-  request(filters: Filter | Filter[], opts?: { id?: string; retries?: number }): Observable<NostrEvent>;
+  request(filters: FilterInput, opts?: { id?: string; retries?: number }): Observable<NostrEvent>;
   /** Open a subscription with retries */
-  subscription(filters: Filter | Filter[], opts?: { id?: string; retries?: number }): Observable<SubscriptionResponse>;
+  subscription(filters: FilterInput, opts?: { id?: string; retries?: number }): Observable<SubscriptionResponse>;
 }
 
 export interface IPool {
   /** Send an EVENT message */
   event(relays: string[], event: NostrEvent): Observable<PublishResponse>;
   /** Send a REQ message */
-  req(relays: string[], filters: Filter | Filter[], id?: string): Observable<SubscriptionResponse>;
+  req(relays: string[], filters: FilterInput, id?: string): Observable<SubscriptionResponse>;
   /** Get or create a relay */
   relay(url: string): IRelay;
   /** Create a relay group */
@@ -79,15 +82,11 @@ export interface IPool {
   /** Send an EVENT message to relays with retries */
   publish(relays: string[], event: NostrEvent, opts?: { retries?: number }): Observable<PublishResponse>;
   /** Send a REQ message to relays with retries */
-  request(
-    relays: string[],
-    filters: Filter | Filter[],
-    opts?: { id?: string; retries?: number },
-  ): Observable<NostrEvent>;
+  request(relays: string[], filters: FilterInput, opts?: { id?: string; retries?: number }): Observable<NostrEvent>;
   /** Open a subscription to relays with retries */
   subscription(
     relays: string[],
-    filters: Filter | Filter[],
+    filters: FilterInput,
     opts?: { id?: string; retries?: number },
   ): Observable<SubscriptionResponse>;
 }

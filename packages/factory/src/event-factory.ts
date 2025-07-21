@@ -1,16 +1,26 @@
-import { Emoji, getHiddenContent, HiddenContentSymbol, unixNow } from "applesauce-core/helpers";
-import { AddressPointer } from "nostr-tools/nip19";
-import { isAddressableKind } from "nostr-tools/kinds";
+import { EncryptedContentSymbol, unixNow } from "applesauce-core/helpers";
 import { EventTemplate, NostrEvent, UnsignedEvent } from "nostr-tools";
 
-import { includeClientTag } from "./operations/event/client.js";
 import { CommentBlueprint } from "./blueprints/comment.js";
+import { DeleteBlueprint } from "./blueprints/delete.js";
 import { NoteBlueprint } from "./blueprints/note.js";
 import { ReactionBlueprint } from "./blueprints/reaction.js";
-import { DeleteBlueprint } from "./blueprints/delete.js";
 import { NoteReplyBlueprint } from "./blueprints/reply.js";
 import { ShareBlueprint } from "./blueprints/share.js";
-import { includeReplaceableIdentifier, modifyHiddenTags, modifyPublicTags } from "./operations/event/index.js";
+import { eventPipe } from "./helpers/pipeline.js";
+import { includeClientTag } from "./operations/event/client.js";
+import {
+  includeReplaceableIdentifier,
+  modifyTags,
+  ModifyTagsOptions,
+  sign,
+  stamp,
+  stripSignature,
+  stripStamp,
+  stripSymbols,
+  updateCreatedAt,
+} from "./operations/event/index.js";
+import { EventBlueprint, EventFactoryContext, EventOperation } from "./types.js";
 
 export type EventFactoryTemplate = {
   kind: number;
@@ -19,145 +29,87 @@ export type EventFactoryTemplate = {
   created_at?: number;
 };
 
-/** A single operation in the factory process */
-export type EventOperation = (
-  draft: EventTemplate,
+/** Wraps a set of operations with common event operations */
+function wrapCommon(...operations: (EventOperation | undefined)[]): EventOperation {
+  return eventPipe(
+    // Remove all symbols from the event except for the encrypted content symbol
+    stripSymbols([EncryptedContentSymbol]),
+    // Ensure all addressable evnets have "d" tags
+    includeReplaceableIdentifier(),
+    // Apply operations
+    ...operations,
+    // Include client tag if its set in the context
+    (draft, ctx) => (ctx.client ? includeClientTag(ctx.client.name, ctx.client.address)(draft, ctx) : draft),
+  );
+}
+
+/** Creates an event using a template, context, and a set of operations */
+export async function build(
+  template: EventFactoryTemplate,
   context: EventFactoryContext,
-) => EventTemplate | Promise<EventTemplate>;
+  ...operations: (EventOperation | undefined)[]
+): Promise<EventTemplate> {
+  return await wrapCommon(
+    stripSignature(),
+    stripStamp(),
+    ...operations,
+  )({ created_at: unixNow(), tags: [], content: "", ...template }, context);
+}
 
-/** A single operation that modifies an events public or hidden tags array */
-export type TagOperation = (tags: string[][], ctx: EventFactoryContext) => string[][] | Promise<string[][]>;
+/** Creates a blueprint function with operations */
+export function blueprint(kind: number, ...operations: (EventOperation | undefined)[]): EventBlueprint {
+  return async (context) => await build({ kind }, context, ...operations);
+}
 
-/** A prebuilt event template */
-export type EventBlueprint = (context: EventFactoryContext) => EventTemplate | Promise<EventTemplate>;
+/** Creates an event from a context and a blueprint */
+export async function create<Args extends Array<any>, T extends EventTemplate | UnsignedEvent | NostrEvent>(
+  context: EventFactoryContext,
+  blueprintConstructor: (...args: Args) => EventBlueprint<T>,
+  ...args: Args
+): Promise<T> {
+  return await blueprintConstructor(...args)(context);
+}
 
-export type EventFactorySigner = {
-  getPublicKey: () => Promise<string> | string;
-  signEvent: (template: EventTemplate) => Promise<NostrEvent> | NostrEvent;
-  nip04?: {
-    encrypt: (pubkey: string, plaintext: string) => Promise<string> | string;
-    decrypt: (pubkey: string, ciphertext: string) => Promise<string> | string;
-  };
-  nip44?: {
-    encrypt: (pubkey: string, plaintext: string) => Promise<string> | string;
-    decrypt: (pubkey: string, ciphertext: string) => Promise<string> | string;
-  };
-};
-
-export type EventFactoryClient = {
-  name: string;
-  address?: Omit<AddressPointer, "kind" | "relays">;
-};
-
-export type EventFactoryContext = {
-  /** NIP-89 client tag */
-  client?: EventFactoryClient;
-  getEventRelayHint?: (event: string) => string | undefined | Promise<string> | Promise<undefined>;
-  getPubkeyRelayHint?: (pubkey: string) => string | undefined | Promise<string> | Promise<undefined>;
-  /** A signer used to encrypt the content of some notes */
-  signer?: EventFactorySigner;
-  /** An array of custom emojis that will be used in text note content */
-  emojis?: Emoji[];
-};
+/** Modifies an event using a context and a set of operations */
+export async function modify(
+  event: EventTemplate | UnsignedEvent | NostrEvent,
+  context: EventFactoryContext,
+  ...operations: (EventOperation | undefined)[]
+): Promise<EventTemplate> {
+  return await wrapCommon(stripSignature(), stripStamp(), updateCreatedAt(), ...operations)(event, context);
+}
 
 export class EventFactory {
   constructor(public context: EventFactoryContext = {}) {}
 
-  static async runProcess(
-    template: EventFactoryTemplate,
-    context: EventFactoryContext,
-    ...operations: (EventOperation | undefined)[]
-  ): Promise<EventTemplate> {
-    let draft: EventTemplate = {
-      kind: template.kind,
-      content: template.content ?? "",
-      created_at: unixNow(),
-      tags: template.tags ? Array.from(template.tags) : [],
-    };
-
-    // preserve the existing hidden content
-    if (Reflect.has(template, HiddenContentSymbol)) Reflect.set(draft, HiddenContentSymbol, getHiddenContent(template));
-
-    // make sure parameterized replaceable events have "d" tags
-    if (isAddressableKind(draft.kind)) draft = await includeReplaceableIdentifier()(draft, context);
-
-    // get the existing hidden content
-    let hiddenContent = getHiddenContent(template);
-
-    // run operations
-    for (const operation of operations) {
-      if (operation) {
-        draft = await operation(draft, context);
-
-        // if the operation has set encrypted content and left the plaintext version, carry it forward
-        if (Reflect.has(draft, HiddenContentSymbol)) hiddenContent = Reflect.get(draft, HiddenContentSymbol) as string;
-      }
-    }
-
-    // add client tag
-    if (context.client) {
-      draft = await includeClientTag(context.client.name, context.client.address)(draft, context);
-    }
-
-    // if there was hidden content set, carry it forward
-    if (hiddenContent !== undefined) Reflect.set(draft, HiddenContentSymbol, hiddenContent);
-
-    return draft;
-  }
-
   /** Build an event template with operations */
   async build(template: EventFactoryTemplate, ...operations: (EventOperation | undefined)[]): Promise<EventTemplate> {
-    return await EventFactory.runProcess(template, this.context, ...operations);
-  }
-
-  /**
-   * Build an event template with operations
-   * @deprecated use the build method instead
-   */
-  async process(template: EventFactoryTemplate, ...operations: (EventOperation | undefined)[]): Promise<EventTemplate> {
-    return await EventFactory.runProcess(template, this.context, ...operations);
+    return await build(template, this.context, ...operations);
   }
 
   /** Create an event from a blueprint */
-  async create<Args extends Array<any>>(
-    blueprint: (...args: Args) => EventBlueprint,
+  async create<Args extends Array<any>, T extends EventTemplate | UnsignedEvent | NostrEvent>(
+    blueprintConstructor: (...args: Args) => EventBlueprint<T>,
     ...args: Args
-  ): Promise<EventTemplate> {
-    return await blueprint(...args)(this.context);
+  ): Promise<T> {
+    return await blueprintConstructor(...args)(this.context);
   }
 
   /** Modify an existing event with operations and updated the created_at */
   async modify(
-    draft: EventFactoryTemplate | NostrEvent,
+    draft: EventTemplate | UnsignedEvent | NostrEvent,
     ...operations: (EventOperation | undefined)[]
   ): Promise<EventTemplate> {
-    return await EventFactory.runProcess(draft, this.context, ...operations);
+    return await modify(draft, this.context, ...operations);
   }
 
   /** Modify a lists public and hidden tags and updated the created_at */
   async modifyTags(
-    event: EventFactoryTemplate,
-    tagOperations?:
-      | TagOperation
-      | TagOperation[]
-      | { public?: TagOperation | TagOperation[]; hidden?: TagOperation | TagOperation[] },
+    event: EventTemplate | UnsignedEvent | NostrEvent,
+    tagOperations?: ModifyTagsOptions,
     eventOperations?: EventOperation | (EventOperation | undefined)[],
   ): Promise<EventTemplate> {
-    let publicTagOperations: TagOperation[] = [];
-    let hiddenTagOperations: TagOperation[] = [];
     let eventOperationsArr: EventOperation[] = [];
-
-    // normalize tag operation arg
-    if (tagOperations === undefined) publicTagOperations = hiddenTagOperations = [];
-    else if (Array.isArray(tagOperations)) publicTagOperations = tagOperations;
-    else if (typeof tagOperations === "function") publicTagOperations = [tagOperations];
-    else {
-      if (typeof tagOperations.public === "function") publicTagOperations = [tagOperations.public];
-      else if (tagOperations.public) publicTagOperations = tagOperations.public;
-
-      if (typeof tagOperations.hidden === "function") hiddenTagOperations = [tagOperations.hidden];
-      else if (tagOperations.hidden) hiddenTagOperations = tagOperations.hidden;
-    }
 
     // normalize event operation arg
     if (eventOperations === undefined) eventOperationsArr = [];
@@ -165,55 +117,29 @@ export class EventFactory {
     else if (Array.isArray(eventOperations)) eventOperationsArr = eventOperations.filter((e) => !!e);
 
     // modify event
-    return await this.modify(
-      event,
-      publicTagOperations.length > 0 ? modifyPublicTags(...publicTagOperations) : undefined,
-      hiddenTagOperations.length > 0 ? modifyHiddenTags(...hiddenTagOperations) : undefined,
-      ...eventOperationsArr,
-    );
+    return await this.modify(event, modifyTags(tagOperations), ...eventOperationsArr);
   }
 
   /** Attaches the signers pubkey to an event template */
-  async stamp(draft: EventTemplate): Promise<UnsignedEvent> {
-    if (!this.context.signer) throw new Error("Missing signer");
-
-    // Remove old fields from signed nostr event
-    Reflect.deleteProperty(draft, "id");
-    Reflect.deleteProperty(draft, "sig");
-
-    const newDraft = { ...draft, pubkey: await this.context.signer.getPublicKey() };
-
-    // copy the plaintext hidden content if its on the draft
-    if (Reflect.has(draft, HiddenContentSymbol)) {
-      Reflect.set(newDraft, HiddenContentSymbol, Reflect.get(draft, HiddenContentSymbol)!);
-    }
-
-    return newDraft;
+  async stamp(draft: EventTemplate | UnsignedEvent): Promise<UnsignedEvent> {
+    return await stamp()(draft, this.context);
   }
 
+  /** Signs a event template with the signer */
   async sign(draft: EventTemplate | UnsignedEvent): Promise<NostrEvent> {
-    if (!this.context.signer) throw new Error("Missing signer");
-    draft = await this.stamp(draft);
-    const signed = await this.context.signer.signEvent(draft);
-
-    // copy the plaintext hidden content if its on the draft
-    if (Reflect.has(draft, HiddenContentSymbol)) {
-      Reflect.set(signed, HiddenContentSymbol, Reflect.get(draft, HiddenContentSymbol)!);
-    }
-
-    return signed;
+    return await sign()(draft, this.context);
   }
 
   // Helpers
 
-  /** Create a NIP-22 comment */
-  comment(...args: Parameters<typeof CommentBlueprint>) {
-    return this.create(CommentBlueprint, ...args);
-  }
-
   /** Creates a short text note */
   note(...args: Parameters<typeof NoteBlueprint>) {
     return this.create(NoteBlueprint, ...args);
+  }
+
+  /** Create a NIP-22 comment */
+  comment(...args: Parameters<typeof CommentBlueprint>) {
+    return this.create(CommentBlueprint, ...args);
   }
 
   /** Creates a short text note reply */

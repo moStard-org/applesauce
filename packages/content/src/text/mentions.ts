@@ -5,6 +5,7 @@ import { Root } from "../nast/types.js";
 import { Tokens } from "../helpers/regexp.js";
 import { findAndReplace } from "../nast/find-and-replace.js";
 
+/** Finds and creates NIP-19 nostr mentions in the tree */
 export function nostrMentions(): Transformer<Root> {
   return (tree) => {
     findAndReplace(tree, [

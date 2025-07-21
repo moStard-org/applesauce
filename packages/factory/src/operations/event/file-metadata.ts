@@ -1,5 +1,5 @@
 import { FileMetadata } from "applesauce-core/helpers";
-import { EventOperation } from "../../event-factory.js";
+import { EventOperation } from "../../types.js";
 import { createFileMetadataTags } from "../../helpers/file-metadata.js";
 import { ensureSingletonTag } from "../../helpers/tag.js";
 

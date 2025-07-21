@@ -1,5 +1,5 @@
-import { AddressPointer, EventPointer, ProfilePointer } from "nostr-tools/nip19";
 import { getCoordinateFromAddressPointer, parseCoordinate } from "applesauce-core/helpers";
+import { AddressPointer, EventPointer, ProfilePointer } from "nostr-tools/nip19";
 
 import {
   createATagFromAddressPointer,
@@ -7,16 +7,16 @@ import {
   createPTagFromProfilePointer,
 } from "../../helpers/pointer.js";
 import { ensureNamedValueTag, ensureSingletonTag } from "../../helpers/tag.js";
-import { TagOperation } from "../../event-factory.js";
+import { TagOperation } from "../../types.js";
 
 /** Adds a single "p" tag for a ProfilePointer */
 export function addPubkeyTag(pubkey: string | ProfilePointer, replace = true): TagOperation {
-  return async (tags, ctx) => {
+  return async (tags, { getPubkeyRelayHint }) => {
     const pointer = typeof pubkey === "string" ? { pubkey: pubkey } : { ...pubkey };
 
     // add relay hint
-    if (ctx.getPubkeyRelayHint && pointer.relays?.[0] === undefined) {
-      const hint = await ctx.getPubkeyRelayHint(pointer.pubkey);
+    if (getPubkeyRelayHint && pointer.relays?.[0] === undefined) {
+      const hint = await getPubkeyRelayHint(pointer.pubkey);
       if (hint) pointer.relays = [hint];
     }
 
@@ -36,12 +36,12 @@ export function removePubkeyTag(pubkey: string | ProfilePointer): TagOperation {
 
 /** Adds a a single "e" tag for an EventPointer */
 export function addEventTag(id: string | EventPointer, replace = true): TagOperation {
-  return async (tags, ctx) => {
+  return async (tags, { getEventRelayHint }) => {
     const pointer = typeof id === "string" ? { id } : id;
 
     // add relay hint
-    if (ctx.getEventRelayHint && pointer.relays?.[0] === undefined) {
-      const hint = await ctx.getEventRelayHint(pointer.id);
+    if (getEventRelayHint && pointer.relays?.[0] === undefined) {
+      const hint = await getEventRelayHint(pointer.id);
       if (hint) pointer.relays = [hint];
     }
 
@@ -61,14 +61,14 @@ export function removeEventTag(id: string | EventPointer): TagOperation {
 
 /** Adds a single "a" tag based on an AddressPointer */
 export function addCoordinateTag(cord: string | AddressPointer, replace = true): TagOperation {
-  return async (tags, ctx) => {
+  return async (tags, { getPubkeyRelayHint }) => {
     // convert the string into an address pointer object
     const pointer = typeof cord === "string" ? parseCoordinate(cord, true, false) : cord;
     const coordinate = typeof cord === "string" ? cord : getCoordinateFromAddressPointer(pointer);
 
     // add relay hint if there isn't one
-    if (ctx.getPubkeyRelayHint && pointer.relays?.[0] === undefined) {
-      const hint = await ctx.getPubkeyRelayHint(pointer.pubkey);
+    if (getPubkeyRelayHint && pointer.relays?.[0] === undefined) {
+      const hint = await getPubkeyRelayHint(pointer.pubkey);
       if (hint) pointer.relays = [hint];
     }
 

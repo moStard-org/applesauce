@@ -30,12 +30,14 @@ export class SimpleAccount<Metadata extends unknown> extends BaseAccount<
     return super.loadCommonFields(account, json);
   }
 
-  static fromKey<Metadata extends unknown>(key: Uint8Array | string): SimpleAccount<Metadata> {
-    if (typeof key === "string") key = hexToBytes(key);
-    const pubkey = getPublicKey(key);
-    return new SimpleAccount(pubkey, new SimpleSigner(key));
+  /** Creates a SimpleAccount from a hex private key or NIP-19 nsec */
+  static fromKey<Metadata extends unknown>(privateKey: Uint8Array | string): SimpleAccount<Metadata> {
+    const signer = SimpleSigner.fromKey(privateKey);
+    const pubkey = getPublicKey(signer.key);
+    return new SimpleAccount(pubkey, signer);
   }
 
+  /** Creates a new SimpleAccount with a random private key */
   static generateNew<Metadata extends unknown>(): SimpleAccount<Metadata> {
     const key = generateSecretKey();
     return SimpleAccount.fromKey(key);

@@ -1,4 +1,4 @@
-import { NostrEvent, type Filter } from "nostr-tools";
+import { type NostrEvent } from "nostr-tools";
 import { BehaviorSubject, Observable } from "rxjs";
 
 import { RelayGroup } from "./group.js";
@@ -10,6 +10,7 @@ import {
   RequestOptions,
   SubscriptionOptions,
   SubscriptionResponse,
+  FilterInput,
 } from "./types.js";
 import { normalizeURL } from "applesauce-core/helpers";
 
@@ -69,7 +70,7 @@ export class RelayPool implements IPool {
   }
 
   /** Make a REQ to multiple relays that does not deduplicate events */
-  req(relays: string[], filters: Filter | Filter[], id?: string): Observable<SubscriptionResponse> {
+  req(relays: string[], filters: FilterInput, id?: string): Observable<SubscriptionResponse> {
     return this.group(relays).req(filters, id);
   }
 
@@ -84,16 +85,12 @@ export class RelayPool implements IPool {
   }
 
   /** Request events from multiple relays */
-  request(relays: string[], filters: Filter | Filter[], opts?: RequestOptions): Observable<NostrEvent> {
+  request(relays: string[], filters: FilterInput, opts?: RequestOptions): Observable<NostrEvent> {
     return this.group(relays).request(filters, opts);
   }
 
   /** Open a subscription to multiple relays */
-  subscription(
-    relays: string[],
-    filters: Filter | Filter[],
-    opts?: SubscriptionOptions,
-  ): Observable<SubscriptionResponse> {
+  subscription(relays: string[], filters: FilterInput, opts?: SubscriptionOptions): Observable<SubscriptionResponse> {
     return this.group(relays).subscription(filters, opts);
   }
 }

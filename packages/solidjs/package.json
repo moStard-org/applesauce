@@ -1,64 +1,57 @@
 {
-  "name": "applesauce-solidjs",
-  "version": "1.0.0",
-  "description": "SolidJS utilities for applesauce",
-  "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc",
-    "watch:build": "tsc --watch > /dev/null",
-    "test": "vitest run --passWithNoTests",
-    "watch:test": "vitest"
-  },
-  "keywords": [
-    "nostr",
-    "solidjs",
-    "applesauce"
-  ],
-  "author": "hzrd149",
-  "license": "MIT",
-  "files": [
-    "dist",
-    "applesauce"
-  ],
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    },
-    "./hooks": {
-      "import": "./dist/hooks/index.js",
-      "require": "./dist/hooks/index.js",
-      "types": "./dist/hooks/index.d.ts"
-    },
-    "./hooks/*": {
-      "import": "./dist/hooks/*.js",
-      "require": "./dist/hooks/*.js",
-      "types": "./dist/hooks/*.d.ts"
-    },
-    "./context": {
-      "import": "./dist/context/index.js",
-      "require": "./dist/context/index.js",
-      "types": "./dist/context/index.d.ts"
-    },
-    "./context/*": {
-      "import": "./dist/context/*.js",
-      "require": "./dist/context/*.js",
-      "types": "./dist/context/*.d.ts"
-    }
-  },
-  "dependencies": {
-    "applesauce-core": "link:../core",
-    "solid-js": "^1.9.5"
-  },
-  "devDependencies": {
-    "typescript": "^5.8.3",
-    "vitest": "^3.1.1"
-  },
-  "funding": {
-    "type": "lightning",
-    "url": "lightning:nostrudel@geyser.fund"
-  }
+	"name": "applesauce-solidjs",
+	"version": "2.0.0",
+	"description": "SolidJS utilities for applesauce",
+	"type": "module",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"build": "tsc",
+		"watch:build": "tsc --watch > /dev/null",
+		"test": "vitest run --passWithNoTests",
+		"watch:test": "vitest"
+	},
+	"keywords": ["nostr", "solidjs", "applesauce"],
+	"author": "hzrd149",
+	"license": "MIT",
+	"files": ["dist", "applesauce"],
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"require": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		},
+		"./hooks": {
+			"import": "./dist/hooks/index.js",
+			"require": "./dist/hooks/index.js",
+			"types": "./dist/hooks/index.d.ts"
+		},
+		"./hooks/*": {
+			"import": "./dist/hooks/*.js",
+			"require": "./dist/hooks/*.js",
+			"types": "./dist/hooks/*.d.ts"
+		},
+		"./context": {
+			"import": "./dist/context/index.js",
+			"require": "./dist/context/index.js",
+			"types": "./dist/context/index.d.ts"
+		},
+		"./context/*": {
+			"import": "./dist/context/*.js",
+			"require": "./dist/context/*.js",
+			"types": "./dist/context/*.d.ts"
+		}
+	},
+	"dependencies": {
+		"applesauce-core": "link:../core",
+		"solid-js": "^1.9.5"
+	},
+	"devDependencies": {
+		"typescript": "^5.8.3",
+		"vitest": "^3.2.3"
+	},
+	"funding": {
+		"type": "lightning",
+		"url": "lightning:nostrudel@geyser.fund"
+	}
 }

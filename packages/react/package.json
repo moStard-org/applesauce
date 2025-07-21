@@ -1,6 +1,6 @@
 {
 	"name": "applesauce-react",
-	"version": "1.0.0",
+	"version": "2.1.0",
 	"description": "React hooks for applesauce",
 	"type": "module",
 	"main": "dist/index.js",
@@ -11,17 +11,10 @@
 		"test": "vitest run --passWithNoTests",
 		"watch:test": "vitest"
 	},
-	"keywords": [
-		"nostr",
-		"react",
-		"applesauce"
-	],
+	"keywords": ["nostr", "react", "applesauce"],
 	"author": "hzrd149",
 	"license": "MIT",
-	"files": [
-		"dist",
-		"applesauce"
-	],
+	"files": ["dist", "applesauce"],
 	"exports": {
 		".": {
 			"import": "./dist/index.js",
@@ -55,20 +48,22 @@
 		}
 	},
 	"dependencies": {
-		"applesauce-accounts": "^1.0.0",
-		"applesauce-actions": "^1.0.0",
-		"applesauce-content": "^1.0.0",
+		"applesauce-accounts": "link:../accounts",
+		"applesauce-actions": "link:../actions",
+		"applesauce-content": "link:../content",
 		"applesauce-core": "link:../core",
-		"applesauce-factory": "^1.0.0",
-		"nostr-tools": "^2.10.4",
+		"applesauce-factory": "link:../factory",
+		"hash-sum": "^2.0.0",
+		"nostr-tools": "^2.13",
 		"observable-hooks": "^4.2.4",
 		"react": "^18.3.1",
-		"rxjs": "^7.8.2"
+		"rxjs": "^7.8.1"
 	},
 	"devDependencies": {
+		"@types/hash-sum": "^1.0.2",
 		"@types/react": "^18.3.18",
 		"typescript": "^5.8.3",
-		"vitest": "^3.1.1"
+		"vitest": "^3.2.3"
 	},
 	"funding": {
 		"type": "lightning",

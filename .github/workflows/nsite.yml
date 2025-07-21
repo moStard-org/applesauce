@@ -44,5 +44,13 @@ jobs:
       - name: Copy vitepress
         run: cp -r packages/docs/.vitepress/dist/* docs
 
+      - name: Install Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: "v2.x"
+
+      - name: Install nsyte CLI
+        run: deno install -A -f -g -n nsyte jsr:@nsyte/cli
+
       - name: Deploy nsite
-        run: npx -y nsite-cli upload docs --verbose --purge --privatekey ${{ secrets.NSITE_KEY }}
+        run: nsyte upload docs -i --purge --privatekey ${{ secrets.NSITE_KEY }}

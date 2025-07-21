@@ -1,7 +1,7 @@
-import { EventBlueprint, EventFactory, TagOperation } from "applesauce-factory";
-import { RequestInput } from "../helpers/request.js";
-import { includeSingletonTag, modifyPublicTags } from "applesauce-factory/operations/event";
+import { blueprint, TagOperation } from "applesauce-factory";
 import { fillAndTrimTag } from "applesauce-factory/helpers";
+import { includeSingletonTag, modifyPublicTags } from "applesauce-factory/operations/event";
+import { RequestInput } from "../helpers/request.js";
 
 /** Includes the input tags for a request */
 export function includeRequestInputs(inputs: RequestInput[]): TagOperation {
@@ -59,15 +59,13 @@ export function MachineRequestBlueprint(
     inputs?: RequestInput[];
     params?: Record<string, string | string[]>;
   },
-): EventBlueprint {
-  return (ctx) =>
-    EventFactory.runProcess(
-      { kind },
-      ctx,
-      modifyPublicTags(
-        options?.inputs ? includeRequestInputs(options.inputs) : undefined,
-        options?.params ? includeRequestParams(options.params) : undefined,
-      ),
-      options?.relays ? includeSingletonTag(["relays", ...options.relays]) : undefined,
-    );
+) {
+  return blueprint(
+    kind,
+    modifyPublicTags(
+      options?.inputs ? includeRequestInputs(options.inputs) : undefined,
+      options?.params ? includeRequestParams(options.params) : undefined,
+    ),
+    options?.relays ? includeSingletonTag(["relays", ...options.relays]) : undefined,
+  );
 }

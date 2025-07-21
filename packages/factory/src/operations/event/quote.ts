@@ -1,6 +1,6 @@
-import { EventOperation } from "../../event-factory.js";
-import { ensureQuoteEventPointerTag } from "../../helpers/quote.js";
 import { getContentPointers } from "../../helpers/content.js";
+import { ensureQuoteEventPointerTag } from "../../helpers/quote.js";
+import { EventOperation } from "../../types.js";
 
 /** Include "q" quote tags for any nostr event mentioned in the content */
 export function includeQuoteTags(): EventOperation {

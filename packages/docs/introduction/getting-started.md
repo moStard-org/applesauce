@@ -1,57 +1,99 @@
 # Getting Started
 
-There are a few main components that makeup the applesauce libraries: [Helpers](https://hzrd149.github.io/applesauce/typedoc/modules/applesauce-core.Helpers.html), the [EventStore](https://hzrd149.github.io/applesauce/typedoc/classes/applesauce-core.EventStore.html), the [QueryStore](https://hzrd149.github.io/applesauce/typedoc/classes/applesauce-core.QueryStore.html), and [Queries](https://hzrd149.github.io/applesauce/typedoc/modules/applesauce-core.Queries.html)
+Ready to build reactive Nostr applications with applesauce? Follow our step-by-step tutorial that will teach you everything you need to know.
 
-## Helpers
+## 📚 [Complete Tutorial](../tutorial/00-introduction)
 
-Helper methods are the core of the library and serve to extract and parse nostr events
+Our beginner-friendly tutorial covers:
 
-A few good example methods are [getProfileContent](https://hzrd149.github.io/applesauce/typedoc/functions/applesauce-core.Helpers.getProfileContent.html) which returns the parsed content of a kind:0 event and [getOutboxes](https://hzrd149.github.io/applesauce/typedoc/functions/applesauce-core.Helpers.getOutboxes.html) which returns an array of outbox _(write)_ relays from a kind:10002 relay list event
+1. **[Event Store](../tutorial/01-event-store.md)** - The reactive database at the heart of applesauce
+2. **[Helpers](../tutorial/02-helpers.md)** - Extract and parse data from Nostr events
+3. **[Models](../tutorial/03-models.md)** - Build reactive UI components
+4. **[Relay Pool](../tutorial/04-relays.md)** - Connect to Nostr relays and receive events
+5. **[Loaders](../tutorial/05-loaders.md)** - Load specific events on-demand
+6. **[Event Factory](../tutorial/06-event-factory.md)** - Create and sign events
+7. **[Publishing](../tutorial/07-publishing.md)** - Publish events to relays
+8. **[Actions](../tutorial/08-actions.md)** - Run complex actions like following users
 
-## EventStore
+Each section includes complete code examples and builds toward a working social media application.
 
-The [EventStore](https://hzrd149.github.io/applesauce/typedoc/classes/applesauce-core.EventStore.html) class is an in-memory database that can be used to subscribe to events and timeline updates
+## Quick Overview
 
-The event store does not make any relay connections or fetch any data, nor does it persist the events. its sole purpose is to store events and notify the UI when there are new events
+Applesauce consists of several key components that work together:
 
-> [!NOTE]
-> Its recommended that you only create a single instance of the `EventStore` for your app
+### EventStore
 
-## QueryStore
-
-The `QueryStore` is built on top of the `EventStore` and handles managing and running the queries. its primary role is to ensure that only a single query for each filter is created and that it is wrapped in the rxjs [share](https://rxjs.dev/api/index/function/share) operator for performance reasons
-
-> [!IMPORTANT]
-> For performance reasons UI components should only subscribe to the `QueryStore` and NOT the `EventStore`
-
-## Queries
-
-Queries are more complex subscriptions that can be run against the `QueryStore`
-
-For example the [ProfileQuery](https://hzrd149.github.io/applesauce/typedoc/functions/applesauce-core.Queries.ProfileQuery.html) query can be used to subscribe to changes to a users profile
+A reactive in-memory database that stores Nostr events and notifies your UI when data changes.
 
 ```ts
-const sub = queryStore
-  .createQuery(ProfileQuery, "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d")
-  .subscribe((profile) => {
-    if (profile) console.log(profile);
+import { EventStore } from "applesauce-core";
+
+const eventStore = new EventStore();
+
+// Subscribe to timeline updates
+eventStore.timeline({ kinds: [1] }).subscribe((notes) => {
+  console.log(`Timeline updated with ${notes.length} notes`);
+});
+```
+
+### Helpers
+
+Utility functions that extract useful data from raw Nostr events.
+
+```ts
+import { getProfileContent, getDisplayName } from "applesauce-core/helpers";
+
+const profile = getProfileContent(profileEvent);
+const name = getDisplayName(profile);
+```
+
+### Models
+
+Pre-built subscriptions that combine EventStore with helpers for reactive UI components.
+
+```ts
+import { ProfileModel } from "applesauce-core/models";
+
+// Automatically parses and updates when profile changes
+eventStore.model(ProfileModel, pubkey).subscribe((profile) => {
+  console.log("Profile updated:", profile);
+});
+```
+
+### RelayPool
+
+Manages connections to Nostr relays and provides reactive subscriptions.
+
+```ts
+import { RelayPool, onlyEvents } from "applesauce-relay";
+
+const pool = new RelayPool();
+
+pool
+  .relay("wss://relay.damus.io")
+  .subscription({ kinds: [1] })
+  .pipe(onlyEvents())
+  .subscribe((event) => {
+    eventStore.add(event);
   });
 ```
 
-Or the [MailboxesQuery](https://hzrd149.github.io/applesauce/typedoc/functions/applesauce-core.Queries.MailboxesQuery.html) can be used to subscribe to changes to a users outbox and inbox relays
+### EventFactory
+
+Creates and signs Nostr events using pre-built blueprints.
 
 ```ts
-const sub = queryStore
-  .createQuery(MailboxesQuery, "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d")
-  .subscribe((mailboxes) => {
-    if (mailboxes) {
-      console.log(mailboxes.inboxes, mailboxes.outboxes);
-    }
-  });
+import { EventFactory } from "applesauce-factory";
+import { NoteBlueprint } from "applesauce-factory/blueprints";
+
+const factory = new EventFactory({ signer });
+
+const note = await factory.create(NoteBlueprint, "Hello Nostr!");
+const signed = await factory.sign(note);
 ```
 
-## Actions
+## Next Steps
 
-Actions are reusable functions that perform specific operations on nostr events. The `applesauce-actions` package provides a collection of pre-built actions that can be used in your application.
-
-Actions are typically executed in a [ActionHub](https://hzrd149.github.io/applesauce/typedoc/classes/applesauce-actions.ActionHub.html), which provides the `EventStore` and `EventFactory` to the actions.
+- **Start with the [tutorial](../tutorial/00-introduction.md)** to learn step-by-step
+- **Browse the [examples](https://hzrd149.github.io/applesauce/examples)** to see whats possible
+- **Check the [API documentation](https://hzrd149.github.io/applesauce/typedoc/)** for detailed reference

@@ -1,55 +1,50 @@
 {
-  "name": "applesauce-accounts",
-  "version": "1.0.0",
-  "description": "A simple nostr account management system",
-  "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc",
-    "watch:build": "tsc --watch > /dev/null",
-    "test": "vitest run --passWithNoTests",
-    "watch:test": "vitest"
-  },
-  "keywords": [
-    "nostr",
-    "applesauce"
-  ],
-  "author": "hzrd149",
-  "license": "MIT",
-  "files": [
-    "dist"
-  ],
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    },
-    "./accounts": {
-      "import": "./dist/accounts/index.js",
-      "require": "./dist/accounts/index.js",
-      "types": "./dist/accounts/index.d.ts"
-    },
-    "./accounts/*": {
-      "import": "./dist/accounts/*.js",
-      "require": "./dist/accounts/*.js",
-      "types": "./dist/accounts/*.d.ts"
-    }
-  },
-  "dependencies": {
-    "@noble/hashes": "^1.7.1",
-    "applesauce-signers": "link:../signers",
-    "nanoid": "^5.1.5",
-    "nostr-tools": "^2.10.4",
-    "rxjs": "^7.8.1"
-  },
-  "devDependencies": {
-    "typescript": "^5.8.3",
-    "vitest": "^3.1.1"
-  },
-  "funding": {
-    "type": "lightning",
-    "url": "lightning:nostrudel@geyser.fund"
-  }
+	"name": "applesauce-accounts",
+	"version": "2.0.0",
+	"description": "A simple nostr account management system",
+	"type": "module",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"build": "tsc",
+		"watch:build": "tsc --watch > /dev/null",
+		"test": "vitest run --passWithNoTests",
+		"watch:test": "vitest"
+	},
+	"keywords": ["nostr", "applesauce"],
+	"author": "hzrd149",
+	"license": "MIT",
+	"files": ["dist"],
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"require": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		},
+		"./accounts": {
+			"import": "./dist/accounts/index.js",
+			"require": "./dist/accounts/index.js",
+			"types": "./dist/accounts/index.d.ts"
+		},
+		"./accounts/*": {
+			"import": "./dist/accounts/*.js",
+			"require": "./dist/accounts/*.js",
+			"types": "./dist/accounts/*.d.ts"
+		}
+	},
+	"dependencies": {
+		"@noble/hashes": "^1.7.1",
+		"applesauce-signers": "link:../signers",
+		"nanoid": "^5.1.5",
+		"nostr-tools": "^2.13",
+		"rxjs": "^7.8.1"
+	},
+	"devDependencies": {
+		"typescript": "^5.8.3",
+		"vitest": "^3.2.3"
+	},
+	"funding": {
+		"type": "lightning",
+		"url": "lightning:nostrudel@geyser.fund"
+	}
 }

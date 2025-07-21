@@ -1,110 +1,113 @@
-import { logger } from "applesauce-core";
-import { mergeFilters } from "applesauce-core/helpers";
-import { nanoid } from "nanoid";
+import { IEventStore, mapEventsToStore } from "applesauce-core";
 import { NostrEvent } from "nostr-tools";
-import { BehaviorSubject, combineLatest, connect, merge, tap } from "rxjs";
+import { EMPTY, finalize, identity, merge, Observable, tap } from "rxjs";
 
-import { CacheTimelineLoader } from "./cache-timeline-loader.js";
+import { makeCacheRequest } from "../helpers/cache.js";
+import { wrapUpstreamPool } from "../helpers/upstream.js";
 import {
   CacheRequest,
-  Loader,
+  FilterRequest,
   NostrRequest,
-  RelayFilterMap,
-} from "./loader.js";
-import {
-  RelayTimelineLoader,
   TimelessFilter,
-} from "./relay-timeline-loader.js";
+  UpstreamPool,
+} from "../types.js";
 
-export type TimelineLoaderOptions = {
-  limit?: number;
-  cacheRequest?: CacheRequest;
-};
+/** A loader that optionally takes a timestamp to load till and returns a stream of events */
+export type TimelineLoader = (since?: number) => Observable<NostrEvent>;
 
-/** A multi-relay timeline loader that can be used to load a timeline from multiple relays */
-export class TimelineLoader extends Loader<number | undefined, NostrEvent> {
-  id = nanoid(8);
-  loading$ = new BehaviorSubject(false);
-  get loading() {
-    return this.loading$.value;
-  }
+/** Common options for timeline loaders */
+export type CommonTimelineLoaderOptions = Partial<{
+  limit: number;
+}>;
 
-  requests: RelayFilterMap<TimelessFilter>;
+/** A loader that loads blocks of events until none are returned or the since timestamp is reached */
+export function filterBlockLoader(
+  request: FilterRequest,
+  filters: TimelessFilter[],
+  opts?: CommonTimelineLoaderOptions,
+): TimelineLoader {
+  let cursor = Infinity;
+  let complete = false;
 
-  protected log: typeof logger = logger.extend("TimelineLoader");
-  protected cache?: CacheTimelineLoader;
-  protected loaders: Map<string, RelayTimelineLoader>;
+  return (since) => {
+    if (complete) return EMPTY;
+    if (since !== undefined && cursor <= since) return EMPTY;
 
-  constructor(
-    request: NostrRequest,
-    requests: RelayFilterMap<TimelessFilter>,
-    opts?: TimelineLoaderOptions,
-  ) {
-    const loaders = new Map<string, RelayTimelineLoader>();
+    // Keep loading blocks until none are returned or an event is found that is ealier then the new cursor
+    const withTime = filters.map((filter) => ({
+      ...filter,
+      limit: filter.limit || opts?.limit,
+      until: cursor !== Infinity ? cursor : undefined,
+    }));
 
-    // create cache loader
-    const cache = opts?.cacheRequest
-      ? new CacheTimelineLoader(
-        opts.cacheRequest,
-        [mergeFilters(...Object.values(requests).flat())],
-        opts,
-      )
-      : undefined;
+    let count = 0;
 
-    // create loaders
-    for (const [relay, filters] of Object.entries(requests)) {
-      loaders.set(
-        relay,
-        new RelayTimelineLoader(request, relay, filters, opts),
-      );
-    }
-
-    const allLoaders = cache
-      ? [cache, ...loaders.values()]
-      : Array.from(loaders.values());
-
-    super((source) => {
-      // observable that triggers the loaders based on cursor
-      const trigger$ = source.pipe(
-        tap((cursor) => {
-          for (const loader of allLoaders) {
-            // load the next page if cursor is past loader cursor
-            if (!cursor || !Number.isFinite(cursor) || cursor <= loader.cursor)
-              loader.next();
-          }
-        }),
-      );
-
-      // observable that handles updating the loading state
-      const loading$ = combineLatest(allLoaders.map((l) => l.loading$)).pipe(
-        // set loading to true as long as one loader is still loading
-        tap((loading) => this.loading$.next(loading.some((v) => v === true))),
-      );
-
-      // observable that merges all the outputs of the loaders
-      const events$ = merge<NostrEvent[]>(
-        ...allLoaders.map((l) => l.observable),
-      );
-
-      // subscribe to all observables but only return the results of events$
-      return merge(trigger$, loading$, events$).pipe(
-        connect((_shared$) => events$),
-      );
-    });
-
-    this.requests = requests;
-    this.cache = cache;
-    this.loaders = loaders;
-    this.log = this.log.extend(this.id);
-  }
-
-  static simpleFilterMap(
-    relays: string[],
-    filters: TimelessFilter[],
-  ): RelayFilterMap<TimelessFilter> {
-    return relays.reduce<RelayFilterMap<TimelessFilter>>(
-      (map, relay) => ({ ...map, [relay]: filters }),
-      {},
+    // Load the next block of events
+    return request(withTime).pipe(
+      tap((event) => {
+        // Update the cursor to the oldest event
+        cursor = Math.min(event.created_at - 1, cursor);
+        count++;
+      }),
+      finalize(() => {
+        // Set the loader to complete if no events are returned
+        if (count === 0) complete = true;
+      }),
     );
-  }
+  };
+}
+
+/** Creates a loader that loads a timeline from a cache */
+export function cacheTimelineLoader(
+  request: CacheRequest,
+  filters: TimelessFilter[],
+  opts?: CommonTimelineLoaderOptions,
+): TimelineLoader {
+  return filterBlockLoader(
+    (filters) => makeCacheRequest(request, filters),
+    filters,
+    opts,
+  );
+}
+
+/** Creates a timeline loader that loads the same filters from multiple relays */
+export function relaysTimelineLoader(
+  request: NostrRequest,
+  relays: string[],
+  filters: TimelessFilter[],
+  opts?: CommonTimelineLoaderOptions,
+): TimelineLoader {
+  const loaders = relays.map((relay) =>
+    filterBlockLoader((f) => request([relay], f), filters, opts),
+  );
+  return (since?: number) => merge(...loaders.map((l) => l(since)));
+}
+
+export type TimelineLoaderOptions = Partial<{
+  /** A method used to load the timeline from the cache */
+  cache: CacheRequest;
+  /** An event store to pass all the events to */
+  eventStore: IEventStore;
+}> &
+  CommonTimelineLoaderOptions;
+
+/** A common timeline loader that takes an array of relays and a cache method */
+export function createTimelineLoader(
+  pool: UpstreamPool,
+  relays: string[],
+  filters: TimelessFilter[] | TimelessFilter,
+  opts?: TimelineLoaderOptions,
+): TimelineLoader {
+  if (!Array.isArray(filters)) filters = [filters];
+
+  const request = wrapUpstreamPool(pool);
+
+  const cacheLoader =
+    opts?.cache && cacheTimelineLoader(opts.cache, filters, opts);
+  const relayLoader = relaysTimelineLoader(request, relays, filters, opts);
+
+  return (since?: number) =>
+    merge(cacheLoader?.(since) ?? EMPTY, relayLoader?.(since)).pipe(
+      opts?.eventStore ? mapEventsToStore(opts.eventStore) : identity,
+    );
 }

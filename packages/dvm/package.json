@@ -1,85 +1,79 @@
 {
-  "name": "applesauce-dvm",
-  "version": "1.0.0",
-  "description": "DVM utilities built on top of applesauce",
-  "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc",
-    "watch:build": "tsc --watch > /dev/null",
-    "test": "vitest run --passWithNoTests",
-    "watch:test": "vitest"
-  },
-  "keywords": [
-    "nostr",
-    "applesauce",
-    "dvm"
-  ],
-  "author": "hzrd149",
-  "license": "MIT",
-  "files": [
-    "dist"
-  ],
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    },
-    "./helpers": {
-      "import": "./dist/helpers/index.js",
-      "require": "./dist/helpers/index.js",
-      "types": "./dist/helpers/index.d.ts"
-    },
-    "./helpers/*": {
-      "import": "./dist/helpers/*.js",
-      "require": "./dist/helpers/*.js",
-      "types": "./dist/helpers/*.d.ts"
-    },
-    "./blueprints": {
-      "import": "./dist/blueprints/index.js",
-      "require": "./dist/blueprints/index.js",
-      "types": "./dist/blueprints/index.d.ts"
-    },
-    "./blueprints/*": {
-      "import": "./dist/blueprints/*.js",
-      "require": "./dist/blueprints/*.js",
-      "types": "./dist/blueprints/*.d.ts"
-    },
-    "./operations": {
-      "import": "./dist/operations/index.js",
-      "require": "./dist/operations/index.js",
-      "types": "./dist/operations/index.d.ts"
-    },
-    "./operations/tag/*": {
-      "import": "./dist/operations/tag/*.js",
-      "require": "./dist/operations/tag/*.js",
-      "types": "./dist/operations/tag/*.d.ts"
-    },
-    "./operations/event/*": {
-      "import": "./dist/operations/event/*.js",
-      "require": "./dist/operations/event/*.js",
-      "types": "./dist/operations/event/*.d.ts"
-    }
-  },
-  "dependencies": {
-    "@noble/hashes": "^1.7.1",
-    "applesauce-core": "link:../core",
-    "applesauce-factory": "link:../factory",
-    "nostr-tools": "^2.10.4",
-    "rxjs": "^7.8.1"
-  },
-  "devDependencies": {
-    "@hirez_io/observer-spy": "^2.2.0",
-    "@types/debug": "^4.1.12",
-    "applesauce-signers": "link:../signers",
-    "applesauce-relay": "link:../relay",
-    "typescript": "^5.8.3",
-    "vitest": "^3.1.1"
-  },
-  "funding": {
-    "type": "lightning",
-    "url": "lightning:nostrudel@geyser.fund"
-  }
+	"name": "applesauce-dvm",
+	"version": "2.0.0",
+	"description": "DVM utilities built on top of applesauce",
+	"type": "module",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"build": "tsc",
+		"watch:build": "tsc --watch > /dev/null",
+		"test": "vitest run --passWithNoTests",
+		"watch:test": "vitest"
+	},
+	"keywords": ["nostr", "applesauce", "dvm"],
+	"author": "hzrd149",
+	"license": "MIT",
+	"files": ["dist"],
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"require": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		},
+		"./helpers": {
+			"import": "./dist/helpers/index.js",
+			"require": "./dist/helpers/index.js",
+			"types": "./dist/helpers/index.d.ts"
+		},
+		"./helpers/*": {
+			"import": "./dist/helpers/*.js",
+			"require": "./dist/helpers/*.js",
+			"types": "./dist/helpers/*.d.ts"
+		},
+		"./blueprints": {
+			"import": "./dist/blueprints/index.js",
+			"require": "./dist/blueprints/index.js",
+			"types": "./dist/blueprints/index.d.ts"
+		},
+		"./blueprints/*": {
+			"import": "./dist/blueprints/*.js",
+			"require": "./dist/blueprints/*.js",
+			"types": "./dist/blueprints/*.d.ts"
+		},
+		"./operations": {
+			"import": "./dist/operations/index.js",
+			"require": "./dist/operations/index.js",
+			"types": "./dist/operations/index.d.ts"
+		},
+		"./operations/tag/*": {
+			"import": "./dist/operations/tag/*.js",
+			"require": "./dist/operations/tag/*.js",
+			"types": "./dist/operations/tag/*.d.ts"
+		},
+		"./operations/event/*": {
+			"import": "./dist/operations/event/*.js",
+			"require": "./dist/operations/event/*.js",
+			"types": "./dist/operations/event/*.d.ts"
+		}
+	},
+	"dependencies": {
+		"@noble/hashes": "^1.7.1",
+		"applesauce-core": "link:../core",
+		"applesauce-factory": "link:../factory",
+		"nostr-tools": "^2.13",
+		"rxjs": "^7.8.1"
+	},
+	"devDependencies": {
+		"@hirez_io/observer-spy": "^2.2.0",
+		"@types/debug": "^4.1.12",
+		"applesauce-signers": "link:../signers",
+		"applesauce-relay": "link:../relay",
+		"typescript": "^5.8.3",
+		"vitest": "^3.2.3"
+	},
+	"funding": {
+		"type": "lightning",
+		"url": "lightning:nostrudel@geyser.fund"
+	}
 }

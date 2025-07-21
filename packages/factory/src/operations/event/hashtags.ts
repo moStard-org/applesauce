@@ -1,5 +1,5 @@
 import { Expressions } from "applesauce-content/helpers";
-import { EventOperation } from "../../event-factory.js";
+import { EventOperation } from "../../types.js";
 import { ensureNamedValueTag } from "../../helpers/tag.js";
 
 /** Adds "t" tags for every #hashtag in the content */

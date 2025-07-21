@@ -1,14 +1,16 @@
+import { Emoji, getTagValue } from "applesauce-core/helpers";
 import { NostrEvent } from "nostr-tools";
 import { isAddressableKind } from "nostr-tools/kinds";
-import { Emoji, getTagValue } from "applesauce-core/helpers";
 
-import { EventOperation } from "../../event-factory.js";
 import {
   ensureAddressPointerTag,
   ensureEventPointerTag,
   ensureKTag,
   ensureProfilePointerTag,
 } from "../../helpers/common-tags.js";
+import { EventOperation } from "../../types.js";
+
+// TODO: some of these operations should be refactored to use "modifyPublicTags"
 
 /** Sets the content for a reaction event */
 export function setReactionContent(emoji: string | Emoji = "+"): EventOperation {

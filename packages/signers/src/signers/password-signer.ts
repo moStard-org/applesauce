@@ -3,6 +3,7 @@ import { encrypt, decrypt } from "nostr-tools/nip49";
 import { createDefer, Deferred } from "applesauce-core/promise";
 
 import { Nip07Interface } from "../nip-07.js";
+import { normalizeToSecretKey } from "applesauce-core/helpers";
 
 /** A NIP-49 (Private Key Encryption) signer */
 export class PasswordSigner implements Nip07Interface {
@@ -43,12 +44,14 @@ export class PasswordSigner implements Nip07Interface {
     return p;
   }
 
+  /** Sets the ncryptsec from the key and password */
   public async setPassword(password: string) {
     if (!this.key) throw new Error("Cant set password until unlocked");
 
     this.ncryptsec = encrypt(this.key, password);
   }
 
+  /** Tests if the provided password is correct by decrypting the ncryptsec */
   public async testPassword(password: string) {
     if (this.ncryptsec) {
       const key = decrypt(this.ncryptsec, password);
@@ -56,6 +59,7 @@ export class PasswordSigner implements Nip07Interface {
     } else throw new Error("Missing ncryptsec");
   }
 
+  /** Unlocks the signer by decrypting the ncryptsec using the provided password */
   public async unlock(password: string) {
     if (this.key) return;
 
@@ -63,6 +67,11 @@ export class PasswordSigner implements Nip07Interface {
       this.key = decrypt(this.ncryptsec, password);
       if (!this.key) throw new Error("Failed to decrypt key");
     } else throw new Error("Missing ncryptsec");
+  }
+
+  /** Locks the signer by removing the unencrypted key from memory */
+  public lock() {
+    this.key = null;
   }
 
   // public methods
@@ -93,5 +102,21 @@ export class PasswordSigner implements Nip07Interface {
   async nip44Decrypt(pubkey: string, ciphertext: string) {
     await this.requestUnlock();
     return nip44.v2.decrypt(ciphertext, nip44.v2.utils.getConversationKey(this.key!, pubkey));
+  }
+
+  /** Creates a PasswordSigner from a hex private key or NIP-19 nsec and password */
+  static async fromPrivateKey(privateKey: Uint8Array | string, password: string) {
+    const signer = new PasswordSigner();
+    signer.key = normalizeToSecretKey(privateKey);
+    await signer.setPassword(password);
+    return signer;
+  }
+
+  /** Creates a PasswordSigner from a ncryptsec and unlocks it with the provided password */
+  static async fromNcryptsec(ncryptsec: string, password?: string) {
+    const signer = new PasswordSigner();
+    signer.ncryptsec = ncryptsec;
+    if (password) await signer.unlock(password);
+    return signer;
   }
 }

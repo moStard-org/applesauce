@@ -1,5 +1,5 @@
 import { ProfileContent, safeParse } from "applesauce-core/helpers";
-import { EventOperation } from "../../event-factory.js";
+import { EventOperation } from "../../types.js";
 import { setContent } from "./content.js";
 
 /** Sets the content of a kind 0 metadata event */

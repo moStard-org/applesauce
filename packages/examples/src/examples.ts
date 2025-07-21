@@ -1,12 +1,26 @@
-const modules = import.meta.glob("./examples/**/*");
+const modules = import.meta.glob("./examples/**/*.tsx");
+const sources = import.meta.glob("./examples/**/*.tsx", { query: "?raw" }) as Record<
+  string,
+  () => Promise<{ default: string }>
+>;
 
-function basename(path: string) {
-  return path.split("/").pop()?.replace(/\..+$/, "") ?? "";
-}
+export type Example = {
+  id: string;
+  name: string;
+  path: string;
+  load: () => Promise<unknown>;
+  source: () => Promise<string>;
+};
 
-const examples: { id: string; path: string; load: () => Promise<unknown> }[] = [];
+const examples: Example[] = [];
+
 for (const [path, load] of Object.entries(modules)) {
-  examples.push({ id: basename(path), path, load });
+  const source = async () => (await sources[path]()).default as string;
+
+  const id = path.replace(/^.*\/examples\/|\.tsx$/g, "");
+  const name = id.replace(/\//g, " / ").replace(/[-_]/g, " ");
+
+  examples.push({ id, name, path, load, source });
 }
 
 export default examples;

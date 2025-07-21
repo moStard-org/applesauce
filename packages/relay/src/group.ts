@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { Filter, NostrEvent } from "nostr-tools";
+import { type NostrEvent } from "nostr-tools";
 import { catchError, EMPTY, endWith, ignoreElements, merge, Observable, of } from "rxjs";
 
 import { completeOnEose } from "./operators/complete-on-eose.js";
@@ -12,6 +12,7 @@ import {
   PublishOptions,
   RequestOptions,
   SubscriptionOptions,
+  FilterInput,
 } from "./types.js";
 
 export class RelayGroup implements IGroup {
@@ -35,7 +36,7 @@ export class RelayGroup implements IGroup {
   }
 
   /** Make a request to all relays */
-  req(filters: Filter | Filter[], id = nanoid(8)): Observable<SubscriptionResponse> {
+  req(filters: FilterInput, id = nanoid(8)): Observable<SubscriptionResponse> {
     const requests = this.relays.map((relay) =>
       relay.req(filters, id).pipe(
         // Ignore connection errors
@@ -76,7 +77,7 @@ export class RelayGroup implements IGroup {
   }
 
   /** Request events from all relays with retries ( default 3 retries ) */
-  request(filters: Filter | Filter[], opts?: RequestOptions): Observable<NostrEvent> {
+  request(filters: FilterInput, opts?: RequestOptions): Observable<NostrEvent> {
     return merge(
       ...this.relays.map((relay) =>
         relay.request(filters, opts).pipe(
@@ -88,7 +89,7 @@ export class RelayGroup implements IGroup {
   }
 
   /** Open a subscription to all relays with retries ( default 3 retries ) */
-  subscription(filters: Filter | Filter[], opts?: SubscriptionOptions): Observable<SubscriptionResponse> {
+  subscription(filters: FilterInput, opts?: SubscriptionOptions): Observable<SubscriptionResponse> {
     return this.mergeEOSE(
       ...this.relays.map((relay) =>
         relay.subscription(filters, opts).pipe(

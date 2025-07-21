@@ -1,5 +1,48 @@
 # applesauce-relay
 
+## 2.3.0
+
+### Minor Changes
+
+- d638591: Expose `authRequiredForPublish` and `authRequiredForRead` observables on `Relay`
+- 3f6dbb0: Add `Relay.authenticationResponse` to expose last AUTH response
+
+### Patch Changes
+
+- Updated dependencies
+  - applesauce-core@2.3.0
+
+## 2.1.1
+
+### Patch Changes
+
+- b446dd1: Fix bug with fetching NIP-11 document using wss URL
+
+## 2.0.0
+
+### Minor Changes
+
+- 324b960: Bump `nostr-tools` to 2.13
+
+### Patch Changes
+
+- f8d833e: Fix bug with NIP-11 `auth_required` preventing connection
+- d52d39a: Fix `toEventStore` not removing duplicate events
+- Updated dependencies
+  - applesauce-core@2.0.0
+
+## 1.2.0
+
+### Minor Changes
+
+- 466cd6e: Allow `.req`, `.request`, and `.subscription` to take `filters` as an observable so they can be updated
+
+### Patch Changes
+
+- 63ed560: Normalize relay url to prevent duplicates
+- Updated dependencies
+  - applesauce-core@1.2.0
+
 ## 1.1.0
 
 ### Minor Changes

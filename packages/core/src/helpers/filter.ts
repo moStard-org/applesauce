@@ -1,6 +1,6 @@
-import { Filter, NostrEvent } from "nostr-tools";
-import { getIndexableTags } from "./event.js";
 import equal from "fast-deep-equal";
+import { Filter, NostrEvent } from "nostr-tools";
+import { getIndexableTags } from "./event-tags.js";
 
 /**
  * Copied from nostr-tools and modified to use getIndexableTags
@@ -45,9 +45,7 @@ export function matchFilters(filters: Filter[], event: NostrEvent): boolean {
 	return false;
 }
 
-/**
- * Copied from nostr-tools and modified to support undefined
- */
+/** Copied from nostr-tools and modified to support undefined  */
 export function mergeFilters(...filters: Filter[]): Filter {
 	const result: Filter = {};
 

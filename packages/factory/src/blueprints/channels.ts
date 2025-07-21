@@ -1,37 +1,21 @@
 import { kinds, NostrEvent } from "nostr-tools";
 
-import { createTextContentOperations, TextContentOptions } from "../operations/event/content.js";
-import { EventFactory, EventBlueprint } from "../event-factory.js";
-import { includeNoteThreadingNotifyTags, includeNoteThreadingTags } from "../operations/event/note.js";
+import { blueprint } from "../event-factory.js";
 import { includeChannelPointerTag } from "../operations/event/channels.js";
+import { setShortTextContent, TextContentOptions } from "../operations/event/content.js";
+import { includeNoteThreadingNotifyTags, includeNoteThreadingTags } from "../operations/event/note.js";
 
 /** Creates a NIP-28 channel message */
-export function ChannelMessageBlueprint(
-  channel: NostrEvent,
-  message: string,
-  options?: TextContentOptions,
-): EventBlueprint {
-  return (ctx) =>
-    EventFactory.runProcess(
-      { kind: kinds.ChannelMessage },
-      ctx,
-      includeChannelPointerTag(channel),
-      ...createTextContentOperations(message, options),
-    );
+export function ChannelMessageBlueprint(channel: NostrEvent, message: string, options?: TextContentOptions) {
+  return blueprint(kinds.ChannelMessage, includeChannelPointerTag(channel), setShortTextContent(message, options));
 }
 
 /** Creates a NIP-28 channel message reply */
-export function ChannelMessageReplyBlueprint(
-  parent: NostrEvent,
-  message: string,
-  options?: TextContentOptions,
-): EventBlueprint {
-  return (ctx) =>
-    EventFactory.runProcess(
-      { kind: kinds.ChannelMessage },
-      ctx,
-      includeNoteThreadingTags(parent),
-      includeNoteThreadingNotifyTags(parent),
-      ...createTextContentOperations(message, options),
-    );
+export function ChannelMessageReplyBlueprint(parent: NostrEvent, message: string, options?: TextContentOptions) {
+  return blueprint(
+    kinds.ChannelMessage,
+    includeNoteThreadingTags(parent),
+    includeNoteThreadingNotifyTags(parent),
+    setShortTextContent(message, options),
+  );
 }

@@ -1,38 +1,31 @@
 # React Hooks
 
-## useObservable
+## useObservableMemo
 
-The [`useObservable`](https://hzrd149.github.io/applesauce/typedoc/functions/applesauce-react.Hooks.useObservable.html) hook is a thing wrapper around the `useObservableState` hook from [observable-hooks](https://observable-hooks.js.org/) that allows `undefined` to be passed
+The [`useObservableMemo`](https://hzrd149.github.io/applesauce/typedoc/functions/applesauce-react.Hooks.useObservableMemo.html) hook is a thing wrapper around the `useObservableState` hook from [observable-hooks](https://observable-hooks.js.org/) that re-creates the observable when the dependencies change and allows `undefined` to returned
 
 This is useful for subscribing to observables that are not created yet
 
 ```ts
 const account = useActiveAccount(); // IAccount | null
 
-const profileQuery = useMemo(() => {
-  if (account) return queryStore.profile(account.pubkey);
+const profile = useObservableMemo(() => {
+  if (account) return eventStore.profile(account.pubkey);
   else return undefined;
-}, [account]);
-
-// profileQuery may be undefined
-const profile = useObservable(profileQuery);
+}, [account.pubkey]);
 ```
-
-## useQueryStore
-
-The [`useQueryStore`](https://hzrd149.github.io/applesauce/typedoc/functions/applesauce-react.Hooks.useQueryStore.html) hook can be used at access the `QueryStore` from anywhere in the react tree
 
 ## useEventStore
 
 The [`useEventStore`](https://hzrd149.github.io/applesauce/typedoc/functions/applesauce-react.Hooks.useEventStore.html) hook can be used at access the `EventStore` from anywhere in the react tree
 
-## useStoreQuery
+## useModel
 
-The [`useStoreQuery`](https://hzrd149.github.io/applesauce/typedoc/functions/applesauce-react.Hooks.useStoreQuery.html) hook requires the `QueryStoreProvider` and can be used to create and run a query in the `QueryStore` and subscribe to the results
+The [`useModel`](https://hzrd149.github.io/applesauce/typedoc/functions/applesauce-react.Hooks.useModel.html) hook requires the `EventStoreProvider` and can be used to create and run a model in the `EventStore` and subscribe to the results
 
 ```ts
 function UserAvatar({ pubkey }: { pubkey: string }) {
-  const profile = useStoreQuery(ProfileQuery, [pubkey]);
+  const profile = useModel(ProfileQuery, [pubkey]);
 	// profile will be undefined until the event is loaded
 
 	return <img src={profile?.picture}/>

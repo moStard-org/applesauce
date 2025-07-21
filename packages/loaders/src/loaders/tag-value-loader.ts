@@ -1,14 +1,15 @@
-import { logger } from "applesauce-core";
-import { markFromCache, mergeRelaySets } from "applesauce-core/helpers";
+import { IEventStore, mapEventsToStore } from "applesauce-core";
+import { mergeRelaySets } from "applesauce-core/helpers";
 import { Filter, NostrEvent } from "nostr-tools";
-import { bufferTime, filter, merge, mergeMap, tap } from "rxjs";
+import { bufferTime, EMPTY, merge, Observable } from "rxjs";
 
 import { unique } from "../helpers/array.js";
-import { completeOnEOSE } from "../operators/complete-on-eose.js";
-import { distinctRelaysBatch } from "../operators/distinct-relays.js";
-import { CacheRequest, Loader, NostrRequest, RelayFilterMap } from "./loader.js";
+import { makeCacheRequest } from "../helpers/cache.js";
+import { batchLoader, unwrap } from "../helpers/loaders.js";
+import { wrapUpstreamPool } from "../helpers/upstream.js";
+import { CacheRequest, NostrRequest, UpstreamPool } from "../types.js";
 
-export type TabValuePointer = {
+export type TagValuePointer = {
   /** The value of the tag to load */
   value: string;
   /** The relays to load from */
@@ -18,108 +19,109 @@ export type TabValuePointer = {
 };
 
 export type TagValueLoaderOptions = {
-  /** the name of this loader (for debugging) */
-  name?: string;
-  /**
-   * Time interval to buffer requests in ms
-   * @default 1000
-   */
+  /** Time interval to buffer requests in ms ( default 1000 ) */
   bufferTime?: number;
-
+  /** Max buffer size ( default 200 ) */
+  bufferSize?: number;
   /** Restrict queries to specific kinds */
   kinds?: number[];
   /** Restrict queries to specific authors */
   authors?: string[];
   /** Restrict queries since */
   since?: number;
-
   /** Method used to load from the cache */
   cacheRequest?: CacheRequest;
   /** An array of relays to always fetch from */
-  extraRelays?: string[];
+  extraRelays?: string[] | Observable<string[]>;
+  /** An event store used to deduplicate events */
+  eventStore?: IEventStore;
 };
 
-export class TagValueLoader extends Loader<TabValuePointer, NostrEvent> {
-  name: string;
-  protected log: typeof logger = logger.extend("TagValueLoader");
+export type TagValueLoader = (pointer: TagValuePointer) => Observable<NostrEvent>;
 
-  /** A method to load events from a local cache */
-  cacheRequest?: CacheRequest;
+/** Creates a loader that gets tag values from the cache */
+export function cacheTagValueLoader(
+  request: CacheRequest,
+  tagName: string,
+  opts?: TagValueLoaderOptions,
+): (pointers: TagValuePointer[]) => Observable<NostrEvent> {
+  return (pointers) => {
+    const baseFilter: Filter = {};
+    if (opts?.kinds) baseFilter.kinds = opts.kinds;
+    if (opts?.authors) baseFilter.authors = opts.authors;
+    if (opts?.since) baseFilter.since = opts.since;
 
-  /** An array of relays to always fetch from */
-  extraRelays?: string[];
-
-  constructor(request: NostrRequest, tagName: string, opts?: TagValueLoaderOptions) {
     const filterTag: `#${string}` = `#${tagName}`;
+    const filter = { ...baseFilter, [filterTag]: unique(pointers.map((p) => p.value)) };
 
-    super((source) =>
-      source.pipe(
-        // batch the pointers
-        bufferTime(opts?.bufferTime ?? 1000),
-        // filter out empty batches
-        filter((pointers) => pointers.length > 0),
-        // only request from each relay once
-        distinctRelaysBatch((m) => m.value),
-        // batch pointers into requests
-        mergeMap((pointers) => {
-          const baseFilter: Filter = {};
-          if (opts?.kinds) baseFilter.kinds = opts.kinds;
-          if (opts?.since) baseFilter.since = opts.since;
-          if (opts?.authors) baseFilter.authors = opts.authors;
+    return makeCacheRequest(request, [filter]);
+  };
+}
 
-          // build request map for relays
-          const requestMap = pointers.reduce<RelayFilterMap>((map, pointer) => {
-            const relays = mergeRelaySets(pointer.relays, this.extraRelays);
+/** Creates a loader that gets tag values from relays */
+export function relaysTagValueLoader(
+  request: NostrRequest,
+  tagName: string,
+  opts?: TagValueLoaderOptions,
+): (pointers: TagValuePointer[]) => Observable<NostrEvent> {
+  const filterTag: `#${string}` = `#${tagName}`;
 
-            for (const relay of relays) {
-              if (!map[relay]) {
-                // create new filter for relay
-                const filter: Filter = { ...baseFilter, [filterTag]: [pointer.value] };
-                map[relay] = [filter];
-              } else {
-                // map for relay already exists, add the tag value
-                const filter = map[relay][0];
-                filter[filterTag]!.push(pointer.value);
-              }
-            }
-            return map;
-          }, {});
+  return (pointers) =>
+    unwrap(opts?.extraRelays, (extraRelays) => {
+      const baseFilter: Filter = {};
+      if (opts?.kinds) baseFilter.kinds = opts.kinds;
+      if (opts?.authors) baseFilter.authors = opts.authors;
+      if (opts?.since) baseFilter.since = opts.since;
 
-          let fromCache = 0;
-          const cacheRequest = this?.cacheRequest?.([
-            { ...baseFilter, [filterTag]: unique(pointers.map((p) => p.value)) },
-          ]).pipe(
-            // mark the event as from the cache
-            tap({
-              next: (event) => {
-                markFromCache(event);
-                fromCache++;
-              },
-              complete: () => {
-                if (fromCache > 0) this.log(`Loaded ${fromCache} from cache`);
-              },
-            }),
-          );
+      // build request map for relays
+      const requestMap = pointers.reduce<Record<string, Filter>>((map, pointer) => {
+        const relays = mergeRelaySets(pointer.relays, extraRelays);
 
-          const requests = Object.entries(requestMap).map(([relay, filters]) =>
-            request([relay], filters).pipe(completeOnEOSE()),
-          );
+        for (const relay of relays) {
+          if (!map[relay]) {
+            // create new filter for relay
+            map[relay] = { ...baseFilter, [filterTag]: [pointer.value] };
+          } else {
+            // map for relay already exists, add the tag value
+            map[relay][filterTag]!.push(pointer.value);
+          }
+        }
+        return map;
+      }, {});
 
-          this.log(`Requesting ${pointers.length} tag values from ${requests.length} relays`);
+      const requests = Object.entries(requestMap).map(([relay, filter]) => request([relay], [filter]));
 
-          return cacheRequest ? merge(cacheRequest, ...requests) : merge(...requests);
-        }),
-      ),
-    );
+      return merge(...requests);
+    });
+}
 
-    // Set options
-    this.cacheRequest = opts?.cacheRequest;
-    this.extraRelays = opts?.extraRelays;
+/** Create a pre-built tag value loader that supports batching, caching, and relay hints */
+export function createTagValueLoader(
+  pool: UpstreamPool,
+  tagName: string,
+  opts?: TagValueLoaderOptions,
+): TagValueLoader {
+  const request = wrapUpstreamPool(pool);
 
-    // create a unique logger for this instance
-    this.name = opts?.name ?? "";
-    this.log = this.log.extend(
-      opts?.kinds ? `${this.name} ${filterTag} (${opts?.kinds?.join(",")})` : `${this.name} ${filterTag}`,
-    );
-  }
+  return batchLoader(
+    // buffer requests by time or size
+    bufferTime(opts?.bufferTime ?? 1000, undefined, opts?.bufferSize ?? 200),
+    // Create a loader for batching
+    (pointers) => {
+      // Skip if there are no pointers
+      if (pointers.length === 0) return EMPTY;
+
+      // Load from cache and relays in parallel
+      return merge(
+        // load from cache if available
+        opts?.cacheRequest ? cacheTagValueLoader(opts.cacheRequest, tagName, opts)(pointers) : [],
+        // load from relays
+        relaysTagValueLoader(request, tagName, opts)(pointers),
+      );
+    },
+    // Filter results based on requests
+    (pointer, event) => event.tags.some((tag) => tag[0] === tagName && tag[1] === pointer.value),
+    // Pass all events through the store if defined
+    opts?.eventStore && mapEventsToStore(opts?.eventStore),
+  );
 }

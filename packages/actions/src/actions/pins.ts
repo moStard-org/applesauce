@@ -32,7 +32,7 @@ export function CreatePinList(pins: NostrEvent[] = []): Action {
     const existing = events.getReplaceable(kinds.Pinlist, self);
     if (existing) throw new Error("Pin list already exists");
 
-    const draft = await factory.process(
+    const draft = await factory.build(
       { kind: kinds.Pinlist },
       modifyPublicTags(...pins.map((event) => addEventTag(event.id))),
     );

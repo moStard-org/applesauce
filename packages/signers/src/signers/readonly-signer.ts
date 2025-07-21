@@ -1,5 +1,6 @@
 import { VerifiedEvent } from "nostr-tools";
 import { Nip07Interface } from "../nip-07.js";
+import { isHexKey, normalizeToPubkey } from "applesauce-core/helpers";
 
 /** A signer that only implements getPublicKey and throws on ever other method */
 export class ReadonlySigner implements Nip07Interface {
@@ -13,6 +14,8 @@ export class ReadonlySigner implements Nip07Interface {
   };
 
   constructor(private pubkey: string) {
+    if (!isHexKey(pubkey)) throw new Error("Invalid public key");
+
     this.nip04 = {
       encrypt: this.nip04Encrypt.bind(this),
       decrypt: this.nip04Decrypt.bind(this),
@@ -45,5 +48,10 @@ export class ReadonlySigner implements Nip07Interface {
   }
   nip44Decrypt(): string {
     throw new Error("Cant decrypt with readonly");
+  }
+
+  /** Creates a ReadonlySigner from a hex public key or NIP-19 npub */
+  static fromPubkey(pubkey: string) {
+    return new ReadonlySigner(normalizeToPubkey(pubkey));
   }
 }

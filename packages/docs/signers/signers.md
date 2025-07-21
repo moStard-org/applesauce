@@ -1,7 +1,3 @@
-# Signers
-
-All signers in the `applesauce-signers` package are compatible with the [NIP-07](https://github.com/nostr-protocol/nips/blob/master/07.md) API
-
 ## Password Signer
 
 The [PasswordSigner](https://hzrd149.github.io/applesauce/typedoc/classes/applesauce-signers.PasswordSigner.html) is a [NIP-49](https://github.com/nostr-protocol/nips/blob/master/49.md) (Private Key Encryption) signer

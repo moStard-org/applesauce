@@ -1,7 +1,7 @@
 import { MediaAttachment } from "applesauce-core/helpers";
 
-import { EventOperation } from "../../event-factory.js";
 import { ensureNamedValueTag } from "../../helpers/tag.js";
+import { EventOperation } from "../../types.js";
 
 /** Includes the "x" and "m" tags for kind 20 picture posts */
 export function includePicturePostImageTags(pictures: MediaAttachment[]): EventOperation {

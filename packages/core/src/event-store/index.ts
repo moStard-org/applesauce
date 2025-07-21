@@ -1,3 +1,3 @@
 export * from "./event-store.js";
-export * from "./database.js";
+export * from "./event-set.js";
 export * from "./interface.js";

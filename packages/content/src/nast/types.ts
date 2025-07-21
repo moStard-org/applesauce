@@ -1,6 +1,6 @@
-import { EventTemplate, NostrEvent } from "nostr-tools";
-import { DecodeResult } from "nostr-tools/nip19";
-import { Node as UnistNode, Parent } from "unist";
+import { type DecodeResult } from "applesauce-core/helpers";
+import { type EventTemplate, type NostrEvent } from "nostr-tools";
+import { type Parent, type Node as UnistNode } from "unist";
 
 export interface CommonData {
 	eol?: boolean;
@@ -38,7 +38,8 @@ export interface Hashtag extends Node {
 	name: string;
 	/** The lowercase canonical name */
 	hashtag: string;
-	tag: ["t", ...string[]];
+	/** The indexable tag for the hashtag. will be undefined if none was found */
+	tag?: ["t", ...string[]];
 }
 
 export interface Emoji extends Node {

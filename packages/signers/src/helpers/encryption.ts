@@ -2,10 +2,4 @@
  * Checks if a string is encrypted with NIP-04 or NIP-44
  * @see https://github.com/nostr-protocol/nips/pull/1248#issuecomment-2437731316
  */
-export function isNIP04(ciphertext: string): boolean {
-  const l = ciphertext.length;
-  if (l < 28) return false;
-  return (
-    ciphertext[l - 28] == "?" && ciphertext[l - 27] == "i" && ciphertext[l - 26] == "v" && ciphertext[l - 25] == "="
-  );
-}
+export { isNIP04Encrypted as isNIP04 } from "applesauce-core/helpers/encryption";

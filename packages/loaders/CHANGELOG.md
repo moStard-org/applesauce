@@ -1,5 +1,44 @@
 # applesauce-loaders
 
+## 2.1.0
+
+### Minor Changes
+
+- b652776: Update all loaders to accept observables for `extraRelays` option
+- 230e6d2: Add `cache` option to address and event loader
+
+### Patch Changes
+
+- 937e23e: Fix loaders missing requests in FireFox
+- Updated dependencies
+  - applesauce-core@2.1.0
+
+## 2.0.0
+
+### Major Changes
+
+- 9b165a0: Export loaders under `Loaders` namespace from root `import { Loaders } from "applesauce-loaders"`
+- 8384565: Remove `CacheTimelineLoader` class
+- 8384565: Remove `RelayTimelineLoader` class
+- 8384565: Remove `ReplaceableLoader` class
+- 7535052: Remove `UserSetsLoader` class
+- 8384565: Remove `TimelineLoader` class
+- e0e455a: Remove `SingleEventLoader` class
+
+### Minor Changes
+
+- f0ce2e5: Add zaps and reactions loaders
+- 8384565: Add `createTimelineLoader` loader method
+- 7535052: Add `createUserListsLoader` loader
+- a1e5652: Add `createAddressLoader` method to create a pre-built address loader
+- 324b960: Bump `nostr-tools` to 2.13
+
+### Patch Changes
+
+- aec8278: Fix `UserSetsLoader` making requests with no filters
+- Updated dependencies
+  - applesauce-core@2.0.0
+
 ## 1.0.0
 
 ### Major Changes

@@ -1,5 +1,41 @@
 # applesauce-actions
 
+## 2.3.0
+
+### Minor Changes
+
+- 5e38452: Update contacts actions not to throw when event missing
+- 5e38452: Update blossom actions not to throw when event is missing
+- 5e38452: Update mailbox actions to not throw when event missing
+
+### Patch Changes
+
+- 5e38452: Fix bookmark actions using wrong kind
+- bb9fe08: Fix `SendWrappedMessage` action not creating gift wrap for user when a single recipient is provided
+- Updated dependencies
+  - applesauce-factory@2.3.0
+  - applesauce-core@2.3.0
+
+## 2.1.0
+
+### Patch Changes
+
+- c58facb: Fix `UnbookmarkEvent` action requiring bookmark set identifier
+- Updated dependencies
+  - applesauce-core@2.1.0
+
+## 2.0.0
+
+### Minor Changes
+
+- 324b960: Bump `nostr-tools` to 2.13
+
+### Patch Changes
+
+- Updated dependencies
+  - applesauce-core@2.0.0
+  - applesauce-factory@2.0.0
+
 ## 1.1.0
 
 ### Minor Changes

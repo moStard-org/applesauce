@@ -1,26 +1,23 @@
-import { OperatorFunction, scan } from "rxjs";
+import { OperatorFunction } from "rxjs";
 import { IEventStore } from "applesauce-core";
 import { NostrEvent } from "nostr-tools";
-import { insertEventIntoDescendingList } from "nostr-tools/utils";
+import { mapEventsToStore, mapEventsToTimeline } from "applesauce-core/observable";
 
 import { SubscriptionResponse } from "../types.js";
-
 import { completeOnEose } from "./complete-on-eose.js";
 
-/** Adds all events to event store and returns a deduplicated timeline when EOSE is received */
+/**
+ * Adds all events to event store and returns a deduplicated timeline when EOSE is received
+ * @deprecated use `mapEventsToStore` and `mapEventsToTimeline` instead
+ */
 export function toEventStore(eventStore: IEventStore): OperatorFunction<SubscriptionResponse, NostrEvent[]> {
   return (source) =>
     source.pipe(
       // Complete when there are not events
       completeOnEose(),
+      // Save events to store and remove duplicates
+      mapEventsToStore(eventStore, true),
       // Add the events to an array
-      scan((events, event) => {
-        // Get the current instance of this event
-        let e = eventStore.add(event);
-
-        // If its not in the timeline, add it
-        if (events.includes(e)) return events;
-        else return insertEventIntoDescendingList(events, e);
-      }, [] as NostrEvent[]),
+      mapEventsToTimeline(),
     );
 }
